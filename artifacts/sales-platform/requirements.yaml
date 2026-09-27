@@ -1,0 +1,25 @@
+packages:
+  "framer-motion": "For premium smooth animations and page transitions"
+  "react-hook-form": "For form state management"
+  "@hookform/resolvers": "For Zod form validation"
+  "zod": "For schema validation"
+  "clsx": "For classname merging"
+  "tailwind-merge": "For tailwind class deduplication"
+
+images:
+  - path: "artifacts/sales-platform/public/images/hero-home.png"
+    description: "Premium abstract architectural background in dark navy and anthracite colors, sharp minimal lines, soft elegant lighting, highly professional and expensive look"
+    aspect_ratio: "16:9"
+  - path: "artifacts/sales-platform/public/images/hero-water.png"
+    description: "Abstract premium representation of water purification, dark background with subtle blue and silver reflections, clean and technological aesthetic"
+    aspect_ratio: "16:9"
+  - path: "artifacts/sales-platform/public/images/hero-windows.png"
+    description: "Minimalist modern glass and light reflection, architectural detail, dark premium aesthetic with subtle warm lighting"
+    aspect_ratio: "16:9"
+  - path: "artifacts/sales-platform/public/images/hero-about.png"
+    description: "High-end corporate office texture, dark marble or slate with subtle warm ambient light, extremely minimal and luxurious"
+    aspect_ratio: "16:9"
+
+notes:
+  - No backend API is needed; all forms simulate a network request and show a visual success message.
+  - The design features a premium color palette centered around dark navy (#0f1d2e), anthracite (#1a2535), and white/light gray.
