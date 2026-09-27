@@ -2,6 +2,7 @@ services:
   - type: web
     name: bcore-website
     runtime: node
+    region: frankfurt
     plan: free
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build:deploy
     startCommand: pnpm start
