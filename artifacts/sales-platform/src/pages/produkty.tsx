@@ -1,3 +1,4 @@
+import { Reveal, RevealArticle } from "@/components/Reveal";
 import { isStandalonePreview } from "@/lib/preview";
 import { useEffect, useState } from "react";
 import { Link, Redirect } from "wouter";
@@ -55,7 +56,7 @@ export function ProductCatalogue() {
   );
   return (
     <section className="catalogue container" id="oferty">
-      <div className="catalogue-heading">
+      <Reveal className="catalogue-heading">
         <div>
           <p className="eyebrow">TRADE OPPORTUNITIES</p>
           <h2>{t.offers}</h2>
@@ -76,7 +77,7 @@ export function ProductCatalogue() {
             </select>
           </label>
         )}
-      </div>
+      </Reveal>
       {state === "loading" ? (
         <div className="catalogue-state" role="status">
           {t.loading}
@@ -112,7 +113,7 @@ export function ProductCatalogue() {
       ) : (
         <div className="product-grid">
           {filtered.map((p) => (
-            <article key={p.id} className="product-card">
+            <RevealArticle key={p.id} className="product-card">
               <div className="product-image">
                 {p.imageBase64 &&
                 /^(data:image\/(png|jpe?g|webp|gif);base64,|https?:\/\/)/i.test(
@@ -160,7 +161,7 @@ export function ProductCatalogue() {
                   <ArrowUpRight size={18} />
                 </Link>
               </div>
-            </article>
+            </RevealArticle>
           ))}
         </div>
       )}

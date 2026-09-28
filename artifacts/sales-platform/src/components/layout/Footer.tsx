@@ -1,3 +1,4 @@
+import { Reveal } from "@/components/Reveal";
 import { useState } from "react";
 import { Link } from "wouter";
 import { ArrowUpRight } from "lucide-react";
@@ -10,7 +11,7 @@ export function ContactCTA() {
     t = advisory[lang];
   return (
     <section className="contact-cta">
-      <div className="container cta-inner">
+      <Reveal className="container cta-inner">
         <span className="eyebrow">LET’S CONNECT</span>
         <div>
           <h2>{t.cta}</h2>
@@ -19,7 +20,7 @@ export function ContactCTA() {
         <Link href="/kontakt" className="cta-circle" aria-label={t.talk}>
           <ArrowUpRight />
         </Link>
-      </div>
+      </Reveal>
     </section>
   );
 }

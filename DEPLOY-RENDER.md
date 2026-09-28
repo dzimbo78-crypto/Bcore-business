@@ -16,23 +16,28 @@ git commit -m "Redesign B-CORE advisory website"
 git push -u origin redesign/advisory-copper
 ```
 
-Po przejrzeniu zmian połącz tę gałąź z gałęzią podłączoną do Rendera. Paczka nie została automatycznie wypchnięta do Twojego repozytorium ani wdrożona.
+Po przejrzeniu zmian podłącz tę gałąź do właściwej, osobnej usługi Render. Paczka nie została automatycznie wypchnięta do Twojego repozytorium ani wdrożona.
 
 ## 2. Skonfiguruj usługę Render
 
-**Jeśli masz już działającą usługę**, zaktualizuj ją. Zachowaj istniejący `DATABASE_URL`, aby nadal korzystać z tych samych ofert.
+**Ta wersja jest przeznaczona dla osobnej usługi `bcore-business-web` w regionie Frankfurt.** Zachowaj dotychczasową, drugą usługę B-CORE. Jeśli `bcore-business-web` już istnieje, zaktualizuj tę usługę i zachowaj jej `DATABASE_URL`, aby nadal korzystać z tych samych ofert. Nie usuwaj poprzedniej usługi ani jej bazy.
+
+Jeżeli obie usługi śledzą tę samą gałąź jednego repozytorium, push może wdrożyć zmiany do obu. Przed aktualizacją wskaż w `bcore-business-web` osobną gałąź, np. `redesign/advisory-copper`, i ustaw ją jako Deploy Branch. Poprzednia usługa powinna zachować dotychczasową gałąź.
 
 Ustawienia usługi:
 
 | Pole | Wartość |
 | --- | --- |
+| Nazwa | `bcore-business-web` |
+| Region | Frankfurt |
+| Plan w Blueprint | Free |
 | Runtime / Language | Node |
 | Root Directory | główny katalog repozytorium — pole puste |
 | Build Command | `corepack enable && pnpm install --frozen-lockfile && pnpm run build:deploy` |
 | Start Command | `pnpm start` |
 | Health Check Path | `/api/healthz` |
 
-Dla nowego wdrożenia możesz użyć **New → Blueprint** i wskazać repozytorium. Plik `render.yaml` zawiera te ustawienia oraz pola do uzupełnienia sekretów. Dołącz istniejącą lub utwórz nową bazę PostgreSQL i podaj jej adres połączenia. Nie trzeba ręcznie tworzyć tabeli ofert.
+Dla nowego wdrożenia możesz użyć **New → Blueprint** i wskazać repozytorium. Plik `render.yaml` zawiera te ustawienia oraz pola do uzupełnienia sekretów. Dla nowej, osobnej usługi utwórz lub wybierz przeznaczoną dla niej bazę PostgreSQL we Frankfurcie i podaj jej adres połączenia. Nie trzeba ręcznie tworzyć tabeli ofert.
 
 ## 3. Ustaw zmienne środowiskowe
 
@@ -69,7 +74,8 @@ Po zakończeniu wdrożenia:
 2. Otwórz `/admin` i zaloguj się hasłem z `ADMIN_PASSWORD`.
 3. Dodaj ofertę z wyłączoną opcją „Widoczna na stronie”. Sprawdź edycję, następnie opublikuj wybraną ofertę.
 4. Wyślij próbne zapytanie ze strony i sprawdź skrzynkę odbiorczą oraz folder spam. Komunikat sukcesu pojawia się dopiero po zaakceptowaniu wiadomości przez Resend; ostateczne dostarczenie sprawdzisz także w jego dzienniku.
-5. Sprawdź wygląd na telefonie oraz przycisk wstrzymywania animacji.
+5. Sprawdź wygląd na telefonie, regulator jasności, wstrzymywanie animacji, przeciąganie globusa oraz wejście bezpośrednio na `/polityka-prywatnosci` i `/regulamin`.
+6. Przed publikacją sprawdź dane właściciela w `artifacts/sales-platform/src/data/legal-config.ts` oraz wykonaj kroki z `LEGAL-SETUP.md`.
 
 Nie zmieniaj `DATABASE_URL` podczas kolejnych aktualizacji, jeśli chcesz zachować oferty. Wykonuj kopie zapasowe bazy u wybranego dostawcy.
 

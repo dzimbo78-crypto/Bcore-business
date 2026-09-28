@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: bcore-website
+    name: bcore-business-web
     runtime: node
     region: frankfurt
     plan: free

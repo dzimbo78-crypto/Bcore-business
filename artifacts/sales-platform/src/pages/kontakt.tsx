@@ -9,7 +9,6 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { useLanguage } from "@/i18n/context";
 import { advisory, email, phone, serviceMeta } from "@/data/advisory";
 import { LegalModal } from "@/components/LegalModal";
@@ -62,7 +61,7 @@ export default function Kontakt() {
     }
   }
   return (
-    <PageLayout>
+    <>
       <section className="contact-page container">
         <p className="eyebrow">LET’S CONNECT</p>
         <div className="contact-grid">
@@ -190,6 +189,6 @@ export default function Kontakt() {
         initialTab="privacy"
         onClose={() => setLegal(false)}
       />
-    </PageLayout>
+    </>
   );
 }

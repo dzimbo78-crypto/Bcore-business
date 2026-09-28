@@ -95,7 +95,7 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
     };
 
     if (!response.ok || typeof payload?.id !== "string") {
-      console.error("Resend email error:", response.status, payload);
+      console.error("Resend email error status:", response.status);
       res.status(502).json({ error: "Failed to send email" });
       return;
     }
@@ -103,7 +103,10 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
     console.log("B-CORE email sent via Resend:", payload?.id ?? "ok");
     res.json({ ok: true });
   } catch (err) {
-    console.error("Resend request error:", err);
+    console.error(
+      "Resend request failed:",
+      err instanceof Error ? err.name : "UnknownError",
+    );
     res.status(502).json({ error: "Failed to send email" });
   }
 });

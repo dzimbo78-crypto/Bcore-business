@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMotionPreferences } from "./MotionPreferences";
 import { useLanguage } from "@/i18n/context";
 import land from "@/data/globe-land.json";
+import { GlobeMotion } from "@/lib/globe-motion";
 
 type Vector = [number, number, number];
 const radians = Math.PI / 180;
@@ -56,22 +57,10 @@ const connections = markets.slice(1).map((destination) => {
   });
 });
 const labels = {
-  pl: [
-    "Interaktywny globus z symbolicznymi połączeniami biznesowymi. Przeciągnij lub użyj strzałek, aby obrócić.",
-    "PRZECIĄGNIJ, ABY OBRÓCIĆ",
-  ],
-  en: [
-    "Interactive globe with illustrative business connections. Drag or use arrow keys to rotate.",
-    "DRAG TO EXPLORE",
-  ],
-  da: [
-    "Interaktiv globus med illustrative forretningsforbindelser. Træk eller brug piletasterne for at rotere.",
-    "TRÆK FOR AT UDFORSKE",
-  ],
-  de: [
-    "Interaktiver Globus mit symbolischen Geschäftsverbindungen. Zum Drehen ziehen oder Pfeiltasten verwenden.",
-    "ZIEHEN ZUM ENTDECKEN",
-  ],
+  pl: "Interaktywny globus z symbolicznymi połączeniami biznesowymi. Przeciągnij lub użyj strzałek, aby obrócić.",
+  en: "Interactive globe with illustrative business connections. Drag or use arrow keys to rotate.",
+  da: "Interaktiv globus med illustrative forretningsforbindelser. Træk eller brug piletasterne for at rotere.",
+  de: "Interaktiver Globus mit symbolischen Geschäftsverbindungen. Zum Drehen ziehen oder Pfeiltasten verwenden.",
 };
 
 /** Geographic 3D projection rendered locally; works without WebGL or remote textures. */
@@ -100,23 +89,28 @@ export function CoreScene() {
       elapsed = 0;
     let active = true,
       visible = !document.hidden,
-      dirty = true,
-      dragging = false;
-    let yaw = -0.26,
-      tilt = 0.27,
-      pointerX = 0,
+      dirty = true;
+    const motion = new GlobeMotion();
+    let pointerX = 0,
       pointerY = 0,
-      previousX = 0;
+      previousX = 0,
+      previousY = 0;
+    let activePointer: number | null = null;
     let targetX = 0,
       targetY = 0;
     const draw = () => {
+      if (!width || !height || !radius) return;
       ctx.clearRect(0, 0, width, height);
+      if (import.meta.env.DEV) {
+        canvas.dataset.rotation = motion.yaw.toFixed(5);
+        canvas.dataset.tilt = motion.tilt.toFixed(5);
+      }
       const cx = width * 0.5 + pointerX * 5,
         cy = height * 0.49 + pointerY * 4;
-      const c = Math.cos(yaw),
-        s = Math.sin(yaw),
-        ct = Math.cos(tilt),
-        st = Math.sin(tilt);
+      const c = Math.cos(motion.yaw),
+        s = Math.sin(motion.yaw),
+        ct = Math.cos(motion.tilt),
+        st = Math.sin(motion.tilt);
       const project = ([x, y, z]: Vector): Vector => {
         const xx = x * c + z * s,
           zz = z * c - x * s;
@@ -253,10 +247,10 @@ export function CoreScene() {
         const dt = last ? Math.min(now - last, 70) / 1000 : 0;
         if (moving) {
           elapsed += dt;
-          if (!dragging) yaw += dt * 0.072;
         }
-        pointerX += (targetX - pointerX) * 0.08;
-        pointerY += (targetY - pointerY) * 0.08;
+        motion.advance(dt, !moving);
+        pointerX += (targetX - pointerX) * 0.14;
+        pointerY += (targetY - pointerY) * 0.14;
         last = now;
         dirty = false;
         draw();
@@ -278,27 +272,62 @@ export function CoreScene() {
       radius = Math.min(width * 0.405, height * 0.39);
       wake();
     };
-    const down = (event: PointerEvent) => {
-      dragging = true;
-      previousX = event.clientX;
-      canvas.setPointerCapture(event.pointerId);
+    const finish = (event?: PointerEvent, cancelled = false) => {
+      if (event && event.pointerId !== activePointer) return;
+      const id = activePointer;
+      activePointer = null;
+      motion.release(performance.now(), cancelled);
+      canvas.classList.remove("is-dragging");
+      if (id !== null && canvas.hasPointerCapture(id))
+        canvas.releasePointerCapture(id);
+      wake();
     };
-    const move = (event: PointerEvent) => {
-      const bounds = canvas.getBoundingClientRect();
-      targetX = (event.clientX - bounds.left) / Math.max(1, bounds.width) - 0.5;
-      targetY = (event.clientY - bounds.top) / Math.max(1, bounds.height) - 0.5;
-      if (dragging) {
-        yaw += (event.clientX - previousX) * 0.006;
-        previousX = event.clientX;
+    const down = (event: PointerEvent) => {
+      if (!event.isPrimary || event.button !== 0 || activePointer !== null)
+        return;
+      activePointer = event.pointerId;
+      previousX = event.clientX;
+      previousY = event.clientY;
+      motion.begin(performance.now());
+      canvas.setPointerCapture(event.pointerId);
+      canvas.classList.add("is-dragging");
+      if (event.pointerType === "mouse") {
+        event.preventDefault();
+        canvas.focus({ preventScroll: true });
       }
       wake();
     };
-    const up = () => {
-      dragging = false;
+    const move = (event: PointerEvent) => {
+      if (!event.isPrimary) return;
+      const bounds = canvas.getBoundingClientRect();
+      targetX = pausedRef.current
+        ? 0
+        : (event.clientX - bounds.left) / Math.max(1, bounds.width) - 0.5;
+      targetY = pausedRef.current
+        ? 0
+        : (event.clientY - bounds.top) / Math.max(1, bounds.height) - 0.5;
+      if (activePointer === event.pointerId) {
+        // Horizontal touch gestures rotate the globe; vertical gestures still scroll the page.
+        motion.drag(
+          event.clientX - previousX,
+          event.pointerType === "touch" ? 0 : event.clientY - previousY,
+          performance.now(),
+          radius,
+        );
+        previousX = event.clientX;
+        previousY = event.clientY;
+      }
+      wake();
     };
+    const up = (event: PointerEvent) => finish(event);
+    const cancel = (event: PointerEvent) => finish(event, true);
     const leave = () => {
       targetX = targetY = 0;
       wake();
+    };
+    const blur = () => {
+      finish(undefined, true);
+      last = 0;
     };
     const key = (event: KeyboardEvent) => {
       if (
@@ -306,14 +335,15 @@ export function CoreScene() {
       )
         return;
       event.preventDefault();
-      if (event.key === "ArrowLeft") yaw -= 0.18;
-      if (event.key === "ArrowRight") yaw += 0.18;
-      if (event.key === "ArrowUp") tilt = Math.min(0.8, tilt + 0.1);
-      if (event.key === "ArrowDown") tilt = Math.max(-0.8, tilt - 0.1);
+      if (event.key === "ArrowLeft") motion.nudge(-0.18, 0);
+      if (event.key === "ArrowRight") motion.nudge(0.18, 0);
+      if (event.key === "ArrowUp") motion.nudge(0, -0.1);
+      if (event.key === "ArrowDown") motion.nudge(0, 0.1);
       wake();
     };
     const visibility = () => {
       visible = !document.hidden;
+      if (!visible) finish(undefined, true);
       last = 0;
       wake();
     };
@@ -328,7 +358,9 @@ export function CoreScene() {
     canvas.addEventListener("pointerdown", down);
     canvas.addEventListener("pointermove", move);
     canvas.addEventListener("pointerup", up);
-    canvas.addEventListener("pointercancel", up);
+    canvas.addEventListener("pointercancel", cancel);
+    canvas.addEventListener("lostpointercapture", cancel);
+    window.addEventListener("blur", blur);
     canvas.addEventListener("pointerleave", leave);
     canvas.addEventListener("keydown", key);
     document.addEventListener("visibilitychange", visibility);
@@ -342,7 +374,9 @@ export function CoreScene() {
       canvas.removeEventListener("pointerdown", down);
       canvas.removeEventListener("pointermove", move);
       canvas.removeEventListener("pointerup", up);
-      canvas.removeEventListener("pointercancel", up);
+      canvas.removeEventListener("pointercancel", cancel);
+      canvas.removeEventListener("lostpointercapture", cancel);
+      window.removeEventListener("blur", blur);
       canvas.removeEventListener("pointerleave", leave);
       canvas.removeEventListener("keydown", key);
       document.removeEventListener("visibilitychange", visibility);
@@ -359,13 +393,10 @@ export function CoreScene() {
         className={ready ? "is-ready" : ""}
         role="img"
         tabIndex={0}
-        aria-label={labels[lang][0]}
+        aria-label={labels[lang]}
       />
       <span className="scene-coordinate coordinate-top" aria-hidden="true">
         <span className="scene-dot" /> AN INTERNATIONAL PERSPECTIVE
-      </span>
-      <span className="scene-coordinate coordinate-bottom" aria-hidden="true">
-        {labels[lang][1]}
       </span>
       <span className="scene-cross" aria-hidden="true">
         +

@@ -4,6 +4,7 @@ import { ArrowUpRight, Menu, Pause, Play } from "lucide-react";
 import { useScroll, motion } from "framer-motion";
 import { useLanguage, type Lang } from "@/i18n/context";
 import { advisory, serviceMeta } from "@/data/advisory";
+import { DisplayControl } from "@/components/DisplayPreferences";
 import { useMotionPreferences } from "@/components/MotionPreferences";
 import {
   Sheet,
@@ -12,11 +13,11 @@ import {
   SheetTrigger,
   SheetDescription,
 } from "@/components/ui/sheet";
-export function Brand() {
+export function Brand({ compactDash = false }: { compactDash?: boolean }) {
   return (
     <Link href="/" className="brand" aria-label="B-CORE — home">
       <span className="brand-name">
-        B<span className="brand-dash">—</span>CORE
+        B<span className="brand-dash">{compactDash ? "–" : "—"}</span>CORE
         <span className="brand-period">.</span>
       </span>
       <span className="brand-descriptor">ADVISORY & BROKERAGE</span>
@@ -38,20 +39,21 @@ export function Navbar() {
         className="reading-progress"
         style={{ scaleX: scrollYProgress }}
       />
+      <span key={location} className="navigation-glint" aria-hidden="true" />
       <div className="header-inner">
-        <Brand />
+        <Brand compactDash />
         <nav
           className="desktop-nav"
           aria-label={lang === "pl" ? "Nawigacja główna" : "Main navigation"}
         >
           {links.slice(0, 3).map((href, i) => (
-            <a
+            <Link
               key={href}
               href={href}
               className={location === href ? "active" : ""}
             >
               {t.nav[i]}
-            </a>
+            </Link>
           ))}
         </nav>
         <div className="header-actions">
@@ -69,6 +71,7 @@ export function Navbar() {
               ))}
             </select>
           </label>
+          <DisplayControl />
           <button
             type="button"
             className="icon-button motion-button"
@@ -96,10 +99,10 @@ export function Navbar() {
               <SheetDescription>ADVISORY & BROKERAGE</SheetDescription>
               <nav>
                 {links.map((href, i) => (
-                  <a key={href} href={href} onClick={() => setOpen(false)}>
+                  <Link key={href} href={href} onClick={() => setOpen(false)}>
                     {t.nav[i]}
                     <ArrowUpRight size={22} />
-                  </a>
+                  </Link>
                 ))}
                 <div className="menu-services">
                   {serviceMeta.map((s, i) => (

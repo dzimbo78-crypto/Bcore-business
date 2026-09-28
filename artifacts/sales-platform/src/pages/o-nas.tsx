@@ -1,6 +1,6 @@
+import { Reveal, RevealArticle } from "@/components/Reveal";
 import { Link } from "wouter";
 import { ArrowUpRight } from "lucide-react";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { ContactCTA } from "@/components/layout/Footer";
 import { useLanguage } from "@/i18n/context";
 import { advisory, imagePath } from "@/data/advisory";
@@ -8,11 +8,11 @@ export default function About() {
   const { lang } = useLanguage(),
     t = advisory[lang];
   return (
-    <PageLayout>
+    <>
       <section className="about-hero container">
         <p className="eyebrow">{t.aboutDesc}</p>
         <h1>{t.aboutTitle}</h1>
-        <div className="about-body">
+        <Reveal className="about-body">
           <img
             src={imagePath("business.webp")}
             alt={t.nav[2]}
@@ -27,18 +27,18 @@ export default function About() {
               <ArrowUpRight />
             </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
       <section className="principles container">
         {t.principles.map(([title, desc], i) => (
-          <article key={title}>
+          <RevealArticle key={title} delay={i * 0.07}>
             <span className="eyebrow">0{i + 1}</span>
             <h2>{title}</h2>
             <p>{desc}</p>
-          </article>
+          </RevealArticle>
         ))}
       </section>
       <ContactCTA />
-    </PageLayout>
+    </>
   );
 }

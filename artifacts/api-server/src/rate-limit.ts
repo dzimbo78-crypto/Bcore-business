@@ -3,6 +3,13 @@ import type { RequestHandler } from "express";
 /** Single-instance fixed-window limit; no contact contents or credentials retained. */
 export function rateLimit(limit: number, windowMs: number): RequestHandler {
   const buckets = new Map<string, { count: number; expires: number }>();
+  // Remove expired IP counters even when traffic is low. Never keep enquiry content.
+  const cleanup = setInterval(() => {
+    const now = Date.now();
+    for (const [key, bucket] of buckets)
+      if (bucket.expires <= now) buckets.delete(key);
+  }, 60_000);
+  cleanup.unref();
   return (req, res, next) => {
     const now = Date.now(),
       key = req.ip || req.socket?.remoteAddress || "unknown";

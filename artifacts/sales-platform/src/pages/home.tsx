@@ -1,33 +1,21 @@
-import { useRef } from "react";
+import { Reveal, RevealArticle } from "@/components/Reveal";
 import { Link } from "wouter";
 import { ArrowDown, ArrowUpRight, ArrowRight, Plus } from "lucide-react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { PageLayout } from "@/components/layout/PageLayout";
 import { ContactCTA } from "@/components/layout/Footer";
 import { CoreScene } from "@/components/CoreScene";
-import { useMotionPreferences } from "@/components/MotionPreferences";
 import { useLanguage } from "@/i18n/context";
 import { advisory, serviceMeta, imagePath } from "@/data/advisory";
 function ServicePanel({ index }: { index: number }) {
-  const ref = useRef<HTMLElement>(null),
-    { lang } = useLanguage(),
+  const { lang } = useLanguage(),
     t = advisory[lang],
     s = serviceMeta[index],
-    c = t.services[index],
-    { paused } = useMotionPreferences();
-  const { scrollYProgress } = useScroll({
-      target: ref,
-      offset: ["start end", "end start"],
-    }),
-    y = useTransform(scrollYProgress, [0, 1], [35, -35]),
-    rotate = useTransform(scrollYProgress, [0, 1], [3, -3]);
+    c = t.services[index];
   return (
     <section
-      ref={ref}
       className={`service-panel ${index % 2 ? "is-reversed" : ""}`}
       aria-labelledby={`service-${s.id}`}
     >
-      <div className="service-copy">
+      <Reveal className="service-copy">
         <div className="service-kicker">
           <span>{s.number} / 04</span>
           <span>{s.label}</span>
@@ -43,19 +31,15 @@ function ServicePanel({ index }: { index: number }) {
           {t.discover}
           <ArrowUpRight size={22} />
         </Link>
-      </div>
-      <div className="service-visual-wrap">
-        <motion.div
-          className="service-visual"
-          style={paused ? {} : { rotateY: rotate }}
-        >
-          <motion.img
+      </Reveal>
+      <Reveal className="service-visual-wrap" variant="image" delay={0.09}>
+        <div className="service-visual">
+          <img
             src={imagePath(s.image)}
             alt={c.title}
             loading="lazy"
             width="1200"
             height="1000"
-            style={paused ? {} : { y, scale: 1.12 }}
           />
           <div className="image-shade" />
           <span className="visual-title">{c.title}</span>
@@ -67,25 +51,20 @@ function ServicePanel({ index }: { index: number }) {
           >
             <ArrowUpRight />
           </Link>
-        </motion.div>
-      </div>
+        </div>
+      </Reveal>
     </section>
   );
 }
 export default function Home() {
   const { lang } = useLanguage(),
-    t = advisory[lang],
-    { paused } = useMotionPreferences();
+    t = advisory[lang];
   return (
-    <PageLayout>
+    <>
       <section className="hero container">
         <div className="hero-main">
           <div className="hero-copy">
-            <motion.div
-              initial={paused ? false : { opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-            >
+            <div>
               <p className="eyebrow hero-eyebrow">
                 <span className="copper-line" />
                 {t.eyebrow}
@@ -97,26 +76,26 @@ export default function Home() {
               </h1>
               <p className="hero-description">{t.heroDesc}</p>
               <div className="hero-actions">
-                <a href="#obszary" className="button button-copper">
+                <Link href="/#obszary" className="button button-copper">
                   {t.explore}
                   <ArrowDown size={18} />
-                </a>
+                </Link>
                 <Link href="/kontakt" className="text-link hero-contact">
                   {t.talk}
                   <ArrowUpRight size={18} />
                 </Link>
               </div>
-            </motion.div>
+            </div>
           </div>
           <CoreScene />
         </div>
         <div className="hero-bottom">
-          <a href="#obszary" className="scroll-hint">
+          <Link href="/#obszary" className="scroll-hint">
             <span>
               <ArrowDown size={16} />
             </span>
             {t.scroll}
-          </a>
+          </Link>
           <span className="hero-geography">
             POLAND <span>/</span> DENMARK <span>/</span> EUROPE
           </span>
@@ -132,7 +111,7 @@ export default function Home() {
         </div>
       </section>
       <section id="obszary" className="expertise container">
-        <div className="section-heading">
+        <Reveal className="section-heading">
           <p className="eyebrow">
             {t.expertise}
             <span className="heading-rule" />
@@ -145,28 +124,28 @@ export default function Home() {
             </h2>
             <p>{t.expertiseDesc}</p>
           </div>
-        </div>
+        </Reveal>
         {serviceMeta.map((s, i) => (
           <ServicePanel key={s.id} index={i} />
         ))}
       </section>
       <section id="podejscie" className="approach">
         <div className="container">
-          <div className="approach-intro">
+          <Reveal className="approach-intro">
             <p className="eyebrow">{t.approach}</p>
             <h2>{t.approachTitle}</h2>
             <p>{t.approachDesc}</p>
-          </div>
+          </Reveal>
           <div className="process-grid">
             {t.steps.map(([title, desc], i) => (
-              <article key={title}>
+              <RevealArticle key={title} delay={i * 0.06}>
                 <div className="process-top">
                   <span>0{i + 1}</span>
                   <Plus size={20} />
                 </div>
                 <h3>{title}</h3>
                 <p>{desc}</p>
-              </article>
+              </RevealArticle>
             ))}
           </div>
           <div className="approach-bottom">
@@ -179,6 +158,6 @@ export default function Home() {
         </div>
       </section>
       <ContactCTA />
-    </PageLayout>
+    </>
   );
 }

@@ -1,0 +1,173 @@
+/* Composited, finite motion. No persistent will-change layers or scroll loops. */
+:root {
+  --bc-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+#main-content:focus {
+  outline: none;
+}
+
+.route-content {
+  animation: page-arrive 480ms var(--bc-ease) backwards;
+}
+@keyframes page-arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.route-content .hero-copy,
+.route-content .detail-intro,
+.route-content .about-hero > h1,
+.route-content .contact-grid,
+.route-content .legal-page > h1 {
+  animation: copy-arrive 520ms var(--bc-ease) backwards;
+}
+@keyframes copy-arrive {
+  from {
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    transform: none;
+  }
+}
+.navigation-glint {
+  pointer-events: none;
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--bc-copper) 35%,
+    #ead4bd 65%,
+    transparent
+  );
+  transform-origin: left;
+  opacity: 0;
+  animation: navigation-glint 650ms var(--bc-ease);
+}
+@keyframes navigation-glint {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.08);
+  }
+  24% {
+    opacity: 0.9;
+  }
+  65% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+.reveal-block {
+  transition:
+    opacity 620ms var(--bc-ease) var(--reveal-delay, 0s),
+    transform 820ms var(--bc-ease) var(--reveal-delay, 0s);
+}
+.reveal-block[data-reveal="waiting"] {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+}
+.reveal-image {
+  overflow: hidden;
+}
+.reveal-image img {
+  transition: transform 1100ms var(--bc-ease) var(--reveal-delay, 0s);
+}
+.reveal-image[data-reveal="waiting"] img {
+  transform: scale(1.055);
+}
+.reveal-block:focus-within {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+/* Small directional responses connect a click to the next view. */
+.desktop-nav a {
+  position: relative;
+}
+.desktop-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -7px;
+  height: 1px;
+  background: var(--bc-copper);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 300ms var(--bc-ease);
+}
+.desktop-nav a.active::after,
+.desktop-nav a:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+.hero-service-index svg,
+.text-link svg,
+.header-cta svg,
+.visual-link svg,
+.related a svg {
+  transition: transform 280ms var(--bc-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .desktop-nav a:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .hero-service-index a:hover svg,
+  .text-link:hover svg,
+  .header-cta:hover svg,
+  .visual-link:hover svg,
+  .related a:hover svg {
+    transform: translate(2px, -2px);
+  }
+}
+
+html[data-motion="paused"] {
+  scroll-behavior: auto !important;
+}
+html[data-motion="paused"] .route-content,
+html[data-motion="paused"] .navigation-glint {
+  animation: none !important;
+}
+html[data-motion="paused"] .reveal-block,
+html[data-motion="paused"] .reveal-image img {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+html[data-motion="paused"] .desktop-nav a::after {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-content,
+  .navigation-glint {
+    animation: none !important;
+  }
+  .reveal-block,
+  .reveal-image img {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .desktop-nav a::after {
+    transition: none;
+  }
+}
+@media print {
+  .route-content,
+  .reveal-block,
+  .reveal-image img {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

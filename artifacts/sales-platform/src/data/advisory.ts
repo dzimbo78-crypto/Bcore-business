@@ -74,7 +74,6 @@ type Copy = {
   scope: string;
   result: string;
   related: string;
-  inspiration: string;
   pause: string;
   play: string;
   contactTitle: string;
@@ -155,7 +154,6 @@ export const advisory: Record<Lang, Copy> = {
     scope: "W czym możemy pomóc",
     result: "Co zyskujesz",
     related: "Pozostałe obszary",
-    inspiration: "Zdjęcie poglądowe · inspiracja, nie realizacja B-CORE",
     pause: "Wstrzymaj animacje",
     play: "Włącz animacje",
     contactTitle: "Porozmawiajmy\no możliwościach.",
@@ -370,7 +368,6 @@ export const advisory: Record<Lang, Copy> = {
     scope: "How we can help",
     result: "What you gain",
     related: "Explore other areas",
-    inspiration: "Illustrative image · inspiration, not a B-CORE project",
     pause: "Pause animations",
     play: "Enable animations",
     contactTitle: "Let's talk\nabout possibilities.",
@@ -585,7 +582,6 @@ export const advisory: Record<Lang, Copy> = {
     scope: "Sådan kan vi hjælpe",
     result: "Det får du",
     related: "Andre områder",
-    inspiration: "Illustrationsfoto · inspiration, ikke et B-CORE-projekt",
     pause: "Sæt animationer på pause",
     play: "Aktivér animationer",
     contactTitle: "Lad os tale\nom mulighederne.",
@@ -798,7 +794,6 @@ export const advisory: Record<Lang, Copy> = {
     scope: "Wie wir unterstützen",
     result: "Ihr Mehrwert",
     related: "Weitere Bereiche",
-    inspiration: "Symbolbild · Inspiration, kein B-CORE-Projekt",
     pause: "Animationen pausieren",
     play: "Animationen aktivieren",
     contactTitle: "Sprechen wir\nüber Möglichkeiten.",

@@ -7,6 +7,12 @@ const router = Router();
 const sessions = new Map<string, { createdAt: number }>();
 const SESSION_TTL = 1000 * 60 * 60 * 8; // 8 hours
 
+const cleanupSessions = setInterval(() => {
+  for (const [token, session] of sessions)
+    if (Date.now() - session.createdAt >= SESSION_TTL) sessions.delete(token);
+}, 60_000);
+cleanupSessions.unref();
+
 export function isAdminSession(req: {
   cookies?: Record<string, string>;
 }): boolean {

@@ -1,3 +1,4 @@
+import { Reveal, RevealFigure } from "@/components/Reveal";
 import { Link } from "wouter";
 import { ArrowUpRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,7 +26,7 @@ export function SteelGallery() {
             value={String(i)}
             className="steel-tab-content"
           >
-            <figure>
+            <RevealFigure variant="image">
               <img
                 src={imagePath(img)}
                 alt={s.tags[i]}
@@ -33,9 +34,8 @@ export function SteelGallery() {
                 height="900"
                 loading="lazy"
               />
-              <figcaption>{t.inspiration}</figcaption>
-            </figure>
-            <div>
+            </RevealFigure>
+            <Reveal delay={0.07}>
               <span className="eyebrow">0{i + 1} / DETAIL</span>
               <h2>{s.scope[i][0]}</h2>
               <p>{s.scope[i][1]}</p>
@@ -43,7 +43,7 @@ export function SteelGallery() {
                 {t.talk}
                 <ArrowUpRight size={20} />
               </Link>
-            </div>
+            </Reveal>
           </TabsContent>
         ))}
       </Tabs>

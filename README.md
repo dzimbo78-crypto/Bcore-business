@@ -7,7 +7,9 @@ Gotowa aplikacja firmowa w ciemnym graficie z miedzianymi akcentami. React + Typ
 - Autorski, obracający się globus 3D z rzeczywistym zarysem kontynentów i symbolicznymi połączeniami. Obsługuje przeciąganie i klawiaturę; nie wymaga WebGL ani zewnętrznych modeli.
 - Cztery odrębne obszary z własnymi stronami: doradztwo biznesowe, nieruchomości, rozwiązania dla biznesu i konstrukcje stalowe.
 - Oczyszczalnie, okna i drzwi, dostawcy oraz handel B2B zebrane pod „Rozwiązania dla biznesu”.
-- Fotografie, subtelne animacje przewijania, mobilne menu, cztery języki: PL, EN, DA, DE, oraz wyłącznik animacji.
+- Fotografie, łagodne pojawianie się kolejnych bloków podczas przewijania, mobilne menu i cztery języki: PL, EN, DA, DE.
+- Dyskretny suwak jasności pod ikoną słońca i wyłącznik animacji, z zapamiętaniem ustawień.
+- Regulamin i polityka prywatności w czterech językach, w oknie i pod osobnymi adresami. Dane właściciela osobistej witryny do sprawdzenia: `LEGAL-SETUP.md`.
 - Galeria balustrad, ogrodzeń i schodów z przełączaniem kategorii.
 - Panel `/admin`: dodawanie, edycja, usuwanie, zdjęcia, kategorie i ukrywanie ofert. Oferty przechowuje PostgreSQL.
 - Formularz `/kontakt`: walidacja, ochrona przed prostym spamem, limity wysyłki i poprawna obsługa błędów dostawcy poczty.
@@ -52,7 +54,9 @@ PORT=8080 node --env-file=.env artifacts/api-server/dist/index.cjs
 | --- | --- |
 | Oferta, nagłówki, tłumaczenia i publiczne dane kontaktowe | `artifacts/sales-platform/src/data/advisory.ts` |
 | Kolory, odstępy, układ i wersja mobilna | `artifacts/sales-platform/src/advisory.css` |
-| Globus i jego animacja | `artifacts/sales-platform/src/components/CoreScene.tsx` |
+| Globus i jego animacja | `artifacts/sales-platform/src/components/CoreScene.tsx`, `src/lib/globe-motion.ts` |
+| Dane właściciela, regulamin i prywatność | `artifacts/sales-platform/src/data/legal-config.ts`, `src/data/legal.ts` |
+| Jasność i pojawianie sekcji | `artifacts/sales-platform/src/components/DisplayPreferences.tsx`, `src/components/Reveal.tsx` |
 | Zdjęcia | `artifacts/sales-platform/public/images/advisory/` |
 | Panel ofert | `artifacts/sales-platform/src/pages/admin.tsx` |
 | Odbiorca zapytań | `CONTACT_TO_EMAIL` w ustawieniach serwera |
@@ -84,4 +88,4 @@ Powstanie `deliverables/BCORE-preview.html` — pojedynczy plik z interaktywną 
 
 Sesja administratora wygasa po 8 godzinach i po restarcie serwera. Cookie jest HttpOnly, a w produkcji Secure. Limity prób logowania i wysyłki działają w pamięci pojedynczej instancji. Dla wielu instancji potrzebny byłby współdzielony magazyn sesji i limitów.
 
-Fotografie są ilustracjami obszarów działalności, a połączenia na globusie wizualną metaforą współpracy. Nie przedstawiają deklarowanych realizacji ani biur B-CORE. Przed publikacją uzupełnij rzeczywiste dane podmiotu i sprawdź informacje o prywatności pod kątem swojej działalności, dostawców i okresów przechowywania danych.
+Fotografie są ilustracjami obszarów działalności, a połączenia na globusie wizualną metaforą współpracy. Nie przedstawiają deklarowanych realizacji ani biur B-CORE. Przed publikacją sprawdź dane właściciela i sprawdź informacje o prywatności pod kątem swojej działalności, dostawców i okresów przechowywania danych.
