@@ -2,7 +2,8 @@ import { Reveal, RevealArticle } from "@/components/Reveal";
 import { Link } from "wouter";
 import { ArrowDown, ArrowUpRight, ArrowRight, Plus } from "lucide-react";
 import { ContactCTA } from "@/components/layout/Footer";
-import { CoreScene } from "@/components/CoreScene";
+import { CinematicChapter } from "@/components/CinematicChapter";
+import "@/components/ServiceCinematic.css";
 import { useLanguage } from "@/i18n/context";
 import { advisory, serviceMeta, imagePath } from "@/data/advisory";
 function ServicePanel({ index }: { index: number }) {
@@ -33,7 +34,7 @@ function ServicePanel({ index }: { index: number }) {
         </Link>
       </Reveal>
       <Reveal className="service-visual-wrap" variant="image" delay={0.09}>
-        <div className="service-visual">
+        <div className="service-visual" data-scene={s.id}>
           <img
             src={imagePath(s.image)}
             alt={c.title}
@@ -41,9 +42,8 @@ function ServicePanel({ index }: { index: number }) {
             width="1200"
             height="1000"
           />
+          <div className="service-cinema-overlay" aria-hidden="true"><i /><i /><i /></div>
           <div className="image-shade" />
-          <span className="visual-title">{c.title}</span>
-          <span className="visual-number">{s.number}</span>
           <Link
             href={s.path}
             className="visual-link"
@@ -87,10 +87,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <CoreScene />
+          <div className="hero-cinematic-visual" aria-hidden="true"><img src={imagePath("home-cinematic.webp")} alt="" fetchPriority="high" /><div className="hero-cinematic-shade" /></div>
         </div>
         <div className="hero-bottom">
-          <Link href="/#obszary" className="scroll-hint">
+          <Link href="/#architektura" className="scroll-hint">
             <span>
               <ArrowDown size={16} />
             </span>
@@ -129,6 +129,9 @@ export default function Home() {
           <ServicePanel key={s.id} index={i} />
         ))}
       </section>
+      <div id="cinematic" className="home-chapters">
+        {serviceMeta.map((item) => <CinematicChapter key={item.id} id={item.id} teaser />)}
+      </div>
       <section id="podejscie" className="approach">
         <div className="container">
           <Reveal className="approach-intro">

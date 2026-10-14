@@ -20,7 +20,7 @@ export default function About() {
             height="900"
           />
           <div>
-            <span className="about-wordmark">B—CORE.</span>
+            <span className="about-wordmark"><span className="brand-first">B</span><span className="brand-dash" aria-hidden="true" />CORE.</span>
             <p>{t.aboutBody}</p>
             <Link className="text-link" href="/kontakt">
               {t.talk}

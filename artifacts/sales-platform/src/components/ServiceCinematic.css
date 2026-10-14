@@ -1,0 +1,77 @@
+/* Lightweight thematic scroll accents on the homepage service cards.
+   Scroll-linked in browsers with native timelines, no JS or video required. */
+.service-visual .service-cinema-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: .56;
+  filter: drop-shadow(0 0 9px #ddb58b55);
+}
+.service-cinema-overlay i {
+  position: absolute;
+  display: block;
+  border: 1px solid #edc399c9;
+  width: 55px;
+  height: 55px;
+  top: 40%;
+  left: 41%;
+}
+.service-visual[data-scene="business"] .service-cinema-overlay i {
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  background: #f5bb7a16;
+}
+.service-visual[data-scene="business"] .service-cinema-overlay i:nth-child(1) { left: 23%; top: 28%; }
+.service-visual[data-scene="business"] .service-cinema-overlay i:nth-child(2) { left: 67%; top: 48%; }
+.service-visual[data-scene="business"] .service-cinema-overlay i:nth-child(3) { left: 48%; top: 70%; }
+.service-visual[data-scene="property"] .service-cinema-overlay i {
+  width: 26%;
+  height: 52px;
+  border-color: #fff5dcbe;
+  background: linear-gradient(90deg,#dba56d22,transparent);
+}
+.service-visual[data-scene="property"] .service-cinema-overlay i:nth-child(1) { left: 34%; top: 27%; transform: translate(-28px,-18px) rotate(-3deg); }
+.service-visual[data-scene="property"] .service-cinema-overlay i:nth-child(2) { left: 34%; top: 43%; transform: translate(35px,8px) rotate(4deg); }
+.service-visual[data-scene="property"] .service-cinema-overlay i:nth-child(3) { left: 34%; top: 59%; transform: translate(-22px,18px) rotate(-2deg); }
+.service-visual[data-scene="solutions"] .service-cinema-overlay i {
+  width: 55px;
+  height: 55px;
+  border-radius: 3px;
+  transform: rotate(45deg);
+  background: #ba8e5e16;
+}
+.service-visual[data-scene="solutions"] .service-cinema-overlay i:nth-child(1) { left: 22%; top: 47%; }
+.service-visual[data-scene="solutions"] .service-cinema-overlay i:nth-child(2) { left: 46%; top: 37%; }
+.service-visual[data-scene="solutions"] .service-cinema-overlay i:nth-child(3) { left: 70%; top: 47%; }
+.service-visual[data-scene="steel"] .service-cinema-overlay i {
+  width: 5px;
+  height: 140px;
+  border: 0;
+  background: #f1be8aa8;
+  transform-origin: bottom center;
+}
+.service-visual[data-scene="steel"] .service-cinema-overlay i:nth-child(1) { left: 27%; top: 43%; transform: rotate(-22deg); }
+.service-visual[data-scene="steel"] .service-cinema-overlay i:nth-child(2) { left: 50%; top: 40%; transform: rotate(0); }
+.service-visual[data-scene="steel"] .service-cinema-overlay i:nth-child(3) { left: 73%; top: 43%; transform: rotate(22deg); }
+.service-visual .image-shade { z-index: 2; }
+.service-visual .visual-title,
+.service-visual .visual-number,
+.service-visual .visual-link { z-index: 3; }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html[data-motion="active"] .service-cinema-overlay {
+      animation: service-cinematic-entry linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 55%;
+    }
+    @keyframes service-cinematic-entry {
+      0% { opacity: 0; transform: translate3d(0, 30px, 0) scale(1.09); }
+      100% { opacity: .56; transform: translate3d(0, 0, 0) scale(1); }
+    }
+  }
+}
+@media (max-width: 760px) { .service-visual .service-cinema-overlay { opacity: .40; } }
+html[data-motion="paused"] .service-visual .service-cinema-overlay { animation: none !important; opacity: .3; transform: none !important; }
+@media (prefers-reduced-motion: reduce) { .service-visual .service-cinema-overlay { animation: none !important; opacity: .3; transform: none !important; } }

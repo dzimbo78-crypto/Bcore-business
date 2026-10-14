@@ -5,28 +5,28 @@ export const serviceMeta = [
     id: "business",
     path: "/doradztwo-biznesowe",
     image: "business.webp",
-    label: "BUSINESS ADVISORY",
+    label: "EXECUTIVE ADVISORY",
     number: "01",
   },
   {
     id: "property",
     path: "/nieruchomosci",
     image: "property.webp",
-    label: "REAL ESTATE",
+    label: "REAL ESTATE ADVISORY",
     number: "02",
   },
   {
     id: "solutions",
     path: "/rozwiazania-dla-biznesu",
     image: "trade.webp",
-    label: "BUSINESS SOLUTIONS",
+    label: "COMMERCIAL SOLUTIONS",
     number: "03",
   },
   {
     id: "steel",
     path: "/konstrukcje-stalowe",
     image: "steel.webp",
-    label: "STEEL & ARCHITECTURE",
+    label: "STEEL STRUCTURES",
     number: "04",
   },
 ] as const;
@@ -204,9 +204,9 @@ export const advisory: Record<Lang, Copy> = {
     services: [
       {
         title: "Doradztwo biznesowe",
-        headline: "Perspektywa, która\npomaga iść dalej.",
-        desc: "Pomagamy uporządkować pomysł, wybrać kierunek działania i dotrzeć do właściwych partnerów.",
-        tags: ["Kierunek rozwoju", "Partnerstwa", "Projekty biznesowe"],
+        headline: "Doradztwo, które\nporządkuje decyzje.",
+        desc: "Wspieramy w ocenie kierunku, rozmowach strategicznych i budowaniu właściwych relacji biznesowych.",
+        tags: ["Strategia", "Relacje biznesowe", "Rozwój"],
         intro:
           "Dobry pomysł potrzebuje właściwego kontekstu. Rozmawiamy o potrzebach, możliwościach i ograniczeniach, aby pomóc przełożyć założenia na konkretne działania. Wspieramy przedsiębiorców, właścicieli i osoby rozwijające nowe przedsięwzięcia.",
         scope: [
@@ -260,9 +260,9 @@ export const advisory: Record<Lang, Copy> = {
       },
       {
         title: "Rozwiązania dla biznesu",
-        headline: "Jedna potrzeba.\nWiele możliwości.",
-        desc: "Znajdujemy partnerów i rozwiązania dla Twojej firmy — od technologii i wyposażenia po dostawy oraz handel.",
-        tags: ["Dostawcy", "Technologie", "Handel B2B"],
+        headline: "Potrzeba, partner,\ni sprawna realizacja.",
+        desc: "Łączymy zapotrzebowanie z odpowiednimi dostawcami i pomagamy przeprowadzić proces od briefu do dostawy.",
+        tags: ["Sourcing", "Dostawcy", "Realizacja"],
         intro:
           "Nie musisz zaczynać od nazwy produktu. Wystarczy potrzeba, cel lub wyzwanie. Pomagamy przełożyć je na wymagania, znaleźć dostawców i porównać możliwe kierunki współpracy.",
         scope: [
@@ -418,9 +418,9 @@ export const advisory: Record<Lang, Copy> = {
     services: [
       {
         title: "Business advisory",
-        headline: "Perspective that\nmoves you forward.",
-        desc: "Helping you structure an idea, choose a direction and reach the right partners.",
-        tags: ["Business direction", "Partnerships", "Business projects"],
+        headline: "Advisory that\nsharpens decisions.",
+        desc: "Supporting strategic decisions, key conversations and the relationships that move a business forward.",
+        tags: ["Strategy", "Business relationships", "Growth"],
         intro:
           "A good idea needs the right context. We discuss needs, opportunities and constraints to help translate plans into practical steps. We support entrepreneurs, owners and people developing new ventures.",
         scope: [
@@ -474,9 +474,9 @@ export const advisory: Record<Lang, Copy> = {
       },
       {
         title: "Business solutions",
-        headline: "One need.\nMany possibilities.",
-        desc: "Finding partners and solutions for your business, from technology and equipment to sourcing and trade.",
-        tags: ["Suppliers", "Technology", "B2B trade"],
+        headline: "A clear need.\nThe right execution.",
+        desc: "Connecting your requirements with the right suppliers and helping move the process from brief to delivery.",
+        tags: ["Sourcing", "Suppliers", "Delivery"],
         intro:
           "You do not need to start with a product name. Start with a need, objective or challenge. We help translate it into requirements, find suppliers and compare opportunities.",
         scope: [
@@ -630,9 +630,9 @@ export const advisory: Record<Lang, Copy> = {
     services: [
       {
         title: "Forretningsrådgivning",
-        headline: "Perspektiv, der\nbringer dig videre.",
-        desc: "Vi hjælper med at strukturere idéer, vælge retning og finde de rette partnere.",
-        tags: ["Udvikling", "Partnerskaber", "Forretningsprojekter"],
+        headline: "Rådgivning, der\nskaber klarhed.",
+        desc: "Vi støtter strategiske beslutninger, vigtige dialoger og opbygning af de rette forretningsrelationer.",
+        tags: ["Strategi", "Relationer", "Udvikling"],
         intro:
           "En god idé har brug for den rette sammenhæng. Vi taler om behov, muligheder og begrænsninger for at omsætte planer til konkrete skridt.",
         scope: [
@@ -686,9 +686,9 @@ export const advisory: Record<Lang, Copy> = {
       },
       {
         title: "Erhvervsløsninger",
-        headline: "Ét behov.\nMange muligheder.",
-        desc: "Vi finder partnere og løsninger til din virksomhed, fra teknologi og udstyr til indkøb og handel.",
-        tags: ["Leverandører", "Teknologi", "B2B-handel"],
+        headline: "Et klart behov.\nDen rette løsning.",
+        desc: "Vi forbinder dit behov med de rette leverandører og hjælper processen sikkert fra brief til levering.",
+        tags: ["Sourcing", "Leverandører", "Levering"],
         intro:
           "Begynd med et behov, et mål eller en udfordring. Vi hjælper med krav, leverandørsøgning og sammenligning af muligheder.",
         scope: [
@@ -844,9 +844,9 @@ export const advisory: Record<Lang, Copy> = {
     services: [
       {
         title: "Unternehmensberatung",
-        headline: "Perspektiven, die\nSie weiterbringen.",
-        desc: "Wir helfen, Ideen zu strukturieren, eine Richtung zu wählen und passende Partner zu erreichen.",
-        tags: ["Entwicklung", "Partnerschaften", "Geschäftsprojekte"],
+        headline: "Beratung, die\nEntscheidungen schärft.",
+        desc: "Wir unterstützen bei strategischen Entscheidungen, wichtigen Gesprächen und dem Aufbau passender Geschäftsbeziehungen.",
+        tags: ["Strategie", "Geschäftsbeziehungen", "Wachstum"],
         intro:
           "Eine gute Idee braucht den richtigen Kontext. Wir besprechen Bedarf, Möglichkeiten und Grenzen, um Pläne in konkrete Schritte zu übersetzen.",
         scope: [
@@ -900,9 +900,9 @@ export const advisory: Record<Lang, Copy> = {
       },
       {
         title: "Geschäftslösungen",
-        headline: "Ein Bedarf.\nViele Möglichkeiten.",
-        desc: "Partner und Lösungen für Ihr Unternehmen, von Technik und Ausstattung bis zu Beschaffung und Handel.",
-        tags: ["Lieferanten", "Technologie", "B2B-Handel"],
+        headline: "Ein klarer Bedarf.\nDie richtige Umsetzung.",
+        desc: "Wir verbinden Ihren Bedarf mit passenden Lieferanten und begleiten den Weg vom Briefing bis zur Umsetzung.",
+        tags: ["Sourcing", "Lieferanten", "Umsetzung"],
         intro:
           "Beginnen Sie mit einem Bedarf, Ziel oder einer Aufgabe. Wir helfen bei Anforderungen, Lieferantensuche und dem Vergleich von Möglichkeiten.",
         scope: [

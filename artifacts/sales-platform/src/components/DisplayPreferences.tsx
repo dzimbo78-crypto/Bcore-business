@@ -37,19 +37,19 @@ export function DisplayPreferences({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     const root = document.documentElement,
       t = brightness / 100;
-    root.style.setProperty("--bc-bg", mix([16, 20, 21], [44, 50, 53], t));
-    root.style.setProperty("--bc-surface", mix([25, 30, 31], [54, 62, 65], t));
+    root.style.setProperty("--bc-bg", mix([16, 16, 17], [59, 54, 49], t));
+    root.style.setProperty("--bc-surface", mix([25, 26, 26], [72, 65, 57], t));
     root.style.setProperty(
       "--bc-light",
-      mix([238, 238, 232], [255, 255, 249], t),
+      mix([241, 237, 232], [255, 255, 249], t),
     );
     root.style.setProperty(
       "--bc-muted",
-      mix([161, 166, 165], [216, 222, 221], t),
+      mix([184, 180, 174], [233, 226, 217], t),
     );
     root.style.setProperty(
       "--bc-copper",
-      mix([207, 161, 124], [236, 197, 156], t),
+      mix([213, 168, 121], [242, 209, 169], t),
     );
     root.style.setProperty("--bc-line", `rgba(255,255,255,${0.11 + t * 0.12})`);
     root.dataset.readability = brightness > 0 ? "enhanced" : "default";

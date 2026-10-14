@@ -13,11 +13,11 @@ import {
   SheetTrigger,
   SheetDescription,
 } from "@/components/ui/sheet";
-export function Brand({ compactDash = false }: { compactDash?: boolean }) {
+export function Brand() {
   return (
     <Link href="/" className="brand" aria-label="B-CORE — home">
       <span className="brand-name">
-        B<span className="brand-dash">{compactDash ? "–" : "—"}</span>CORE
+        <span className="brand-first">B</span><span className="brand-dash" aria-hidden="true" />CORE
         <span className="brand-period">.</span>
       </span>
       <span className="brand-descriptor">ADVISORY & BROKERAGE</span>
@@ -41,7 +41,7 @@ export function Navbar() {
       />
       <span key={location} className="navigation-glint" aria-hidden="true" />
       <div className="header-inner">
-        <Brand compactDash />
+        <Brand />
         <nav
           className="desktop-nav"
           aria-label={lang === "pl" ? "Nawigacja główna" : "Main navigation"}
@@ -94,7 +94,7 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent className="bcore-menu" side="right">
               <SheetTitle>
-                <span className="brand-name">B—CORE.</span>
+                <span className="brand-name"><span className="brand-first">B</span><span className="brand-dash" aria-hidden="true" />CORE<span className="brand-period">.</span></span>
               </SheetTitle>
               <SheetDescription>ADVISORY & BROKERAGE</SheetDescription>
               <nav>

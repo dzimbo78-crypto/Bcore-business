@@ -1,5 +1,6 @@
 import { Reveal, RevealArticle, RevealFigure } from "@/components/Reveal";
 import { SteelGallery } from "@/components/SteelGallery";
+import { CinematicChapter } from "@/components/CinematicChapter";
 import { Link } from "wouter";
 import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { ContactCTA } from "@/components/layout/Footer";
@@ -56,6 +57,7 @@ export default function Service({ id }: { id: ServiceId }) {
           ))}
         </ul>
       </section>
+      <CinematicChapter id={id} />
       <section className="scope-section container">
         <Reveal className="scope-intro">
           <p className="eyebrow">{t.scope}</p>

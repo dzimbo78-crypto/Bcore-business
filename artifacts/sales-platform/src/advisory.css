@@ -5,8 +5,8 @@
   --bc-muted: #a1a6a5;
   --bc-line: #ffffff1c;
   --bc-copper: #cfa17c;
-  --bc-font: "Inter", Arial, sans-serif;
-  --bc-display: "Outfit", "Inter", Arial, sans-serif;
+  --bc-font: Arial, "Segoe UI", sans-serif;
+  --bc-display: "Outfit", Arial, "Segoe UI", sans-serif;
 }
 html {
   scroll-padding-top: 110px;
@@ -96,8 +96,14 @@ html {
   white-space: nowrap;
 }
 .brand-dash {
-  font-size: 24px;
-  margin: 0 1px;
+  display: inline-block;
+  vertical-align: middle;
+  width: 0.34em;
+  height: 0.065em;
+  min-height: 1px;
+  background: currentColor;
+  margin: 0 0.055em 0 0.035em;
+  transform: translateY(-0.08em);
 }
 .brand-period {
   color: var(--bc-copper);
@@ -2938,3 +2944,41 @@ html[data-readability="enhanced"] .approach-bottom > span {
     break-inside: avoid;
   }
 }
+
+/* B-CORE FINAL CINEMATIC — logo geometry, photography, accessible controls */
+:root { --bc-bg:#101011;--bc-surface:#191a1a;--bc-light:#f1ede8;--bc-muted:#b8b4ae;--bc-line:rgba(240,224,207,.17);--bc-copper:#d5a879;--bc-font:Arial, "Segoe UI", sans-serif;--bc-display:Georgia, "Times New Roman",serif; }
+.brand-name {font-family:var(--bc-display);letter-spacing:.065em;font-size:31px;font-weight:400;display:inline-flex;align-items:center;line-height:1.1;}
+.brand-first{color:var(--bc-copper)}
+.brand-dash{display:inline-block;flex-shrink:0;width:.43em;height:1px;min-height:0;align-self:center;background:var(--bc-copper);margin:0 .09em 0 .12em;transform:translateY(-.10em);vertical-align:initial;}
+.brand-period{display:none}
+.about-wordmark{font-family:var(--bc-display)}
+.hero-main{position:relative;display:flex;align-items:center;min-height:min(690px,calc(100svh - 150px));isolation:isolate;padding:clamp(35px,6vw,86px);overflow:hidden;border:1px solid #d6a97b28;background:#0b0c0d;}
+.hero-cinematic-visual{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none;}
+.hero-cinematic-visual img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 52%;transform:scale(1.04);animation:bcore-hero-arrive 2.6s cubic-bezier(.2,.75,.2,1) both;}
+.hero-cinematic-shade{position:absolute;inset:0;background:linear-gradient(90deg,#0b0c0df5 0%,#101010e3 39%,#11111148 77%,#07080836),linear-gradient(0deg,#0a0b0ba6,transparent 30%);}
+@keyframes bcore-hero-arrive{from{opacity:.48;transform:scale(1.11)}to{opacity:1;transform:scale(1.04)}}
+.hero .hero-copy{width:min(730px,100%);padding:15px 0;}
+.hero h1{font-family:var(--bc-display);font-size:clamp(44px,5.9vw,90px);letter-spacing:-.045em;line-height:1.05;}
+.hero-description{color:#e3d9ce;max-width:550px;font-size:17px;line-height:1.72;}
+.hero-bottom{margin-top:18px;}
+.home-chapters{position:relative;margin-top:38px;}
+.home-chapters .cinema-chapter{border-top:1px solid #d4aa7630;}
+.home-chapters .cinema-chapter--teaser .cinema-story h2{font-family:var(--bc-display)}
+.home-chapters .cinema-chapter--teaser .cinema-description{max-width:500px;font-size:16px;color:#d2c8bc;line-height:1.75;}
+.home-chapters .cinema-chapter--teaser .cinema-cta{margin-top:26px;color:#f1dfc8!important;}
+.home-chapters .cinema-chapter--teaser .cinema-stage{background:radial-gradient(ellipse at 76% 47%,#d5a87918,transparent 56%),linear-gradient(125deg,#101011,#0b0c0d 80%)}
+.home-chapters .cinema-chapter--teaser .cinema-footer{color:#b8a997}
+.home-chapters .cinema-chapter--teaser .cinema-footer-badge{display:none}
+.home-chapters .cinema-chapter--teaser .cinema-story{padding-inline:0}
+.service-visual img{object-position:center}
+@media(max-width:760px){
+  .hero-main{min-height:620px;padding:28px 24px;}
+  .hero-cinematic-visual img{object-position:62% center}
+  .hero-cinematic-shade{background:linear-gradient(90deg,#090909f5,#0a0a0aa8 80%),linear-gradient(0deg,#0a0a0ab0,transparent)}
+  .hero-description{font-size:15px}
+  .home-chapters .cinema-chapter--teaser .cinema-description{font-size:13px}
+  .home-chapters .cinema-chapter--teaser .cinema-cta{margin-top:14px}
+  .brand-name{font-size:27px}
+}
+@media(prefers-reduced-motion:reduce){.hero-cinematic-visual img{animation:none;transform:none}}
+html[data-motion="paused"] .hero-cinematic-visual img{animation:none!important;transform:none!important}

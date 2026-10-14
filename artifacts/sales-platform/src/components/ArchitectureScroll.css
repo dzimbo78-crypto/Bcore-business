@@ -1,0 +1,333 @@
+/* Scroll-controlled architectural assembly. One compressed source image,
+   six compositor transforms, no scroll-driven React renders or 3D runtime. */
+.architecture-scroll {
+  --breakup: 1;
+  --assemble: 0;
+  position: relative;
+  height: 230svh;
+  margin-top: 24px;
+  background: #0c1215;
+  isolation: isolate;
+  scroll-margin-top: 94px;
+}
+.architecture-stage {
+  position: sticky;
+  top: 94px;
+  width: 100%;
+  height: calc(100svh - 94px);
+  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-block: 1px solid #cfaa8050;
+  background: radial-gradient(ellipse at 67% 43%, #8f674b22, transparent 52%), #101819;
+}
+.architecture-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.43;
+  background-image: linear-gradient(#ffffff0a 1px, transparent 1px), linear-gradient(90deg, #ffffff0a 1px, transparent 1px);
+  background-size: 76px 76px;
+  mask-image: linear-gradient(90deg, transparent 8%, #000 52%, #000 95%);
+}
+.architecture-stage::before,
+.architecture-stage::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+.architecture-stage::before {
+  height: 100%;
+  width: 1px;
+  left: 50%;
+  background: linear-gradient(transparent, #c99a6c24, transparent);
+}
+.architecture-stage::after {
+  inset: 0;
+  background: linear-gradient(90deg, #101819 3%, transparent 49%);
+}
+.architecture-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+  gap: 28px;
+}
+.architecture-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 580px;
+  padding: 36px 0;
+}
+.architecture-copy .eyebrow {
+  letter-spacing: 0.14em;
+  font-size: 11px;
+}
+.architecture-copy h2 {
+  margin: 26px 0 22px;
+  font-size: clamp(42px, 4.7vw, 72px);
+  line-height: 1.06;
+  letter-spacing: -0.048em;
+  max-width: 650px;
+  text-wrap: balance;
+}
+.architecture-copy h2 em {
+  display: block;
+  color: var(--bc-copper);
+  font-style: normal;
+}
+.architecture-description {
+  max-width: 420px;
+  color: #afb8b7;
+  font-size: 15px;
+  line-height: 1.85;
+}
+.architecture-phases {
+  display: flex;
+  gap: 18px;
+  list-style: none;
+  padding: 0;
+  margin: 38px 0 25px;
+  max-width: 490px;
+}
+.architecture-phases li {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: #abb0ad;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  transition: color 0.18s ease;
+}
+.architecture-phase-number {
+  font-size: 10px;
+  color: #9d866f;
+  letter-spacing: 0.15em;
+}
+.architecture-phase-line {
+  display: block;
+  margin-top: 8px;
+  height: 2px;
+  background: #ffffff24;
+  transition: background 0.18s ease;
+}
+.architecture-scroll[data-phase="fragmented"] li[data-step="0"],
+.architecture-scroll[data-phase="aligning"] li[data-step="1"],
+.architecture-scroll[data-phase="complete"] li[data-step="2"] {
+  color: #f6e7d4;
+}
+.architecture-scroll[data-phase="fragmented"] li[data-step="0"] .architecture-phase-line,
+.architecture-scroll[data-phase="aligning"] li[data-step="1"] .architecture-phase-line,
+.architecture-scroll[data-phase="complete"] li[data-step="2"] .architecture-phase-line {
+  background: var(--bc-copper);
+}
+.architecture-link { font-size: 13px; }
+.architecture-art {
+  position: relative;
+  height: min(69svh, 650px);
+  min-height: 440px;
+  align-self: center;
+  display: grid;
+  place-items: center;
+}
+.architecture-art::before {
+  content: "";
+  position: absolute;
+  width: min(49vw, 530px);
+  height: min(49vw, 530px);
+  border-radius: 50%;
+  background: radial-gradient(circle, #a9784630, transparent 65%);
+  opacity: var(--assemble);
+  pointer-events: none;
+}
+.architecture-ring {
+  position: absolute;
+  width: min(41vw, 470px);
+  aspect-ratio: 1;
+  border: 1px solid #cba77d21;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.architecture-ring-outer {
+  transform: scale(calc(1 + var(--breakup) * 0.18));
+}
+.architecture-ring-inner {
+  width: min(29vw, 335px);
+  border-style: dashed;
+  opacity: 0.65;
+}
+.architecture-coordinate {
+  position: absolute;
+  color: #acb5b071;
+  font-size: 10px;
+  letter-spacing: 0.13em;
+  pointer-events: none;
+}
+.architecture-coordinate-top { top: 26px; right: 6%; }
+.architecture-coordinate-bottom { bottom: 46px; left: 6%; }
+.architecture-model {
+  position: relative;
+  width: clamp(225px, 24vw, 342px);
+  aspect-ratio: 342 / 582;
+  margin-top: -14px;
+  filter: drop-shadow(0 22px 26px #0008);
+}
+.architecture-model img {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.architecture-ghost {
+  opacity: calc(var(--breakup) * 0.12);
+  filter: grayscale(1) brightness(1.35);
+}
+.architecture-piece {
+  --part-spread: clamp(0, calc(1 - (var(--assemble) - var(--piece-delay, 0)) * 1.55), 1);
+  position: absolute;
+  inset: 0;
+  transform: translate3d(calc(var(--part-spread) * var(--fly-x)), calc(var(--part-spread) * var(--fly-y)), 0) rotate(calc(var(--part-spread) * var(--fly-rotate)));
+  transform-origin: center;
+  backface-visibility: hidden;
+}
+.architecture-ground {
+  position: absolute;
+  width: 82%;
+  height: 10px;
+  border-radius: 50%;
+  left: 9%;
+  bottom: -9px;
+  background: #c29b6b45;
+  filter: blur(9px);
+  opacity: var(--assemble);
+}
+.architecture-art-caption {
+  position: absolute;
+  right: 5%;
+  bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #c7b8a2;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+}
+.architecture-caption-square {
+  border: 1px solid var(--bc-copper);
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+}
+.architecture-scroll-footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding-bottom: 26px;
+  color: #aaaea9;
+  font-size: 10px;
+  letter-spacing: 0.13em;
+}
+.architecture-scroll-footer svg { color: var(--bc-copper); }
+.architecture-progress {
+  margin-left: auto;
+  height: 2px;
+  width: min(15vw, 170px);
+  background: #ffffff2b;
+}
+.architecture-progress i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform: scaleX(var(--assemble));
+  transform-origin: left;
+  background: var(--bc-copper);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .bcore-site .service-visual img {
+    transition: transform 0.8s cubic-bezier(.2,.7,.2,1), filter 0.8s ease;
+  }
+  .bcore-site .service-visual:hover img {
+    transform: scale(1.055);
+    filter: saturate(.87);
+  }
+}
+@media (max-width: 1050px) {
+  .architecture-copy h2 { font-size: clamp(39px, 5vw, 61px); }
+  .architecture-art { min-height: 400px; }
+  .architecture-model { width: clamp(185px, 26vw, 290px); }
+  .architecture-phases { margin-top: 25px; }
+}
+@media (max-width: 760px) {
+  .architecture-scroll { height: 205svh; }
+  .architecture-stage {
+    top: 70px;
+    height: calc(100svh - 70px);
+    min-height: 550px;
+  }
+  .architecture-content {
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 0;
+  }
+  .architecture-copy { padding: 24px 0 0; max-width: 100%; }
+  .architecture-copy h2 {
+    font-size: clamp(30px, 7.3vw, 46px);
+    margin: 14px 0 12px;
+  }
+  .architecture-copy .eyebrow { font-size: 9px; }
+  .architecture-description { font-size: 12px; line-height: 1.7; max-width: 470px; }
+  .architecture-phases { margin: 16px 0 5px; gap: 10px; max-width: 500px; }
+  .architecture-phases li { font-size: 10px; }
+  .architecture-phase-line { margin-top: 2px; }
+  .architecture-link { font-size: 12px; padding-block: 7px; }
+  .architecture-art { height: clamp(240px, 37svh, 420px); min-height: 0; width: 100%; }
+  .architecture-model { width: clamp(133px, 35vw, 220px); margin-top: 0; }
+  .architecture-ring { width: min(62vw, 310px); }
+  .architecture-ring-inner { width: min(43vw, 215px); }
+  .architecture-piece {
+    transform: translate3d(calc(var(--part-spread) * var(--mobile-x)), calc(var(--part-spread) * var(--mobile-y)), 0) rotate(calc(var(--part-spread) * var(--fly-rotate)));
+  }
+  .architecture-coordinate-top { top: 0; right: 2%; }
+  .architecture-coordinate-bottom { bottom: 8px; left: 2%; }
+  .architecture-art-caption { right: 2%; bottom: 8px; font-size: 8px; }
+  .architecture-scroll-footer { padding-bottom: 14px; font-size: 8px; gap: 10px; }
+  .architecture-scroll-footer span { max-width: 170px; }
+  .architecture-progress { width: 90px; }
+}
+@media (max-width: 400px) {
+  .architecture-copy h2 { font-size: 30px; }
+  .architecture-copy .eyebrow { letter-spacing: 0.075em; }
+  .architecture-description { font-size: 11px; }
+  .architecture-model { width: 133px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .architecture-scroll { --breakup: 0 !important; --assemble: 1 !important; height: auto; }
+  .architecture-stage { position: relative; top: auto; height: auto; min-height: 660px; }
+  .architecture-content { min-height: 650px; }
+  .architecture-piece, .architecture-ring, .architecture-progress i { transition: none !important; }
+}
+.architecture-scroll.is-static {
+  --breakup: 0 !important;
+  --assemble: 1 !important;
+  height: auto;
+}
+.architecture-scroll.is-static .architecture-stage { position: relative; top: auto; min-height: 650px; height: auto; }
+.architecture-scroll.is-static .architecture-content { min-height: 650px; }
+@media (max-width: 760px) {
+  .architecture-scroll.is-static .architecture-stage,
+  .architecture-scroll.is-static .architecture-content { min-height: 670px; }
+}
