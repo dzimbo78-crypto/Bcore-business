@@ -12,7 +12,7 @@ export function ContactCTA() {
   return (
     <section className="contact-cta">
       <Reveal className="container cta-inner">
-        <span className="eyebrow">LET’S CONNECT</span>
+        <span className="eyebrow">{t.connectEyebrow}</span>
         <div>
           <h2>{t.cta}</h2>
           <p>{t.ctaDesc}</p>
@@ -36,7 +36,7 @@ export function Footer() {
             <div>
               <Brand />
               <p className="footer-description">{t.footer}</p>
-              <span className="footer-location">POLAND · DENMARK · EUROPE</span>
+              <span className="footer-location">{t.geography}</span>
             </div>
             <div className="footer-links">
               <span className="eyebrow">{t.expertise}</span>

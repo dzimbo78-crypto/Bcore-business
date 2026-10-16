@@ -19,7 +19,7 @@ function ServicePanel({ index }: { index: number }) {
       <Reveal className="service-copy">
         <div className="service-kicker">
           <span>{s.number} / 04</span>
-          <span>{s.label}</span>
+          <span>{t.areaLabels[index]}</span>
         </div>
         <h3 id={`service-${s.id}`}>{c.headline}</h3>
         <p>{c.desc}</p>
@@ -97,7 +97,7 @@ export default function Home() {
             {t.scroll}
           </Link>
           <span className="hero-geography">
-            POLAND <span>/</span> DENMARK <span>/</span> EUROPE
+            {t.geography.replaceAll(" · ", " / ")}
           </span>
         </div>
         <div className="hero-service-index">
@@ -152,7 +152,7 @@ export default function Home() {
             ))}
           </div>
           <div className="approach-bottom">
-            <span>FROM VISION TO CONNECTION.</span>
+            <span>{t.visionLine}</span>
             <Link href="/o-nas" className="text-link">
               {t.nav[2]}
               <ArrowRight size={20} />

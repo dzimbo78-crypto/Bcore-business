@@ -11,7 +11,7 @@ export function SteelGallery() {
   const images = ["railing.webp", "fence.webp", "steel.webp"];
   return (
     <section className="steel-gallery container">
-      <p className="eyebrow">STEEL & ARCHITECTURE</p>
+      <p className="eyebrow">{t.galleryEyebrow}</p>
       <Tabs defaultValue="0">
         <TabsList className="steel-tabs">
           {s.tags.map((tag, i) => (
@@ -36,7 +36,7 @@ export function SteelGallery() {
               />
             </RevealFigure>
             <Reveal delay={0.07}>
-              <span className="eyebrow">0{i + 1} / DETAIL</span>
+              <span className="eyebrow">0{i + 1} / {t.galleryDetail}</span>
               <h2>{s.scope[i][0]}</h2>
               <p>{s.scope[i][1]}</p>
               <Link href="/kontakt?obszar=steel" className="text-link">

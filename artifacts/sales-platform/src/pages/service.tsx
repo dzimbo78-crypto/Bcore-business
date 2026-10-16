@@ -28,7 +28,7 @@ export default function Service({ id }: { id: ServiceId }) {
         <Reveal className="detail-intro">
           <div>
             <p className="eyebrow">
-              {s.number} / {s.label}
+              {s.number} / {t.areaLabels[i]}
             </p>
             <h1>{c.headline}</h1>
           </div>

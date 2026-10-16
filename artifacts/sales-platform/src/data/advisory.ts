@@ -101,6 +101,12 @@ type Copy = {
   inquire: string;
   location: string;
   minOrder: string;
+  areaLabels: string[];
+  visionLine: string;
+  galleryEyebrow: string;
+  galleryDetail: string;
+  connectEyebrow: string;
+  geography: string;
   services: ServiceText[];
 };
 
@@ -201,14 +207,20 @@ export const advisory: Record<Lang, Copy> = {
     inquire: "Zapytaj o ofertę",
     location: "Lokalizacja",
     minOrder: "Minimalne zamówienie",
+    areaLabels: ["DORADZTWO BIZNESOWE", "NIERUCHOMOŚCI INWESTYCYJNE", "ROZWIĄZANIA DLA BIZNESU", "KONSTRUKCJE STALOWE"],
+    visionLine: "OD WIZJI DO WSPÓŁPRACY.",
+    galleryEyebrow: "STAL I ARCHITEKTURA",
+    galleryDetail: "DETAL",
+    connectEyebrow: "POROZMAWIAJMY",
+    geography: "POLSKA · DANIA · EUROPA",
     services: [
       {
         title: "Doradztwo biznesowe",
         headline: "Doradztwo, które\nporządkuje decyzje.",
-        desc: "Wspieramy w ocenie kierunku, rozmowach strategicznych i budowaniu właściwych relacji biznesowych.",
-        tags: ["Strategia", "Relacje biznesowe", "Rozwój"],
+        desc: "Wspieramy rozwój przedsiębiorstw, strategiczne rozmowy oraz pośrednictwo w poszukiwaniu i sprzedaży firm dopasowanych do indywidualnych kryteriów.",
+        tags: ["Strategia i rozwój", "Partnerstwa i inwestorzy", "Kupno i sprzedaż firm"],
         intro:
-          "Dobry pomysł potrzebuje właściwego kontekstu. Rozmawiamy o potrzebach, możliwościach i ograniczeniach, aby pomóc przełożyć założenia na konkretne działania. Wspieramy przedsiębiorców, właścicieli i osoby rozwijające nowe przedsięwzięcia.",
+          "Każdy biznes wymaga właściwego kierunku i odpowiednich relacji. Pomagamy uporządkować cele, zidentyfikować możliwości rozwoju oraz znaleźć partnerów, inwestorów, nabywców lub przedsiębiorstwa odpowiadające indywidualnym oczekiwaniom. Wspieramy kontakt i przygotowanie rozmów, a formalną i finansową ocenę transakcji pozostawiamy właściwym specjalistom.",
         scope: [
           [
             "Rozpoznanie potrzeb",
@@ -226,6 +238,7 @@ export const advisory: Record<Lang, Copy> = {
             "Koordynacja kolejnych kroków",
             "Wspieramy przygotowanie rozmów i przepływ informacji. W razie potrzeby angażujemy odpowiednich specjalistów.",
           ],
+          ["Pośrednictwo w kupnie i sprzedaży firm", "Na podstawie ustalonych kryteriów poszukujemy przedsiębiorstw na sprzedaż, potencjalnych nabywców lub partnerów do przejęcia i rozwoju biznesu. Pomagamy zorganizować kontakt i kolejne etapy rozmów."]
         ],
         deliver:
           "Jaśniejszy kierunek, uporządkowane możliwości i wsparcie w nawiązaniu właściwych relacji. Zakres działań oraz warunki współpracy ustalamy indywidualnie.",
@@ -233,60 +246,68 @@ export const advisory: Record<Lang, Copy> = {
       {
         title: "Nieruchomości",
         headline: "Przestrzeń dla\nTwoich ambicji.",
-        desc: "Łączymy właścicieli i inwestorów. Wyszukujemy nieruchomości oraz partnerów dopasowanych do celu projektu.",
-        tags: ["Grunty inwestycyjne", "Nieruchomości komercyjne", "Off-market"],
+        desc: "Poszukujemy gruntów inwestycyjnych, budynków komercyjnych i gotowych projektów. Łączymy właścicieli, inwestorów oraz nabywców.",
+        tags: ["Budynki komercyjne", "Grunty inwestycyjne", "Gotowe projekty", "Off-market"],
         intro:
-          "Dobra nieruchomość zaczyna się od właściwych kryteriów. Pomagamy określić kierunek poszukiwań, dotrzeć do właścicieli i uporządkować informacje potrzebne do rozmowy o transakcji.",
+          "Poszukujesz nieruchomości pod inwestycję albo chcesz sprzedać atrakcyjny obiekt? Pomagamy dotrzeć do gruntów inwestycyjnych, budynków i lokali komercyjnych, nieruchomości dochodowych oraz gotowych projektów deweloperskich. Pracujemy według indywidualnych kryteriów: lokalizacji, przeznaczenia, budżetu i potencjału przedsięwzięcia. Ułatwiamy bezpośredni kontakt właścicieli, inwestorów i partnerów.",
         scope: [
           [
-            "Zakup i sprzedaż",
-            "Identyfikacja potencjalnych nabywców, właścicieli i ofert dopasowanych do uzgodnionych kryteriów.",
+                    "Budynki i obiekty komercyjne",
+                    "Wyszukujemy i przedstawiamy możliwości dotyczące biurowców, magazynów, hal, lokali usługowych i innych obiektów inwestycyjnych."
           ],
           [
-            "Grunty i projekty",
-            "Poszukiwanie gruntów, obiektów komercyjnych, lokali oraz projektów z potencjałem rozwoju.",
+                    "Grunty inwestycyjne",
+                    "Poszukujemy działek pod zabudowę mieszkaniową, usługową, logistyczną lub przemysłową, zgodnie z ustalonymi wymaganiami."
           ],
           [
-            "Możliwości off-market",
-            "Bezpośrednie rozmowy i poszukiwanie możliwości poza publicznymi portalami — zależnie od dostępności.",
+                    "Gotowe projekty i inwestycje",
+                    "Pomagamy dotrzeć do projektów deweloperskich, nieruchomości z dokumentacją lub obiektów o potencjale dalszego rozwoju."
           ],
           [
-            "Koordynacja rozmów",
-            "Zebranie informacji, organizacja kontaktu i współpraca z właściwymi specjalistami przy dalszej weryfikacji.",
+                    "Zakup, sprzedaż i off-market",
+                    "Łączymy właścicieli, sprzedających i potencjalnych nabywców. Poszukujemy także ofert poza publicznymi portalami, zależnie od dostępności."
           ],
-        ],
+          [
+                    "Indywidualne poszukiwania i koordynacja",
+                    "Ustalamy kryteria, gromadzimy dostępne informacje i organizujemy kontakt. Analizy prawne, techniczne i finansowe wymagają niezależnej weryfikacji."
+          ]
+],
         deliver:
           "Uporządkowane możliwości, bezpośredni kontakt z partnerami i jasny plan kolejnych kroków. Decyzję podejmujesz na podstawie danych oraz niezależnej weryfikacji.",
       },
       {
         title: "Rozwiązania dla biznesu",
         headline: "Potrzeba, partner,\ni sprawna realizacja.",
-        desc: "Łączymy zapotrzebowanie z odpowiednimi dostawcami i pomagamy przeprowadzić proces od briefu do dostawy.",
-        tags: ["Sourcing", "Dostawcy", "Realizacja"],
+        desc: "Oczyszczalnie ścieków, technologie środowiskowe, rozwiązania budowlane i sourcing B2B. Łączymy firmy z odpowiednimi producentami i dostawcami.",
+        tags: ["Oczyszczalnie ścieków", "Technologie środowiskowe", "Okna i drzwi", "Sourcing B2B"],
         intro:
-          "Nie musisz zaczynać od nazwy produktu. Wystarczy potrzeba, cel lub wyzwanie. Pomagamy przełożyć je na wymagania, znaleźć dostawców i porównać możliwe kierunki współpracy.",
+          "Od technologii oczyszczania ścieków po wyposażenie inwestycji i zamówienia przemysłowe — pomagamy znaleźć odpowiednie rozwiązania oraz producentów w Polsce i za granicą. Pracujemy na podstawie parametrów projektu, wymagań technicznych, budżetu i oczekiwanego terminu. Łączymy strony, porównujemy możliwości współpracy i wspieramy uzgodnienia handlowe.",
         scope: [
           [
-            "Dobór partnerów i dostawców",
-            "Identyfikujemy firmy i kompetencje dopasowane do zakresu projektu, miejsca realizacji oraz budżetu.",
+                    "Oczyszczalnie ścieków",
+                    "Pomagamy znaleźć producentów i dostawców oczyszczalni oraz technologii oczyszczania ścieków dla obiektów i inwestycji. Zakres, parametry i zgodność techniczną potwierdza dostawca."
           ],
           [
-            "Oczyszczalnie i rozwiązania środowiskowe",
-            "Pomagamy dotrzeć do dostawców systemów oczyszczania ścieków i zebrać informacje potrzebne do doboru rozwiązania.",
+                    "Rozwiązania środowiskowe i techniczne",
+                    "Poszukujemy urządzeń, instalacji i partnerów technologicznych dopasowanych do potrzeb przedsiębiorstw oraz realizowanych inwestycji."
           ],
           [
-            "Okna, drzwi i rozwiązania budowlane",
-            "Wspieramy kontakt z producentami stolarki oraz koordynację specyfikacji, ofert i warunków dostawy.",
+                    "Okna, drzwi i materiały budowlane",
+                    "Ułatwiamy kontakt z producentami stolarki i dostawcami rozwiązań budowlanych, a także porównanie specyfikacji, ofert i dostaw."
           ],
           [
-            "Giełda towarów i sourcing",
-            "Łączymy dostawców i odbiorców. Pomagamy szukać produktów, prezentować oferty i uzgadniać warunki handlowe.",
+                    "Sourcing produktów i dostawców",
+                    "Identyfikujemy producentów, dostawców i produkty na podstawie zapotrzebowania, parametrów oraz warunków zamówienia."
           ],
           [
-            "Indywidualne zapytania",
-            "Masz temat wykraczający poza te obszary? Opisz go — sprawdzimy możliwości i ustalimy, gdzie możemy pomóc.",
+                    "Pośrednictwo handlowe B2B",
+                    "Łączymy dostawców i odbiorców, pomagamy przedstawiać oferty i koordynować rozmowy dotyczące dostaw oraz warunków współpracy."
           ],
-        ],
+          [
+                    "Rozwiązania na indywidualne zamówienie",
+                    "Jeśli potrzebujesz nietypowego produktu, technologii lub wykonawcy, przedstaw wymagania — sprawdzimy dostępne możliwości i partnerów."
+          ]
+],
         deliver:
           "Jeden punkt kontaktu dla różnych potrzeb biznesowych. Konkretne parametry, dostępność, dokumentację i zakres odpowiedzialności potwierdzamy z właściwymi dostawcami.",
       },
@@ -415,14 +436,20 @@ export const advisory: Record<Lang, Copy> = {
     inquire: "Enquire about this offer",
     location: "Location",
     minOrder: "Minimum order",
+    areaLabels: ["BUSINESS ADVISORY", "INVESTMENT REAL ESTATE", "BUSINESS SOLUTIONS", "STEEL STRUCTURES"],
+    visionLine: "FROM VISION TO COLLABORATION.",
+    galleryEyebrow: "STEEL & ARCHITECTURE",
+    galleryDetail: "DETAIL",
+    connectEyebrow: "LET’S CONNECT",
+    geography: "POLAND · DENMARK · EUROPE",
     services: [
       {
         title: "Business advisory",
         headline: "Advisory that\nsharpens decisions.",
-        desc: "Supporting strategic decisions, key conversations and the relationships that move a business forward.",
-        tags: ["Strategy", "Business relationships", "Growth"],
+        desc: "We support business growth, strategic discussions and tailored brokerage for buying or selling companies based on individual criteria.",
+        tags: ["Strategy & growth", "Partnerships & investors", "Buying & selling businesses"],
         intro:
-          "A good idea needs the right context. We discuss needs, opportunities and constraints to help translate plans into practical steps. We support entrepreneurs, owners and people developing new ventures.",
+          "Every business needs direction and the right relationships. We help clarify objectives, identify opportunities and connect with partners, investors, buyers or businesses that match specific requirements. We facilitate introductions and discussions; legal and financial due diligence is carried out by relevant independent specialists.",
         scope: [
           [
             "Understanding your needs",
@@ -440,6 +467,7 @@ export const advisory: Record<Lang, Copy> = {
             "Coordinating next steps",
             "Preparing discussions and facilitating information flow, involving relevant specialists where needed.",
           ],
+          ["Business acquisition and sale introductions", "Based on agreed criteria, we look for businesses available for sale, potential buyers or acquisition partners. We help organise introductions and the next steps in discussions."]
         ],
         deliver:
           "A clearer direction, structured opportunities and support in building the right relationships. Scope and terms are agreed individually.",
@@ -447,60 +475,68 @@ export const advisory: Record<Lang, Copy> = {
       {
         title: "Real estate",
         headline: "Space for\nyour ambition.",
-        desc: "Connecting owners and investors. Identifying properties and partners that fit your project's objectives.",
-        tags: ["Investment land", "Commercial property", "Off-market"],
+        desc: "We source development land, commercial properties and ready-to-develop projects, connecting owners, investors and buyers.",
+        tags: ["Commercial properties", "Development land", "Ready-to-develop projects", "Off-market"],
         intro:
-          "The right property starts with the right criteria. We help define your search, reach owners and organise the information needed for a transaction discussion.",
+          "Looking for an investment property or planning to sell an asset? We help source development land, commercial buildings and premises, income-generating property and ready-to-develop projects. Searches follow individual criteria: location, permitted use, budget and project potential. We facilitate direct introductions between owners, investors and partners.",
         scope: [
           [
-            "Buying and selling",
-            "Identifying potential buyers, owners and properties that fit the agreed criteria.",
+                    "Commercial buildings and assets",
+                    "We seek opportunities involving offices, warehouses, industrial units, retail premises and other investment properties."
           ],
           [
-            "Land and development",
-            "Sourcing land, commercial buildings and development opportunities.",
+                    "Development land",
+                    "We source land for residential, commercial, logistics or industrial use according to agreed requirements."
           ],
           [
-            "Off-market opportunities",
-            "Direct conversations and opportunities beyond public listings, subject to availability.",
+                    "Ready-to-develop projects",
+                    "We help identify development projects, properties with documentation and assets with potential for further development."
           ],
           [
-            "Coordinating discussions",
-            "Gathering information and connecting the parties and appropriate specialists for further verification.",
+                    "Acquisition, sale and off-market",
+                    "We connect owners, sellers and potential buyers, including opportunities outside public listings where available."
           ],
-        ],
+          [
+                    "Tailored searches and coordination",
+                    "We define criteria, gather available information and arrange introductions. Legal, technical and financial checks require independent verification."
+          ]
+],
         deliver:
           "A structured view of opportunities, direct partner contacts and clear next steps. Decisions are supported by information and independent verification.",
       },
       {
         title: "Business solutions",
         headline: "A clear need.\nThe right execution.",
-        desc: "Connecting your requirements with the right suppliers and helping move the process from brief to delivery.",
-        tags: ["Sourcing", "Suppliers", "Delivery"],
+        desc: "Wastewater treatment plants, environmental technology, building solutions and B2B sourcing. We connect companies with suitable manufacturers and suppliers.",
+        tags: ["Wastewater treatment", "Environmental technology", "Windows & doors", "B2B sourcing"],
         intro:
-          "You do not need to start with a product name. Start with a need, objective or challenge. We help translate it into requirements, find suppliers and compare opportunities.",
+          "From wastewater treatment systems to construction products and industrial procurement, we help identify solutions and suppliers in Poland and abroad. We start with your project specifications, technical requirements, budget and timeline, then compare options and facilitate commercial discussions.",
         scope: [
           [
-            "Partners and suppliers",
-            "Identifying companies and expertise matching your scope, location and budget.",
+                    "Wastewater treatment plants",
+                    "We help identify manufacturers and suppliers of wastewater treatment plants and treatment technologies for facilities and developments. The supplier confirms suitability, specifications and compliance."
           ],
           [
-            "Wastewater and environmental solutions",
-            "Connecting you with wastewater treatment suppliers and gathering information needed to select a solution.",
+                    "Environmental and technical solutions",
+                    "We source equipment, systems and technology partners that match operational or investment requirements."
           ],
           [
-            "Windows, doors and building solutions",
-            "Supporting manufacturer contacts and coordination of specifications, quotations and delivery terms.",
+                    "Windows, doors and building products",
+                    "We facilitate contact with manufacturers and suppliers and help compare specifications, quotations and delivery terms."
           ],
           [
-            "Trade marketplace and sourcing",
-            "Connecting suppliers and buyers, sourcing products, presenting offers and discussing terms.",
+                    "Product and supplier sourcing",
+                    "We identify manufacturers, suppliers and products based on demand, technical parameters and purchasing conditions."
           ],
           [
-            "Individual enquiries",
-            "Have a challenge beyond these areas? Describe it and we will explore where we can help.",
+                    "B2B trade brokerage",
+                    "We introduce suppliers and buyers and support offers, delivery discussions and commercial arrangements."
           ],
-        ],
+          [
+                    "Tailored solutions",
+                    "For specialised products, technology or contractors, share your requirements and we will explore available partners and options."
+          ]
+],
         deliver:
           "One point of contact for a range of business needs. Specifications, availability, documentation and responsibilities are confirmed with the relevant suppliers.",
       },
@@ -627,14 +663,20 @@ export const advisory: Record<Lang, Copy> = {
     inquire: "Spørg til tilbuddet",
     location: "Placering",
     minOrder: "Minimumsordre",
+    areaLabels: ["FORRETNINGSRÅDGIVNING", "INVESTERINGSEJENDOMME", "ERHVERVSLØSNINGER", "STÅLKONSTRUKTIONER"],
+    visionLine: "FRA VISION TIL SAMARBEJDE.",
+    galleryEyebrow: "STÅL OG ARKITEKTUR",
+    galleryDetail: "DETALJE",
+    connectEyebrow: "LAD OS TALE SAMMEN",
+    geography: "POLEN · DANMARK · EUROPA",
     services: [
       {
         title: "Forretningsrådgivning",
         headline: "Rådgivning, der\nskaber klarhed.",
-        desc: "Vi støtter strategiske beslutninger, vigtige dialoger og opbygning af de rette forretningsrelationer.",
-        tags: ["Strategi", "Relationer", "Udvikling"],
+        desc: "Vi understøtter virksomheders udvikling, strategiske drøftelser og individuel formidling ved køb eller salg af virksomheder.",
+        tags: ["Strategi og udvikling", "Partnere og investorer", "Køb og salg af virksomheder"],
         intro:
-          "En god idé har brug for den rette sammenhæng. Vi taler om behov, muligheder og begrænsninger for at omsætte planer til konkrete skridt.",
+          "Enhver virksomhed har brug for en klar retning og de rette relationer. Vi hjælper med at afklare mål, identificere muligheder og finde partnere, investorer, købere eller virksomheder, der passer til konkrete ønsker. Vi formidler kontakten og understøtter dialogen; juridisk og økonomisk due diligence udføres af relevante uafhængige specialister.",
         scope: [
           [
             "Behovsafklaring",
@@ -652,6 +694,7 @@ export const advisory: Record<Lang, Copy> = {
             "Næste skridt",
             "Vi forbereder samtaler og informationsflow og inddrager relevante specialister ved behov.",
           ],
+          ["Køb og salg af virksomheder", "På baggrund af aftalte kriterier søger vi virksomheder til salg, potentielle købere eller overtagelsespartnere. Vi formidler kontakt og hjælper med næste skridt i dialogen."]
         ],
         deliver:
           "En klarere retning, strukturerede muligheder og støtte til de rette relationer. Omfang og vilkår aftales individuelt.",
@@ -659,60 +702,68 @@ export const advisory: Record<Lang, Copy> = {
       {
         title: "Ejendomme",
         headline: "Plads til\ndine ambitioner.",
-        desc: "Vi forbinder ejere og investorer og finder ejendomme og partnere, der passer til projektets mål.",
-        tags: ["Investeringsgrunde", "Erhvervsejendomme", "Off-market"],
+        desc: "Vi søger erhvervsejendomme, investeringsgrunde og færdigudviklede projekter og forbinder ejere, investorer og købere.",
+        tags: ["Erhvervsejendomme", "Investeringsgrunde", "Udviklingsklare projekter", "Off-market"],
         intro:
-          "Den rette ejendom begynder med de rette kriterier. Vi afklarer søgningen, skaber kontakt til ejere og samler oplysninger til dialogen.",
+          "Leder du efter en investeringsejendom, eller ønsker du at sælge en ejendom? Vi hjælper med at finde investeringsgrunde, erhvervsbygninger, udlejningsejendomme og projekter klar til udvikling. Søgningen tilpasses beliggenhed, anvendelse, budget og udviklingsmuligheder. Vi skaber direkte kontakt mellem ejere, investorer og samarbejdspartnere.",
         scope: [
           [
-            "Køb og salg",
-            "Identifikation af potentielle købere, ejere og relevante ejendomme.",
+                    "Erhvervsbygninger og -ejendomme",
+                    "Vi søger kontorer, lager- og produktionsbygninger, butikslokaler og andre investeringsejendomme."
           ],
           [
-            "Grunde og udvikling",
-            "Søgning efter grunde, erhvervsejendomme og udviklingsprojekter.",
+                    "Investeringsgrunde",
+                    "Vi finder grunde til bolig-, erhvervs-, logistik- eller industriformål efter aftalte kriterier."
           ],
           [
-            "Off-market",
-            "Direkte dialog om muligheder uden for offentlige portaler, afhængigt af tilgængelighed.",
+                    "Udviklingsklare projekter",
+                    "Vi hjælper med at finde ejendomsprojekter, ejendomme med dokumentation og udviklingsmuligheder."
           ],
           [
-            "Koordinering",
-            "Indsamling af oplysninger og kontakt til parter og relevante specialister.",
+                    "Køb, salg og off-market",
+                    "Vi forbinder ejere, sælgere og potentielle købere, også uden for offentlige annoncer, når mulighederne findes."
           ],
-        ],
+          [
+                    "Individuel søgning og koordinering",
+                    "Vi afklarer kriterier, indsamler tilgængelige oplysninger og skaber kontakt. Juridiske, tekniske og økonomiske forhold kræver uafhængig kontrol."
+          ]
+],
         deliver:
           "Et struktureret overblik, direkte kontakter og klare næste skridt. Beslutninger baseres på oplysninger og uafhængig kontrol.",
       },
       {
         title: "Erhvervsløsninger",
         headline: "Et klart behov.\nDen rette løsning.",
-        desc: "Vi forbinder dit behov med de rette leverandører og hjælper processen sikkert fra brief til levering.",
-        tags: ["Sourcing", "Leverandører", "Levering"],
+        desc: "Renseanlæg, miljøteknologi, byggeløsninger og B2B-sourcing. Vi forbinder virksomheder med relevante producenter og leverandører.",
+        tags: ["Renseanlæg", "Miljøteknologi", "Vinduer og døre", "B2B-sourcing"],
         intro:
-          "Begynd med et behov, et mål eller en udfordring. Vi hjælper med krav, leverandørsøgning og sammenligning af muligheder.",
+          "Fra spildevandsrensning til byggeprodukter og industrielt indkøb hjælper vi med at finde løsninger og leverandører i Polen og udlandet. Vi tager udgangspunkt i projektets specifikationer, tekniske krav, budget og tidsplan og understøtter sammenligning af tilbud og handelsdialog.",
         scope: [
           [
-            "Partnere og leverandører",
-            "Virksomheder og kompetencer, der matcher projektets omfang, sted og budget.",
+                    "Renseanlæg og spildevandsrensning",
+                    "Vi hjælper med at finde producenter og leverandører af renseanlæg og renseteknologier til bygninger og projekter. Leverandøren bekræfter egnethed, tekniske data og regeloverholdelse."
           ],
           [
-            "Spildevand og miljø",
-            "Kontakt til leverandører af renseanlæg og oplysninger til valg af løsning.",
+                    "Miljø- og teknikløsninger",
+                    "Vi finder udstyr, anlæg og teknologipartnere til virksomhedens drift eller investeringer."
           ],
           [
-            "Vinduer, døre og byggeri",
-            "Kontakt til producenter samt koordinering af specifikationer, tilbud og levering.",
+                    "Vinduer, døre og byggeprodukter",
+                    "Vi formidler kontakt til producenter og leverandører og hjælper med at sammenligne specifikationer, tilbud og levering."
           ],
           [
-            "Varehandel og sourcing",
-            "Vi forbinder leverandører og købere, finder produkter og understøtter handelsvilkår.",
+                    "Produkter og leverandører",
+                    "Vi identificerer producenter, leverandører og varer ud fra behov, tekniske krav og indkøbsvilkår."
           ],
           [
-            "Individuelle forespørgsler",
-            "Beskriv opgaver uden for disse områder, så undersøger vi, hvor vi kan hjælpe.",
+                    "B2B-handelsformidling",
+                    "Vi forbinder leverandører og købere og understøtter tilbud, leveringsaftaler og kommerciel dialog."
           ],
-        ],
+          [
+                    "Individuelle løsninger",
+                    "Har du behov for et specialprodukt, en teknologi eller en udførende partner? Beskriv kravene, så undersøger vi mulighederne."
+          ]
+],
         deliver:
           "Én kontakt til forskellige forretningsbehov. Egenskaber, tilgængelighed, dokumentation og ansvar bekræftes med relevante leverandører.",
       },
@@ -841,14 +892,20 @@ export const advisory: Record<Lang, Copy> = {
     inquire: "Angebot anfragen",
     location: "Standort",
     minOrder: "Mindestbestellung",
+    areaLabels: ["UNTERNEHMENSBERATUNG", "ANLAGEIMMOBILIEN", "LÖSUNGEN FÜR UNTERNEHMEN", "STAHLKONSTRUKTIONEN"],
+    visionLine: "VON DER VISION ZUR ZUSAMMENARBEIT.",
+    galleryEyebrow: "STAHL & ARCHITEKTUR",
+    galleryDetail: "DETAIL",
+    connectEyebrow: "LASSEN SIE UNS SPRECHEN",
+    geography: "POLEN · DÄNEMARK · EUROPA",
     services: [
       {
         title: "Unternehmensberatung",
         headline: "Beratung, die\nEntscheidungen schärft.",
-        desc: "Wir unterstützen bei strategischen Entscheidungen, wichtigen Gesprächen und dem Aufbau passender Geschäftsbeziehungen.",
-        tags: ["Strategie", "Geschäftsbeziehungen", "Wachstum"],
+        desc: "Wir unterstützen Unternehmenswachstum, strategische Gespräche sowie die individuelle Vermittlung beim Kauf und Verkauf von Unternehmen.",
+        tags: ["Strategie & Wachstum", "Partner & Investoren", "Unternehmenskauf und -verkauf"],
         intro:
-          "Eine gute Idee braucht den richtigen Kontext. Wir besprechen Bedarf, Möglichkeiten und Grenzen, um Pläne in konkrete Schritte zu übersetzen.",
+          "Jedes Unternehmen benötigt eine klare Richtung und die richtigen Kontakte. Wir helfen, Ziele zu strukturieren, Chancen zu erkennen und Partner, Investoren, Käufer oder Unternehmen nach individuellen Kriterien zu finden. Wir stellen Kontakte her und begleiten Gespräche; die rechtliche und finanzielle Due Diligence erfolgt durch geeignete unabhängige Fachleute.",
         scope: [
           [
             "Bedarf klären",
@@ -866,6 +923,7 @@ export const advisory: Record<Lang, Copy> = {
             "Nächste Schritte",
             "Gespräche und Informationsfluss vorbereiten und bei Bedarf geeignete Fachleute einbeziehen.",
           ],
+          ["Vermittlung beim Unternehmenskauf und -verkauf", "Anhand vereinbarter Kriterien suchen wir Unternehmen zum Verkauf, potenzielle Käufer oder Übernahmepartner. Wir unterstützen die Kontaktaufnahme und die nächsten Gesprächsschritte."]
         ],
         deliver:
           "Eine klarere Richtung, strukturierte Möglichkeiten und Unterstützung beim Aufbau passender Beziehungen. Umfang und Konditionen werden individuell vereinbart.",
@@ -873,60 +931,68 @@ export const advisory: Record<Lang, Copy> = {
       {
         title: "Immobilien",
         headline: "Raum für\nIhre Ambitionen.",
-        desc: "Wir verbinden Eigentümer und Investoren und finden Immobilien und Partner passend zum Projektziel.",
-        tags: ["Investitionsgrundstücke", "Gewerbeimmobilien", "Off-market"],
+        desc: "Wir suchen Gewerbeimmobilien, Bau- und Investmentgrundstücke sowie baureife Projekte und vernetzen Eigentümer, Investoren und Käufer.",
+        tags: ["Gewerbeimmobilien", "Investmentgrundstücke", "Baureife Projekte", "Off-Market"],
         intro:
-          "Die passende Immobilie beginnt mit klaren Kriterien. Wir strukturieren die Suche, erreichen Eigentümer und ordnen relevante Informationen.",
+          "Sie suchen ein Investitionsobjekt oder möchten eine Immobilie verkaufen? Wir unterstützen die Suche nach Grundstücken, Gewerbegebäuden, Renditeobjekten und baureifen Entwicklungsprojekten. Maßgeblich sind Ihre Kriterien zu Lage, Nutzung, Budget und Entwicklungspotenzial. Wir vermitteln Kontakte zwischen Eigentümern, Investoren und Partnern.",
         scope: [
           [
-            "Kauf und Verkauf",
-            "Identifikation potenzieller Käufer, Eigentümer und geeigneter Immobilien.",
+                    "Gewerbegebäude und Anlageobjekte",
+                    "Wir recherchieren Büroobjekte, Lagerhallen, Industriegebäude, Geschäftsflächen und weitere Investitionsimmobilien."
           ],
           [
-            "Grundstücke und Projekte",
-            "Suche nach Grundstücken, Gewerbeobjekten und Entwicklungsmöglichkeiten.",
+                    "Bau- und Investmentgrundstücke",
+                    "Wir suchen Grundstücke für Wohn-, Gewerbe-, Logistik- und Industrieprojekte nach vereinbarten Anforderungen."
           ],
           [
-            "Off-market",
-            "Direkte Gespräche über Möglichkeiten außerhalb öffentlicher Portale, je nach Verfügbarkeit.",
+                    "Baureife Projekte und Investments",
+                    "Wir helfen, Projektentwicklungen, Objekte mit Unterlagen und Immobilien mit weiterem Entwicklungspotenzial zu finden."
           ],
           [
-            "Koordination",
-            "Informationen sammeln und Kontakte zu Beteiligten und geeigneten Fachleuten herstellen.",
+                    "Kauf, Verkauf und Off-Market",
+                    "Wir vernetzen Eigentümer, Verkäufer und Interessenten, bei Verfügbarkeit auch abseits öffentlicher Angebote."
           ],
-        ],
+          [
+                    "Individuelle Suche und Koordination",
+                    "Wir klären Kriterien, bündeln verfügbare Informationen und organisieren Kontakte. Rechtliche, technische und finanzielle Prüfungen erfolgen unabhängig."
+          ]
+],
         deliver:
           "Strukturierte Möglichkeiten, direkte Kontakte und klare nächste Schritte. Entscheidungen erfolgen auf Basis von Informationen und unabhängiger Prüfung.",
       },
       {
         title: "Geschäftslösungen",
         headline: "Ein klarer Bedarf.\nDie richtige Umsetzung.",
-        desc: "Wir verbinden Ihren Bedarf mit passenden Lieferanten und begleiten den Weg vom Briefing bis zur Umsetzung.",
-        tags: ["Sourcing", "Lieferanten", "Umsetzung"],
+        desc: "Kläranlagen, Umwelttechnik, Baulösungen und B2B-Sourcing. Wir vernetzen Unternehmen mit passenden Herstellern und Lieferanten.",
+        tags: ["Kläranlagen", "Umwelttechnik", "Fenster und Türen", "B2B-Sourcing"],
         intro:
-          "Beginnen Sie mit einem Bedarf, Ziel oder einer Aufgabe. Wir helfen bei Anforderungen, Lieferantensuche und dem Vergleich von Möglichkeiten.",
+          "Von Abwasserreinigung über Bauprodukte bis zur industriellen Beschaffung helfen wir, passende Lösungen und Lieferanten in Polen und im Ausland zu finden. Grundlage sind Projektdaten, technische Anforderungen, Budget und Zeitplan. Wir unterstützen den Vergleich von Angeboten und die geschäftliche Abstimmung.",
         scope: [
           [
-            "Partner und Lieferanten",
-            "Unternehmen und Kompetenzen passend zu Umfang, Standort und Budget finden.",
+                    "Kläranlagen und Abwasserreinigung",
+                    "Wir helfen bei der Suche nach Herstellern und Anbietern von Kläranlagen und Abwassertechnik für Gebäude und Projekte. Eignung, technische Daten und Konformität bestätigt der Anbieter."
           ],
           [
-            "Abwasser und Umwelt",
-            "Kontakte zu Anbietern von Kläranlagen und Informationen zur Auswahl einer Lösung.",
+                    "Umwelt- und technische Lösungen",
+                    "Wir identifizieren Anlagen, Geräte und Technologiepartner nach betrieblichen und projektbezogenen Anforderungen."
           ],
           [
-            "Fenster, Türen und Baulösungen",
-            "Herstellerkontakte sowie Koordination von Spezifikationen, Angeboten und Lieferbedingungen.",
+                    "Fenster, Türen und Bauprodukte",
+                    "Wir vermitteln Kontakte zu Herstellern und Lieferanten und helfen beim Vergleich von Spezifikationen, Angeboten und Lieferbedingungen."
           ],
           [
-            "Warenmarkt und Sourcing",
-            "Lieferanten und Käufer verbinden, Produkte suchen, Angebote präsentieren und Konditionen klären.",
+                    "Produkt- und Lieferantensuche",
+                    "Wir suchen Hersteller, Lieferanten und Produkte anhand von Bedarf, technischen Parametern und Einkaufsbedingungen."
           ],
           [
-            "Individuelle Anfragen",
-            "Beschreiben Sie Aufgaben außerhalb dieser Bereiche. Wir prüfen, wo wir unterstützen können.",
+                    "B2B-Handelsvermittlung",
+                    "Wir vernetzen Lieferanten und Abnehmer und begleiten Angebote, Lieferabsprachen und kommerzielle Gespräche."
           ],
-        ],
+          [
+                    "Individuelle Lösungen",
+                    "Für Spezialprodukte, Technik oder Dienstleister teilen Sie uns Ihre Anforderungen mit – wir prüfen mögliche Partner und Optionen."
+          ]
+],
         deliver:
           "Ein Ansprechpartner für unterschiedliche Geschäftsbedürfnisse. Eigenschaften, Verfügbarkeit, Dokumentation und Verantwortung werden mit den jeweiligen Anbietern bestätigt.",
       },
