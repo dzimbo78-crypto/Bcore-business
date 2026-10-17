@@ -91,3 +91,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 })();
+/* Minimal enhancements module; steel configurator is route-lazy. */
+(function(){const script=document.createElement("script");script.src="/bcore-enhancements.js?v=2";script.defer=true;document.head.appendChild(script);})();

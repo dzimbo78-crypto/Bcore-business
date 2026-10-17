@@ -1,0 +1,25 @@
+/* Isolated configurator stylesheet, only loaded on the steel detail route. */
+.bcore-config-section{position:relative;background:#111214;padding:110px 0 116px;border-top:1px solid #d3b08a36;scroll-margin-top:100px;color:#eee6dc}
+.bcore-config-intro{display:grid;grid-template-columns:1.15fr 1fr;gap:36px;align-items:end;margin:26px 0 42px}
+.bcore-config-intro h2{font-family:Georgia,serif;font-weight:400;font-size:clamp(42px,5.8vw,78px);line-height:1.1;letter-spacing:-.045em;margin:0}
+.bcore-config-intro p{max-width:520px;font-size:15px;line-height:1.8;color:#bdb5ad;margin:0}
+.bcore-config-columns{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);gap:30px;align-items:start}
+.bcore-config-form,.bcore-config-output{border:1px solid #d3b08a34;background:#18181a;padding:30px}
+.bcore-config-form{display:grid;gap:18px}
+.bcore-config-form label{display:grid;gap:8px;font-size:12px;letter-spacing:.035em;color:#e9d8c6}
+.bcore-config-form select,.bcore-config-form input{font:inherit;font-size:15px;background:#111214;border:1px solid #ffffff30;padding:14px 12px;color:#f0e7dd;width:100%;border-radius:0;min-height:50px}
+.bcore-config-form select:focus,.bcore-config-form input:focus{outline:1px solid #d1ab81}
+.bcore-config-form label[hidden]{display:none}
+.bcore-config-pair{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.bcore-config-notice,.bcore-config-note{font-size:12px;line-height:1.75;color:#a9a099}
+.bcore-config-output{min-width:0}.bcore-config-preview-title{color:#d1ae87;font-size:11px;letter-spacing:.19em}
+.bcore-config-drawing{border:1px solid #ffffff19;background:linear-gradient(165deg,#222326,#111214);margin:16px 0 26px;overflow:hidden}
+.bcore-config-drawing svg{width:100%;height:auto;display:block}
+.bcore-config-output h3{font-family:Georgia,serif;font-weight:400;font-size:26px;margin:0 0 14px;color:#f3ede6}
+.bcore-config-summary{font-family:inherit;font-size:13px;line-height:1.9;color:#c7bcb1;white-space:pre-wrap;word-break:break-word;border-top:1px solid #ffffff24;padding-top:14px}
+.bcore-config-actions{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 12px}
+.bcore-config-actions .button,.bcore-config-open{cursor:pointer;min-height:46px;text-align:center;justify-content:center}
+.bcore-config-note{margin:10px 0 0}
+.bcore-config-imported{grid-column:1/-1;color:#d1ae87;font-size:13px}
+@media(max-width:800px){.bcore-config-section{padding:75px 0}.bcore-config-intro,.bcore-config-columns{grid-template-columns:1fr}.bcore-config-form,.bcore-config-output{padding:20px}.bcore-config-intro{gap:18px}}
+@media(max-width:410px){.bcore-config-pair{grid-template-columns:1fr}.bcore-config-actions .button{width:100%;white-space:normal}}
