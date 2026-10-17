@@ -44,6 +44,61 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
   const from =
     process.env["RESEND_FROM_EMAIL"] || "B-CORE <onboarding@resend.dev>";
 
+  // Domain-free delivery on Render Free. The FormSubmit service uses HTTPS,
+  // so it does not require a custom domain or outbound SMTP ports.
+  // The recipient receives a one-time email to activate the forwarding address.
+  if (process.env["EMAIL_PROVIDER"] === "formsubmit") {
+    const title = String(subject || category || "Nowe zapytanie z B-CORE")
+      .replace(/[\r\n]/g, " ").slice(0, 180);
+    try {
+      const response = await fetch(
+        "https://formsubmit.co/ajax/" + encodeURIComponent(recipient),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "User-Agent": "B-CORE-Website/1.0",
+          },
+          body: JSON.stringify({
+            name: String(name).trim(),
+            email: String(email).trim(),
+            phone: phone ? String(phone).trim() : "",
+            category: category ? String(category).trim() : "",
+            message: String(message).trim(),
+            _subject: "[B-CORE] " + title,
+            _template: "table",
+            _honey: "",
+            _captcha: "false",
+            _url: "https://bcore-business.onrender.com/#/kontakt",
+          }),
+          signal: AbortSignal.timeout(15000),
+        },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        success?: string | boolean;
+      } | null;
+      if (
+        !response.ok ||
+        !payload ||
+        (payload.success !== true && payload.success !== "true")
+      ) {
+        console.error("FormSubmit rejected enquiry:", response.status);
+        res.status(502).json({ error: "Failed to forward enquiry" });
+        return;
+      }
+      // Accepted by provider; forwarding depends on recipient email activation.
+      res.json({ ok: true, provider: "formsubmit", accepted: true });
+    } catch (error) {
+      console.error(
+        "FormSubmit request failed:",
+        error instanceof Error ? error.name : "UnknownError",
+      );
+      res.status(502).json({ error: "Failed to forward enquiry" });
+    }
+    return;
+  }
+
   if (!apiKey) {
     console.error("RESEND_API_KEY is not configured");
     res.status(503).json({ error: "Email service is not configured" });
