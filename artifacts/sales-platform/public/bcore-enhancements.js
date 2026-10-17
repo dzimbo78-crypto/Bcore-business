@@ -52,10 +52,10 @@
     simulatorLoaded = true;
     const stylesheet = document.createElement("link");
     stylesheet.rel = "stylesheet";
-    stylesheet.href = "/bcore-configurator.css?v=1";
+    stylesheet.href = "/bcore-configurator.css?v=2";
     document.head.appendChild(stylesheet);
     const script = document.createElement("script");
-    script.src = "/bcore-configurator.js?v=1";
+    script.src = "/bcore-configurator.js?v=2";
     script.async = true;
     script.onerror = () => { simulatorLoaded = false; };
     document.head.appendChild(script);
