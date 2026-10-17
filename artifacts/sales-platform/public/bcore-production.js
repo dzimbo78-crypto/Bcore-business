@@ -3,10 +3,10 @@
   // This file integrates the approved B-CORE cinematic experience with the production API.
   const mail = "przemyslaw.bugajski78@gmail.com";
   const words = {
-    pl: {name:"Imię i nazwisko",email:"Adres e-mail",phone:"Telefon (opcjonalnie)",topic:"Temat",msg:"Opisz swój projekt",send:"Wyślij zapytanie",sending:"Wysyłanie…",sent:"Wiadomość została wysłana. Dziękujemy!",error:"Wysyłka online jest chwilowo niedostępna. Napisz bezpośrednio:",privacy:"Wysyłając formularz, zgadzasz się na kontakt w sprawie zapytania.",hint:"Pola oznaczone * są wymagane.",alt:"Napisz e-mail"},
-    en: {name:"Full name",email:"Email address",phone:"Phone (optional)",topic:"Subject",msg:"Describe your project",send:"Send enquiry",sending:"Sending…",sent:"Your message has been sent. Thank you!",error:"Online messaging is temporarily unavailable. Email us directly:",privacy:"By submitting, you agree to be contacted about your enquiry.",hint:"Fields marked * are required.",alt:"Send an email"},
-    da: {name:"Fulde navn",email:"E-mailadresse",phone:"Telefon (valgfrit)",topic:"Emne",msg:"Beskriv dit projekt",send:"Send forespørgsel",sending:"Sender…",sent:"Din besked er sendt. Tak!",error:"Online beskeder er midlertidigt utilgængelige. Skriv direkte til:",privacy:"Når du sender formularen, accepterer du kontakt om din henvendelse.",hint:"Felter med * skal udfyldes.",alt:"Send en e-mail"},
-    de: {name:"Vor- und Nachname",email:"E-Mail-Adresse",phone:"Telefon (optional)",topic:"Betreff",msg:"Beschreiben Sie Ihr Projekt",send:"Anfrage senden",sending:"Wird gesendet…",sent:"Ihre Nachricht wurde gesendet. Vielen Dank!",error:"Online-Nachrichten sind vorübergehend nicht verfügbar. Schreiben Sie direkt an:",privacy:"Mit dem Absenden stimmen Sie einer Kontaktaufnahme zu Ihrer Anfrage zu.",hint:"Mit * gekennzeichnete Felder sind Pflichtfelder.",alt:"E-Mail schreiben"}
+    pl: {name:"Imię i nazwisko",email:"Adres e-mail",phone:"Telefon (opcjonalnie)",topic:"Temat",msg:"Opisz swój projekt",send:"Wyślij zapytanie",sending:"Wysyłanie…",sent:"Wiadomość została wysłana. Dziękujemy!",error:"Wysyłka online jest chwilowo niedostępna. Napisz bezpośrednio:",privacy:"Wysyłając formularz, zgadzasz się na kontakt w sprawie zapytania.",hint:"Pola oznaczone * są wymagane.",activation:"Formularz oczekuje na aktywację adresu odbiorcy. Wiadomość nie została jeszcze dostarczona.",alt:"Napisz e-mail"},
+    en: {name:"Full name",email:"Email address",phone:"Phone (optional)",topic:"Subject",msg:"Describe your project",send:"Send enquiry",sending:"Sending…",sent:"Your message has been sent. Thank you!",error:"Online messaging is temporarily unavailable. Email us directly:",privacy:"By submitting, you agree to be contacted about your enquiry.",hint:"Fields marked * are required.",activation:"The receiving email address has not activated this form. Delivery is not yet confirmed.",alt:"Send an email"},
+    da: {name:"Fulde navn",email:"E-mailadresse",phone:"Telefon (valgfrit)",topic:"Emne",msg:"Beskriv dit projekt",send:"Send forespørgsel",sending:"Sender…",sent:"Din besked er sendt. Tak!",error:"Online beskeder er midlertidigt utilgængelige. Skriv direkte til:",privacy:"Når du sender formularen, accepterer du kontakt om din henvendelse.",hint:"Felter med * skal udfyldes.",activation:"Modtageradressen har endnu ikke aktiveret formularen. Beskeden er ikke leveret.",alt:"Send en e-mail"},
+    de: {name:"Vor- und Nachname",email:"E-Mail-Adresse",phone:"Telefon (optional)",topic:"Betreff",msg:"Beschreiben Sie Ihr Projekt",send:"Anfrage senden",sending:"Wird gesendet…",sent:"Ihre Nachricht wurde gesendet. Vielen Dank!",error:"Online-Nachrichten sind vorübergehend nicht verfügbar. Schreiben Sie direkt an:",privacy:"Mit dem Absenden stimmen Sie einer Kontaktaufnahme zu Ihrer Anfrage zu.",hint:"Mit * gekennzeichnete Felder sind Pflichtfelder.",activation:"Die Empfängeradresse muss das Formular noch aktivieren. Die Nachricht wurde noch nicht zugestellt.",alt:"E-Mail schreiben"}
   };
   const lang = () => words[document.getElementById("bcLang")?.value] ? document.getElementById("bcLang").value : "pl";
   function installContactForm() {
@@ -51,11 +51,16 @@
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify(body)
         });
-        if (!response.ok) throw new Error("mail delivery unavailable");
+        if (!response.ok) {
+          const details = await response.json().catch(() => ({}));
+          const error = new Error("mail delivery unavailable");
+          error.code = details?.code;
+          throw error;
+        }
         el.reset();
         status.textContent = val.sent;
-      } catch (_) {
-        status.textContent = val.error + " ";
+      } catch (error) {
+        status.textContent = (error?.code === "recipient_activation_required" ? val.activation : val.error) + " ";
         const a = document.createElement("a");
         a.href = "mailto:" + mail;
         a.textContent = mail;

@@ -59,6 +59,10 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
             "Content-Type": "application/json",
             Accept: "application/json",
             "User-Agent": "B-CORE-Website/1.0",
+            // FormSubmit validates the referring website. A server-to-server
+            // proxy must provide the known public origin explicitly.
+            Referer: "https://bcore-business.onrender.com/",
+            Origin: "https://bcore-business.onrender.com",
           },
           body: JSON.stringify({
             name: String(name).trim(),
@@ -77,17 +81,38 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
       );
       const payload = (await response.json().catch(() => null)) as {
         success?: string | boolean;
+        message?: unknown;
       } | null;
-      if (
-        !response.ok ||
-        !payload ||
-        (payload.success !== true && payload.success !== "true")
-      ) {
-        console.error("FormSubmit rejected enquiry:", response.status);
-        res.status(502).json({ error: "Failed to forward enquiry" });
+      const providerAccepted =
+        response.ok &&
+        payload !== null &&
+        (payload.success === true || payload.success === "true");
+      if (!providerAccepted) {
+        // FormSubmit may return HTTP 200 with {"success":"false"}.
+        // In particular, an unactivated form is not a completed delivery.
+        const message =
+          typeof payload?.message === "string" ? payload.message : "";
+        const activationRequired = /activat|confirm/i.test(message);
+        console.error("FormSubmit rejected enquiry:", {
+          status: response.status,
+          activationRequired,
+          message: message.replace(
+            /[a-zA-Z0-9_.+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g,
+            "[redacted email]",
+          ).slice(0, 250),
+        });
+        res.status(activationRequired ? 409 : 502).json({
+          error: activationRequired
+            ? "Recipient must activate the contact form"
+            : "Email provider did not accept the enquiry",
+          code: activationRequired
+            ? "recipient_activation_required"
+            : "provider_rejected",
+        });
         return;
       }
-      // Accepted by provider; forwarding depends on recipient email activation.
+      // Provider accepted this enquiry; actual inbox delivery still depends
+      // on provider email delivery success.
       res.json({ ok: true, provider: "formsubmit", accepted: true });
     } catch (error) {
       console.error(
