@@ -55,7 +55,7 @@
     stylesheet.href = "/bcore-configurator.css?v=2";
     document.head.appendChild(stylesheet);
     const script = document.createElement("script");
-    script.src = "/bcore-configurator.js?v=2";
+    script.src = "/bcore-configurator.js?v=3";
     script.async = true;
     script.onerror = () => { simulatorLoaded = false; };
     document.head.appendChild(script);

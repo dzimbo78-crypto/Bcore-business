@@ -11,3 +11,7 @@
 .bcore-legal-links{margin-left:18px;color:var(--muted)}
 .bcore-legal-links a{color:inherit;text-decoration:underline;text-decoration-color:rgba(255,255,255,.25)}
 @media(max-width:650px){.bcore-contact-form{grid-template-columns:1fr}.bcore-legal-links{display:block;margin:10px 0 0}}
+/* Native form retry is still a form submission (not a mailto fallback). */
+.bcore-form-native-retry{display:inline-block;margin:10px 0 4px;padding:12px 16px;background:transparent;color:#d1ae87;border:1px solid #d1ae8766;font:inherit;font-size:13px;cursor:pointer;text-align:left;max-width:100%}
+.bcore-form-native-retry:hover,.bcore-form-native-retry:focus-visible{background:#d1ae871a;border-color:#d1ae87;outline:none}
+.bcore-form-message{line-height:1.75;overflow-wrap:anywhere}

@@ -237,11 +237,38 @@ function scheduleText(){
 function spec(){
   const t=locale(),g=calc();
   const arr=[t.summaryTitle,"",t.type+": "+t.types[types.indexOf(state.type)],t.length+": "+format(state.length)+" mm",t.height+": "+format(state.height)+" mm",t.posts+": "+state.post,t.postCount+": "+g.postCount,t.bayCount+": "+g.bayCount,t.axis+": "+format(g.centre)+" mm",t.open+": "+format(g.opening)+" mm"];
+  // Full calculated material takeoff and geometrical details are included
+  // in the enquiry itself, not just visible in the visual simulation.
+  arr.push(t.postCount+": "+g.postCount+" × "+state.post+" × "+format(state.height)+" mm");
   if(measure()){
-    arr.push(t.rail+": "+state.rail,t.pattern+": "+t.patterns[patterns.indexOf(state.pattern)],t.bottom+": "+state.bottom+" mm");
-    if(g.glass)arr.push(t.glass+": "+state.glass+" mm",t.glassWidth+": "+format(g.glassW)+" mm");
-    else arr.push(t.bar+": "+state.bar,t.barCount+": "+(g.vertical?g.totalBars:g.hBarCount),t.actualGap+": "+format(g.actualGap)+" mm",t.barLength+": "+format(g.vertical?g.barLength:g.opening)+" mm");
-  }else arr.push(t.main+": "+state.beam,t.brace+": "+t.braces[braces.indexOf(state.brace)]);
+    arr.push(
+      t.rail+": "+state.rail,
+      t.railLength+": "+format(state.length)+" mm",
+      t.pattern+": "+t.patterns[patterns.indexOf(state.pattern)],
+      t.bottom+": "+state.bottom+" mm"
+    );
+    if(g.glass){
+      arr.push(
+        t.glass+": "+state.glass+" mm",
+        t.glassCount+": "+g.glassCount,
+        t.glassWidth+": "+format(g.glassW)+" mm",
+        t.barLength+": "+format(g.barLength)+" mm"
+      );
+    }else{
+      arr.push(
+        t.bar+": "+state.bar,
+        t.barCount+": "+(g.vertical?g.totalBars:g.hBarCount),
+        t.actualGap+": "+format(g.actualGap)+" mm",
+        t.barLength+": "+format(g.vertical?g.barLength:g.opening)+" mm"
+      );
+      if(g.vertical)arr.push("Profiles per bay: "+g.barsPerBay);
+      else arr.push(t.hbarCount+": "+g.hBarCount);
+    }
+  }else{
+    arr.push(t.main+": "+state.beam,t.brace+": "+t.braces[braces.indexOf(state.brace)]);
+    if(state.type==="stairs")arr.push(t.steps+": "+state.steps,t.stairsRise+": "+format(state.height/state.steps)+" mm",t.stairsGoing+": "+format(state.length/state.steps)+" mm");
+    if(state.type==="canopy")arr.push(t.roofDrop+": "+state.roofDrop+" mm");
+  }
   arr.push(t.finish+": "+t.finishes[coats.indexOf(state.finish)],t.mount+": "+t.mountings[mounts.indexOf(state.mount)],"",t.disclaimer,"",t.extra);
   return arr.join("\n");
 }
