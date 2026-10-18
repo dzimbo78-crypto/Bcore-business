@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SteelVision Studio v16</title>
+<title>SteelVision Studio v18</title>
 <style>
 :root{
   --bg:#eef2f5;--card:#fff;--soft:#f7f9fb;--ink:#17222d;--muted:#6f8090;--line:#d8e1e8;
@@ -73,6 +73,13 @@ canvas{width:100%;height:235px;display:block;background:#fff;border:1px solid #d
 table{width:100%;border-collapse:collapse;font-size:10.5px}th,td{padding:7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#f7f9fb;color:#6b7d8c}
 .detailBox{font-size:10.5px;line-height:1.5;background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:10px}
 .hidden{display:none!important}
+.workflowBanner{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 11px;margin:0 0 12px;border:1px solid #ccdbe6;border-radius:9px;background:#f5f9fc}
+.workflowBanner strong{font-size:11px;color:var(--navy)}
+.workflowBanner span{font-size:9.5px;color:#64788a;text-align:right}
+.workflowOnly{display:none}
+.workflowOnly.workflowShow{display:block}
+.fieldHidden{display:none!important}
+@media(max-width:700px){.workflowBanner{align-items:flex-start;flex-direction:column}.workflowBanner span{text-align:left}}
 .v16Audit{border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:12px;margin-bottom:14px}
 .v16AuditHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.v16AuditHead h4{margin:0;font-size:13px;color:var(--navy)}.v16AuditHead p{font-size:9.5px;color:var(--muted);margin:4px 0 0;max-width:760px}
 .v16AuditGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.v16AuditKpi{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px}.v16AuditKpi b{display:block;font-size:18px;color:var(--navy)}.v16AuditKpi span{font-size:8.5px;color:var(--muted)}
@@ -261,6 +268,30 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
 .v15LegacyExports summary{cursor:pointer;font-size:11px;font-weight:750;color:var(--ink)}.v15LegacyExports .packButtons{margin-top:12px}
 @media(max-width:810px){.v15ExportConfig{grid-template-columns:1fr}.v15MainActions button{flex:1 1 180px}}
 @media print{.v15ExportStudio,.v15LegacyExports{display:none!important}}
+
+/* v18: workflow isolation + interactive 3D beam editor */
+.custom3d{border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:14px;margin:15px 0}
+.custom3d h4{margin:0 0 7px;color:var(--navy);font-size:13px}
+.custom3dToolbar{display:flex;align-items:end;gap:8px;flex-wrap:wrap;margin:10px 0}
+.custom3dToolbar label{margin:0;min-width:100px;flex:1 1 110px}
+.custom3dToolbar input,.custom3dToolbar select{margin-top:4px}
+.custom3dToolbar button{padding:10px 12px;min-height:40px}
+.custom3dCanvasWrap{position:relative;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+#custom3dCanvas{height:400px;touch-action:none;cursor:crosshair}
+.custom3dHelp{font-size:11px;color:var(--muted);margin:8px 0;line-height:1.55}
+.custom3dTable{max-height:310px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:#fff}
+.custom3dTable table{min-width:640px;margin:0}
+.custom3dTable input,.custom3dTable select{font-size:11px;padding:6px 7px;min-width:72px}
+.custom3dEmpty{font-size:11px;color:var(--muted);padding:12px;background:#fff;border:1px dashed var(--line);border-radius:9px}
+.custom3dState{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:9px 0;font-size:11px;color:var(--navy)}
+.custom3dState strong{font-weight:800}
+.custom3dBadge{display:inline-flex;padding:4px 8px;border-radius:999px;background:#e9f1f8;border:1px solid #cadbe9;color:#3e6683;font-size:10px}
+.workflowBanner{border:1px solid var(--line);background:var(--soft);padding:9px 12px;border-radius:9px;margin-bottom:14px;display:flex;gap:12px;justify-content:space-between;align-items:center}
+.workflowBanner strong{font-size:12px;color:var(--navy)}.workflowBanner span{font-size:10px;color:var(--muted)}
+.workflowOnly{display:none}.workflowOnly.workflowShow{display:block}.fieldHidden{display:none!important}
+.v18QA{padding:10px;margin:12px 0;border:1px solid var(--line);background:var(--soft);border-radius:10px;font-size:11px;color:var(--ink)}
+.v18QA b{color:var(--navy)}
+@media(max-width:650px){#custom3dCanvas{height:320px}.custom3dToolbar label{flex:1 1 42%}.workflowBanner{display:block}}
 </style>
 </head>
 <body>
@@ -284,7 +315,7 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
           <p class="prefHelp" data-ui-pl="Ustawienia zapisują się automatycznie. Panel zamyka się po wyborze.">Ustawienia zapisują się automatycznie. Panel zamyka się po wyborze.</p>
         </div>
       </div>
-      <button class="soft" id="bcoreSendQuote" type="button" style="background:#c88b48;color:#14191f">Wyślij zapytanie do B-CORE</button><button class="ghost" id="v14NewProject" type="button">Nowy projekt</button><button class="ghost" id="v16BackupBtn" type="button" title="Zapisz lokalną kopię projektu">Kopia</button><button class="ghost" id="v16RestoreBtn" type="button" title="Przywróć poprzednią lokalną kopię">Przywróć</button><button class="ghost" id="exportBtn">Eksport projektu</button>
+      <button class="ghost" id="v14NewProject" type="button">Nowy projekt</button><button class="ghost" id="v16BackupBtn" type="button" title="Zapisz lokalną kopię projektu">Kopia</button><button class="ghost" id="v16RestoreBtn" type="button" title="Przywróć poprzednią lokalną kopię">Przywróć</button><button class="ghost" id="exportBtn">Eksport projektu</button>
       <label class="btn ghost">Import<input id="importInput" type="file" accept=".json" hidden></label>
       <button type="button" class="ghost" id="advancedModeBtn" title="Pokaż / ukryj zaawansowane narzędzia">⚙ <span id="advancedModeLabel">Zaawansowane</span></button>
       <button class="soft" id="bomCsvBtn">BOM CSV</button>
@@ -394,6 +425,7 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
 <div class="step" data-step-pane="2">
   <div class="stepHead"><h2>2. Geometria i wymiary</h2><p>Podaj rzeczywiste wymiary. Program liczy mb i podstawowe ilości materiałowe.</p></div>
   <div class="stepBody">
+    <div class="workflowBanner"><strong id="workflowTitle2">Tryb produktu</strong><span id="workflowDesc2">Widoczne są tylko pola właściwe dla wybranego produktu.</span></div>
 
     <div id="linearGeometry">
       <div class="section">
@@ -414,6 +446,30 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
         <button id="addSegment" class="ghost">+ Dodaj segment</button>
       </div>
     </div>
+
+
+    <section id="custom3dSection" class="custom3d hidden" aria-label="Edytor własnej konstrukcji przestrzennej">
+      <h4>Własna konstrukcja — rysowanie przestrzenne 3D</h4>
+      <p class="custom3dHelp">Wybierz płaszczyznę XY / XZ / YZ i kliknij dwa punkty, aby narysować profil. Ustaw odsunięcie płaszczyzny dla trzeciej osi, aby tworzyć belki na różnych wysokościach. Każdy odcinek trafia do 3D, materiałówki, listy cięcia i dokumentacji producenta. Osobno można wpisać dokładne współrzędne w tabeli.</p>
+      <div class="custom3dToolbar">
+        <label>Płaszczyzna rysowania<select id="customPlane"><option value="XY">XY — rzut z góry</option><option value="XZ">XZ — elewacja</option><option value="YZ">YZ — bok</option></select></label>
+        <label>Poziom trzeciej osi [m]<input id="customDepth" type="number" min="-30" max="30" step="0.05" value="0"></label>
+        <label>Siatka [m]<select id="customGrid"><option value="0.05">0,05 m</option><option value="0.1" selected>0,10 m</option><option value="0.25">0,25 m</option><option value="0.5">0,50 m</option><option value="1">1,00 m</option></select></label>
+        <label>Profil nowego elementu<select id="customProfile"><option>40x40x2</option><option>50x40x2</option><option>50x50x2</option><option>60x40x2</option><option>60x60x3</option><option>80x40x3</option><option>100x50x3</option><option>100x100x4</option><option>Ø42.4x2</option><option>Ø48.3x2</option></select></label>
+      </div>
+      <div class="custom3dToolbar">
+        <button id="customToolDraw" type="button">✎ Rysuj profil</button>
+        <button id="customToolPick" type="button" class="ghost">↗ Zaznacz / przesuń punkt</button>
+        <button id="customAddCoords" type="button" class="ghost">＋ Dodaj odcinek</button>
+        <button id="customCancel" type="button" class="ghost">Anuluj linię</button>
+        <button id="customFit" type="button" class="ghost">Dopasuj</button>
+        <button id="customZoomIn" type="button" class="ghost">＋</button><button id="customZoomOut" type="button" class="ghost">−</button>
+      </div>
+      <div class="custom3dCanvasWrap"><canvas id="custom3dCanvas" aria-label="Rysunek konstrukcji na wybranej płaszczyźnie. Dwukrotne wskazanie punktów tworzy profil."></canvas></div>
+      <div class="custom3dState"><span id="custom3dStatus">Kliknij pierwszy punkt nowego profilu</span><span id="custom3dCount" class="custom3dBadge">0 profili</span></div>
+      <div class="custom3dTable"><table><thead><tr><th>ID / profil</th><th>X1/Y1/Z1 [m]</th><th>X2/Y2/Z2 [m]</th><th>Długość</th><th>Usuń</th></tr></thead><tbody id="custom3dRows"></tbody></table></div>
+      <div class="custom3dHelp">Obrót całego modelu X/Y/Z oraz Explode znajdziesz w kroku 6. W tym edytorze rysujesz w widoku płaskim wybranej płaszczyzny, aby zachować precyzyjne współrzędne. Narysowane profile bez wspólnych węzłów są oznaczane jako wymagające sprawdzenia połączenia.</div>
+    </section>
 
     <div id="stairsGeometry" class="hidden">
       <div class="section"><h4>Schody</h4>
@@ -446,6 +502,33 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
         </div>
       </div>
     </div>
+    <div id="gateGeometry" class="hidden">
+      <div class="section"><h4>Geometria bramy / furtki</h4><div class="grid3">
+        <div><label>Światło otworu [m]</label><input id="gateOpening" type="number" step="0.01"></div>
+        <div><label>Wysokość skrzydła [cm]</label><input id="gateHeight" type="number"></div>
+        <div><label>Liczba skrzydeł</label><select id="gateLeaves"><option value="1">1 skrzydło</option><option value="2">2 skrzydła</option></select></div>
+        <div><label>Szczelina dolna [mm]</label><input id="gateBottomGap" type="number"></div>
+        <div><label>Typ</label><select id="gateOpeningType"><option>Rozwierna</option><option>Przesuwna</option><option>Furtka</option></select></div>
+        <div><label>Strona zawiasów</label><select id="gateHingeSide"><option>Lewa</option><option>Prawa</option><option>Obustronnie</option></select></div>
+      </div></div>
+    </div>
+    <div id="platformGeometry" class="hidden">
+      <div class="section"><h4>Geometria podestu / pomostu</h4><div class="grid3">
+        <div><label>Długość [m]</label><input id="platformL" type="number" step="0.01"></div>
+        <div><label>Szerokość [m]</label><input id="platformW" type="number" step="0.01"></div>
+        <div><label>Wysokość [m]</label><input id="platformH" type="number" step="0.01"></div>
+        <div><label>Rodzaj pomostu</label><select id="platformDeck"><option>Krata WEMA</option><option>Blacha ryflowana</option><option>Blacha pełna</option><option>Drewno / WPC</option></select></div>
+        <div><label>Balustrada — liczba boków</label><select id="platformRailSides"><option value="0">Bez balustrady</option><option value="1">1 bok</option><option value="2">2 boki</option><option value="3">3 boki</option><option value="4">4 boki</option></select></div>
+        <div><label>Liczba podpór</label><input id="platformLegs" type="number" min="2"></div>
+      </div></div>
+    </div>
+    <div id="fenceGeometryExtra" class="hidden">
+      <div class="section"><h4>Warunki ogrodzenia</h4><div class="grid3">
+        <div><label>Teren</label><select id="fenceTerrain"><option>Poziomo</option><option>Spadek — stopniowanie</option><option>Spadek — po terenie</option></select></div>
+        <div><label>Osadzenie słupków</label><select id="fencePostInstall"><option>Betonowane w gruncie</option><option>Na stopach stalowych</option><option>Na murku / fundamencie</option></select></div>
+        <div><label>Głębokość osadzenia [mm]</label><input id="fenceEmbed" type="number"></div>
+      </div></div>
+    </div>
 
     <div class="inlinePreview"><div class="previewCap"><span>Rysunek geometryczny z wymiarami</span><span id="geometryCaption"></span></div><canvas id="miniGeometry"></canvas><div class="previewExplain">Widok pokazuje tylko geometrię: odcinki, kąty i wymiary. Etykiety są odsunięte od konstrukcji, aby się nie nakładały.</div></div>
   </div>
@@ -455,18 +538,20 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
 <div class="step" data-step-pane="3">
   <div class="stepHead"><h2>3. Konstrukcja, profile i wypełnienie</h2><p>Te dane są kluczowe dla masy, powierzchni zabezpieczenia oraz robocizny.</p></div>
   <div class="stepBody">
-    <div class="section"><h4>Materiał i profile</h4>
+    <div class="workflowBanner"><strong id="workflowTitle3">Tryb produktu</strong><span id="workflowDesc3">Widoczne są tylko pola właściwe dla wybranego produktu.</span></div>
+    <div class="section" id="materialSection"><h4 id="materialSectionTitle">Materiał i profile</h4>
       <div class="grid2">
         <div><label>Materiał bazowy</label><select id="material"><option>Stal czarna S235</option><option>Stal czarna S355</option><option>Stal nierdzewna AISI 304</option><option>Stal nierdzewna AISI 316</option><option>Aluminium</option></select></div>
         <div><label>Profil słupków / słupów</label><select id="postProfile"><option>40x40x2</option><option>50x40x2</option><option>50x50x2</option><option>60x40x2</option><option>60x60x3</option><option>80x40x3</option><option>100x100x4</option></select></div>
         <div><label>Profil górny / belka</label><select id="topProfile"><option>40x40x2</option><option>50x40x2</option><option>50x50x2</option><option>60x40x2</option><option>80x40x3</option><option>100x50x3</option><option>Ø42.4x2</option><option>Ø48.3x2</option><option>IPE/HEA wg projektu</option></select></div>
         <div><label>Profil dolny / rygiel</label><select id="bottomProfile"><option>40x40x2</option><option>50x40x2</option><option>50x50x2</option><option>60x40x2</option><option>80x40x3</option><option>Brak</option></select></div>
+        <div id="frameBraceField" class="fieldHidden"><label>Profil stężeń</label><select id="frameBraceProfile"><option>40x40x2</option><option>50x40x2</option><option>60x40x2</option><option>60x60x3</option><option>80x40x3</option></select></div>
         <div><label>Spawy</label><select id="weld"><option>Standard</option><option>Szlifowane widoczne</option><option>Pełne ciągłe</option><option>Wg WPS / projektu</option></select></div>
         <div><label>Tolerancja wykonania</label><select id="tolerance"><option>Standard ±3 mm</option><option>Dokładna ±1 mm</option><option>Wg rysunku</option></select></div>
       </div>
     </div>
 
-    <div class="section" id="infillSection"><h4>Wypełnienie</h4>
+    <div class="section" id="infillSection"><h4 id="infillSectionTitle">Wypełnienie</h4>
       <div class="grid2">
         <div><label>Rodzaj</label><select id="infill"><option value="none">Brak</option><option value="bars">Pionowe profile / pręty</option><option value="hbars">Poziome profile</option><option value="glass">Szkło</option><option value="sheet">Blacha pełna</option><option value="perforated">Blacha perforowana</option><option value="mesh">Siatka cięto-ciągniona</option><option value="wood">Drewno / WPC</option></select></div>
         <div><label>Rozstaw / prześwit [mm]</label><input id="infillSpacing" type="number"></div>
@@ -477,8 +562,8 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
       </div>
     </div>
 
-    <div class="section">
-      <h4>Kryteria wstępnej kontroli technicznej</h4>
+    <div class="section" id="criteriaSection">
+      <h4 id="criteriaSectionTitle">Kryteria wstępnej kontroli technicznej</h4>
       <div class="designCriteria">
         <div class="grid3">
           <div><label>Wymagane obciążenie poziome [kN/m]</label><input id="designLineLoad" type="number" step="0.1" min="0" value="0.5"></div>
@@ -496,7 +581,7 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
       </div>
     </div>
 
-    <div class="section"><h4>Detale produkcyjne</h4>
+    <div class="section" id="productionDetailsSection"><h4>Detale produkcyjne</h4>
       <div class="grid2">
         <div><label>Zaślepki profili</label><select id="caps"><option>Zaślepki spawane</option><option>Zaślepki tworzywowe</option><option>Otwarte technologicznie</option></select></div>
         <div><label>Gratowanie / zaokrąglenie krawędzi</label><select id="deburr"><option>Tak</option><option>Nie</option></select></div>
@@ -505,7 +590,23 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
       </div>
     </div>
 
-    <div class="inlinePreview"><div class="previewCap"><span>Detal konstrukcji i wypełnienia</span><span id="structureCaption"></span></div><canvas id="miniStructure"></canvas><div class="previewExplain">Detal jednego pola pokazujący słupki, profil górny/dolny i dokładnie wybrany rodzaj wypełnienia.</div></div>
+    <div id="stairsStructureExtra" class="workflowOnly"><div class="section"><h4>Elementy schodów</h4><div class="grid3">
+      <div><label>Profil policzków / belek</label><select id="stairStringerProfile"><option>100x50x3</option><option>80x40x3</option><option>60x40x2</option><option>IPE/HEA wg projektu</option></select></div>
+      <div><label>Profil poręczy</label><select id="stairHandrailProfile"><option>50x40x2</option><option>40x40x2</option><option>Ø42.4x2</option><option>Ø48.3x2</option></select></div>
+      <div><label>Profil słupków balustrady</label><select id="stairPostProfile"><option>40x40x2</option><option>50x50x2</option><option>60x40x2</option></select></div>
+      <div><label>Wspornik stopnia</label><select id="stairTreadSupport"><option>40x40x2</option><option>50x40x2</option><option>Kątownik wg projektu</option><option>Bez osobnej ramy</option></select></div>
+      <div><label>Podstopnica</label><select id="stairRiser"><option>Brak</option><option>Blacha</option><option>Inne</option></select></div>
+      <div><label>Krawędź antypoślizgowa</label><select id="stairNosing"><option>Standard</option><option>Antypoślizgowe</option><option>Nie dotyczy</option></select></div>
+    </div></div></div>
+    <div id="gateStructureExtra" class="workflowOnly"><div class="section"><h4>Rama i osprzęt bramy</h4><div class="grid3">
+      <div><label>Profil ramy skrzydła</label><select id="gateFrameProfile"><option>60x40x2</option><option>60x60x3</option><option>80x40x3</option><option>100x50x3</option></select></div>
+      <div><label>Profil słupów</label><select id="gatePostProfile"><option>80x80x3</option><option>100x100x4</option><option>120x120x4</option></select></div>
+      <div><label>Zawiasy</label><select id="gateHinges"><option>Regulowane</option><option>Spawane</option><option>Wg systemu</option></select></div>
+      <div><label>Zamek / rygiel</label><select id="gateLock"><option>Rygiel ręczny</option><option>Zamek furtkowy</option><option>Elektrozaczep</option><option>Wg systemu</option></select></div>
+      <div><label>Automatyka</label><select id="gateAutomation"><option>Nie</option><option>Tak — przygotowanie</option><option>Tak — komplet</option></select></div>
+      <div><label>Odboje</label><select id="gateStops"><option>Tak</option><option>Nie</option><option>Wg systemu</option></select></div>
+    </div></div></div>
+    <div class="inlinePreview"><div class="previewCap"><span id="structurePreviewTitle">Detal konstrukcji</span><span id="structureCaption"></span></div><canvas id="miniStructure"></canvas><div class="previewExplain">Podgląd pokazuje detale właściwe dla wybranego produktu.</div></div>
   </div>
   <div class="stepNav"><button class="ghost" data-prev="2">← Wstecz</button><button data-next="4">Dalej →</button></div>
 </div>
@@ -513,7 +614,8 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
 <div class="step" data-step-pane="4">
   <div class="stepHead"><h2>4. Mocowania i warunki podłoża</h2><p>Wycena mocowań zależy nie tylko od kotwy, ale też od podłoża, odległości od krawędzi i dostępu montażowego.</p></div>
   <div class="stepBody">
-    <div class="section"><h4>Podłoże / miejsce montażu</h4>
+    <div class="workflowBanner"><strong id="workflowTitle4">Tryb produktu</strong><span id="workflowDesc4">Widoczne są tylko pola właściwe dla wybranego produktu.</span></div>
+    <div class="section" id="substrateSection"><h4 id="substrateSectionTitle">Podłoże / miejsce montażu</h4>
       <div class="grid2">
         <div><label>Podłoże</label><select id="substrate"><option>Nieustalone</option><option>Beton zbrojony</option><option>Beton</option><option>Mur pełny</option><option>Mur pustak</option><option>Konstrukcja stalowa</option><option>Drewno</option><option>Inne</option></select></div>
         <div><label>Grubość podłoża / płyty [mm]</label><input id="substrateThickness" type="number"></div>
@@ -524,7 +626,7 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
       </div>
     </div>
 
-    <div class="section"><h4>Mocowanie</h4>
+    <div class="section" id="mountingSection"><h4 id="mountingSectionTitle">Mocowanie</h4>
       <div class="grid2">
         <div><label>Tryb rozmieszczenia mocowań</label><select id="mountMode"><option value="auto">Automatycznie przy słupkach</option><option value="custom">Ręcznie / dowolne położenie</option></select></div>
         <div><label>Domyślna lokalizacja / płaszczyzna</label><select id="mountType"><option value="top">Od góry do płyty</option><option value="face">Do czoła / boku</option><option value="underside">Od spodu balkonu</option><option value="wall">Do ściany / skrzydełka</option><option value="steel">Do konstrukcji stalowej</option><option value="embedded">Do marek / kotew wbetonowanych</option></select></div>
@@ -534,7 +636,7 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
       </div>
     </div>
 
-    <div class="section"><h4>Blacha mocująca / stopa</h4>
+    <div class="section" id="plateSection"><h4>Blacha mocująca / stopa</h4>
       <div class="grid3">
         <div><label>Szerokość [mm]</label><input id="plateW" type="number"></div>
         <div><label>Wysokość [mm]</label><input id="plateH" type="number"></div>
@@ -597,7 +699,21 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
       <div id="customMountList" class="mountList"></div>
     </div>
 
-    <div class="twoPreview"><div class="inlinePreview"><div class="previewCap"><span>Przekrój mocowania</span><span id="mountCaption"></span></div><canvas id="miniMount"></canvas><div class="previewExplain">Widok z boku: słupek, stopa, podłoże, izolacja i kotwy. W trybie ręcznym pokazuje typ zaznaczonego mocowania.</div></div><div class="inlinePreview"><div class="previewCap"><span>Blacha i układ otworów</span><span id="plateCaption"></span></div><canvas id="miniPlate"></canvas><div class="previewExplain">Rzut blachy z liczbą, średnicą i odsunięciem otworów.</div></div></div>
+    <div id="stairsMountExtra" class="workflowOnly"><div class="section"><h4>Połączenia schodów z obiektem</h4><div class="grid2">
+      <div><label>Mocowanie dolne</label><select id="stairBottomFix"><option>Stopa do betonu</option><option>Do konstrukcji stalowej</option><option>Wg projektu</option></select></div>
+      <div><label>Mocowanie górne</label><select id="stairTopFix"><option>Blacha czołowa</option><option>Na belce / podciągu</option><option>Do podestu</option><option>Wg projektu</option></select></div>
+    </div></div></div>
+    <div id="gateMountExtra" class="workflowOnly"><div class="section"><h4>Fundament / mocowanie słupów bramy</h4><div class="grid3">
+      <div><label>Sposób posadowienia</label><select id="gateFoundation"><option>Fundament betonowy</option><option>Stopy na istniejącym betonie</option><option>Do konstrukcji stalowej</option></select></div>
+      <div><label>Szerokość fundamentu [mm]</label><input id="gateFoundationW" type="number"></div>
+      <div><label>Głębokość fundamentu [mm]</label><input id="gateFoundationD" type="number"></div>
+    </div></div></div>
+    <div id="fenceMountExtra" class="workflowOnly"><div class="section"><h4>Posadowienie ogrodzenia</h4><div class="grid3">
+      <div><label>Sposób montażu</label><select id="fenceMountSystem"><option>Betonowane słupki</option><option>Stopa stalowa + kotwy</option><option>Do murku</option></select></div>
+      <div><label>Szerokość fundamentu [mm]</label><input id="fenceFoundationW" type="number"></div>
+      <div><label>Głębokość fundamentu [mm]</label><input id="fenceFoundationD" type="number"></div>
+    </div></div></div>
+    <div class="twoPreview"><div class="inlinePreview"><div class="previewCap"><span id="mountPreviewTitle">Przekrój mocowania</span><span id="mountCaption"></span></div><canvas id="miniMount"></canvas><div class="previewExplain">Podgląd pokazuje sposób zamocowania właściwy dla produktu.</div></div><div class="inlinePreview" id="platePreviewBox"><div class="previewCap"><span>Blacha i układ otworów</span><span id="plateCaption"></span></div><canvas id="miniPlate"></canvas><div class="previewExplain">Rzut blachy z liczbą, średnicą i odsunięciem otworów.</div></div></div>
     <div class="notice warn" style="margin-top:9px">Program porządkuje dane do wyceny. Ostateczny dobór kotew, blach i odległości od krawędzi wymaga zatwierdzenia technicznego.</div>
   </div>
   <div class="stepNav"><button class="ghost" data-prev="3">← Wstecz</button><button data-next="5">Dalej →</button></div>
@@ -606,6 +722,7 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
 <div class="step" data-step-pane="5">
   <div class="stepHead"><h2>5. Finalizacja, dokumentacja i logistyka</h2><p>Te informacje ograniczają późniejsze dopłaty i pytania przy wycenie.</p></div>
   <div class="stepBody">
+    <div class="workflowBanner"><strong id="workflowTitle5">Tryb produktu</strong><span id="workflowDesc5">Widoczne są tylko pola właściwe dla wybranego produktu.</span></div>
     <div class="section"><h4>Finalizacja powierzchni</h4>
       <div class="grid2">
         <div><label>Wykończenie</label><select id="finish"><option value="raw">Stal surowa / bez zabezpieczenia</option><option value="galv">Ocynk ogniowy</option><option value="powder">Malowanie proszkowe</option><option value="galvpowder">Ocynk ogniowy + malowanie proszkowe</option><option value="stainless">Nierdzewna — szlif / satyna</option></select></div>
@@ -839,6 +956,7 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
       </div>
     </div>
 
+    <div id="v18ProductAudit" class="v18QA">Kontrola ścieżki produktu.</div>
     <div class="section" style="margin-top:15px"><h4>Kompletność danych do wyceny</h4>
       <div class="score"><div class="scoreBar"><div id="scoreFill" class="scoreFill"></div></div><div id="scoreNum" class="scoreNum">0%</div></div>
       <div id="warnings" class="notice warn" style="margin-top:9px"></div>
@@ -871,7 +989,7 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
       <table><thead><tr><th>Poz.</th><th>Produkt</th><th>1 szt.</th><th>Ilość</th><th>Razem</th><th>Finalizacja</th></tr></thead><tbody id="orderBody"></tbody></table>
     </div>
 
-    <div class="actions noPrint"><button type="button" id="bcoreSendQuoteFinal" style="background:#c88b48;color:#14191f">Wyślij kompletny projekt do B-CORE</button><button id="copyOrder">Kopiuj pełne zamówienie</button><button class="ghost" id="v15PrintBottom" type="button">Zapisz PDF</button></div>
+    <div class="actions noPrint"><button id="copyOrder">Kopiuj pełne zamówienie</button><button class="ghost" id="v15PrintBottom" type="button">Zapisz PDF</button></div>
   </div>
   <div class="stepNav"><button class="ghost" data-prev="5">← Wstecz</button><span></span></div>
 </div>
@@ -905,6 +1023,20 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
 </div>
 
 <script>
+/* Preserve locally saved projects from the previously deployed B-CORE v16. */
+try {
+  if (!localStorage.getItem("steelvision-v14") && !localStorage.getItem("steelvision-v13") && !localStorage.getItem("steelvision-v12")) {
+    const previous = localStorage.getItem("bcore-steelvision-v12");
+    if (previous) {
+      const parsed = JSON.parse(previous);
+      if (Array.isArray(parsed?.state?.items) && parsed.state.items.length) {
+        localStorage.setItem("steelvision-v14", JSON.stringify({state:parsed.state,project:parsed.project || {}}));
+      }
+    }
+  }
+} catch (_) { /* unavailable storage: continue without migration */ }
+</script>
+<script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const products=[
  {id:"railing",icon:"▥",name:"Balustrada",desc:"Balkon, taras, schody; I/L/U/dowolna."},
@@ -928,7 +1060,12 @@ const D={
  shopDrawings:"Tak",structuralCalc:"Do ustalenia",executionClass:"Nie określono",cert31:"Nie",wps:"Nie",coatingDocs:"Nie",engineeringApproval:"Do weryfikacji",
  scope:"Tylko produkcja",packing:"Standard",floorLevel:"",liftingAccess:"Nie dotyczy",siteAccess:"Nieustalone",siteProtection:"Standard",
  stairSteps:10,stairRise:17.5,stairRun:28,stairWidth:100,stairSides:2,landingLen:0,stairStringers:2,treadType:"Krata WEMA",topLanding:"Nie",
- frameL:4,frameW:3,frameH:2.5,baysL:2,baysW:1,levels:1,bracing:"Brak",topFrame:"Tak",bottomFrame:"Nie"
+ frameL:4,frameW:3,frameH:2.5,baysL:2,baysW:1,levels:1,bracing:"Brak",topFrame:"Tak",bottomFrame:"Nie",
+ gateOpening:3.5,gateHeight:150,gateLeaves:2,gateBottomGap:50,gateOpeningType:"Rozwierna",gateHingeSide:"Lewa",
+ gateFrameProfile:"60x40x2",gatePostProfile:"100x100x4",gateHinges:"Regulowane",gateLock:"Rygiel ręczny",gateAutomation:"Nie",gateStops:"Tak",gateFoundation:"Fundament betonowy",gateFoundationW:400,gateFoundationD:900,
+ fenceTerrain:"Poziomo",fencePostInstall:"Betonowane w gruncie",fenceEmbed:700,fenceMountSystem:"Betonowane słupki",fenceFoundationW:300,fenceFoundationD:800,
+ platformL:3,platformW:1.2,platformH:1,platformDeck:"Krata WEMA",platformRailSides:3,platformLegs:4,
+ stairStringerProfile:"100x50x3",stairHandrailProfile:"50x40x2",stairPostProfile:"40x40x2",stairTreadSupport:"40x40x2",stairRiser:"Brak",stairNosing:"Antypoślizgowe",stairBottomFix:"Stopa do betonu",stairTopFix:"Blacha czołowa"
 };
 function defaultItem(type="railing",name="Balustrada 1",front=5.13){
  return {...JSON.parse(JSON.stringify(D)),type,name,segments:[
@@ -939,7 +1076,7 @@ function defaultItem(type="railing",name="Balustrada 1",front=5.13){
 }
 function current(){return state.items[state.selected]}
 function typeName(id){return products.find(p=>p.id===id)?.name||id}
-function linear(it){return ["railing","fence","gate","platform","screen","custom"].includes(it.type)}
+function linear(it){return ["railing","fence","screen","custom"].includes(it.type)}
 function finishName(v){return ({raw:"stal surowa",galv:"ocynk ogniowy",powder:"malowanie proszkowe",galvpowder:"ocynk + proszek",stainless:"nierdzewna — szlif/satyna"})[v]||v}
 function pieceLength(it){
  if(it.type==="stairs"){
@@ -947,6 +1084,12 @@ function pieceLength(it){
    const rails=(slope+(+it.landingLen||0))*(+it.stairSides||0);
    const stringers=slope*(+it.stairStringers||0);
    return rails+stringers;
+ }
+ if(it.type==="gate")return Math.max(0,+it.gateOpening||0)*(+it.gateLeaves||1);
+ if(it.type==="platform"){
+   const L=+it.platformL||0,W=+it.platformW||0,H=+it.platformH||0,legs=Math.max(2,+it.platformLegs||4),sides=Math.max(0,+it.platformRailSides||0);
+   const rail=sides===1?L:sides===2?L+W:sides===3?2*L+W:sides>=4?2*(L+W):0;
+   return 2*(L+W)+legs*H+rail;
  }
  if(it.type==="frame"){
    const L=+it.frameL||0,W=+it.frameW||0,H=+it.frameH||0,bL=Math.max(1,+it.baysL||1),bW=Math.max(1,+it.baysW||1),lev=Math.max(1,+it.levels||1);
@@ -972,6 +1115,8 @@ function v14LinearPostLayout(it){
 function postsPerPiece(it){
  if(it.type==="frame")return (Math.max(1,+it.baysL||1)+1)*(Math.max(1,+it.baysW||1)+1);
  if(it.type==="stairs")return Math.max(0,(+it.stairSides||0)*(Math.ceil((it.stairSteps*it.stairRun/100)/1)+1));
+ if(it.type==="gate")return (+it.gateLeaves||1)===2?2:1;
+ if(it.type==="platform")return Math.max(2,+it.platformLegs||4);
  if(!linear(it))return 0;
  return v14LinearPostLayout(it).length;
 }
@@ -1016,9 +1161,16 @@ function bomForItem(it){
    if(it.bottomFrame==="Tak")add("Dolna rama",it.bottomProfile,(bW+1)*L+(bL+1)*W,1);
  }else if(it.type==="stairs"){
    const run=it.stairSteps*it.stairRun/100,rise=it.stairSteps*it.stairRise/100,slope=Math.hypot(run,rise);
-   add("Policzki / belki schodowe",it.topProfile,slope*(+it.stairStringers||0),+it.stairStringers||0);
-   add("Poręcze schodowe",it.topProfile,(slope+(+it.landingLen||0))*(+it.stairSides||0),+it.stairSides||0);
-   add("Słupki balustrady",it.postProfile,postsPerPiece(it)*(+it.height||105)/100,postsPerPiece(it));
+   add("Policzki / belki schodowe",it.stairStringerProfile,slope*(+it.stairStringers||0),+it.stairStringers||0);
+   if(+it.stairSides){add("Poręcze schodowe",it.stairHandrailProfile,(slope+(+it.landingLen||0))*(+it.stairSides||0),+it.stairSides||0);add("Słupki balustrady",it.stairPostProfile,postsPerPiece(it)*(+it.height||105)/100,postsPerPiece(it))}
+   rows.push({name:"Stopnie",spec:it.treadType,length:null,count:(+it.stairSteps||0)*q,mass:null,area:null});
+ }else if(it.type==="gate"){
+   const leaves=Math.max(1,+it.gateLeaves||1),W=(+it.gateOpening||0)/leaves,H=(+it.gateHeight||150)/100;
+   add("Rama skrzydła",it.gateFrameProfile,leaves*2*(W+H),leaves);add("Słupy bramy",it.gatePostProfile,2*H,2);
+   rows.push({name:"Zawiasy",spec:it.gateHinges,length:null,count:2*leaves*q,mass:null,area:null});rows.push({name:"Zamek / rygiel",spec:it.gateLock,length:null,count:q,mass:null,area:null});
+ }else if(it.type==="platform"){
+   const L=+it.platformL||0,W=+it.platformW||0,H=+it.platformH||0,legs=Math.max(2,+it.platformLegs||4);
+   add("Rama podestu",it.topProfile,2*(L+W),1);add("Podpory / nogi",it.postProfile,legs*H,legs);rows.push({name:"Pomost",spec:it.platformDeck,length:null,count:q,mass:null,area:L*W*q});
  }else{
    const per=it.segments.reduce((s,x)=>s+(+x.length||0),0),posts=postsPerPiece(it),usable=Math.max(0,(+it.height||105)/100-(+it.bottomGap||0)/1000);
    add("Profil górny",it.topProfile,per,1);
@@ -1036,6 +1188,7 @@ function bomForItem(it){
      const area=per*Math.max(0,usable-.1)*q;rows.push({name:"Panele / wypełnienie",spec:it.infill,length:null,count:it.segments.length*q,mass:null,area})
    }
  }
+ if(["fence","gate"].includes(it.type))return rows;
  if(it.mountMode==="custom"){
    const groups={};it.customMounts.forEach(m=>{const s=effectiveMountSpec(it,m),key=[s.plateW,s.plateH,s.plateT,s.anchorType,s.anchorDia,s.holeCount,s.holeDia].join("|");if(!groups[key])groups[key]={s,count:0};groups[key].count++});
    Object.values(groups).forEach(g=>{const s=g.s,pc=g.count*q,plateMass=(+s.plateW||0)*(+s.plateH||0)*(+s.plateT||0)*7.85e-6*pc,area=(2*((s.plateW*s.plateH)+(s.plateW*s.plateT)+(s.plateH*s.plateT))*1e-6)*pc;rows.push({name:"Blachy mocujące",spec:`${s.plateW}x${s.plateH}x${s.plateT} mm`,length:null,count:pc,mass:plateMass,area});rows.push({name:"Kotwy / łączniki",spec:`${s.anchorType} ${s.anchorDia}`,length:null,count:(+s.holeCount||0)*pc,mass:null,area:null})})
@@ -1056,31 +1209,79 @@ function initProductGrid(){
 }
 function adaptType(){
  const it=current();
+ if(it.type==="railing"){it.name="Balustrada"}
  if(it.type==="fence"){it.shape="I";it.height=120;it.bottomGap=50;it.name="Ogrodzenie"}
- if(it.type==="gate"){it.shape="I";it.height=150;it.name="Brama / furtka";it.segments=[{name:"Szerokość skrzydła",length:3.5,angle:0,jointType:"Koniec",jointGap:0}]}
+ if(it.type==="gate"){it.name="Brama / furtka";it.height=it.gateHeight;it.bottomGap=it.gateBottomGap}
  if(it.type==="screen"){it.shape="I";it.height=180;it.infill="sheet";it.name="Ścianka / osłona"}
- if(it.type==="custom"){it.shape="CUSTOM"}
- if(it.type==="stairs")it.name="Schody stalowe";
+ if(it.type==="custom"){it.shape="CUSTOM";it.name=it.name||"Element nietypowy"}
+ if(it.type==="stairs"){it.name="Schody stalowe";it.topProfile=it.stairStringerProfile;it.postProfile=it.stairPostProfile}
  if(it.type==="frame")it.name="Konstrukcja stalowa";
+ if(it.type==="platform"){it.name="Podest / pomost";it.frameL=it.platformL;it.frameW=it.platformW;it.frameH=it.platformH}
  updateVisibility()
 }
 function markProduct(){$$(".productCard").forEach(c=>c.classList.toggle("active",c.dataset.type===current().type));$("#typeCaption").textContent=typeName(current().type)}
+function showEl(id,show){const e=$("#"+id);if(e)e.classList.toggle("hidden",!show)}
+function showField(id,show){const e=$("#"+id);if(e){const wrap=e.closest(".grid2>div,.grid3>div");if(wrap)wrap.classList.toggle("fieldHidden",!show)}}
+function setLabelFor(id,text){const e=$("#"+id),lab=e?.closest("div")?.querySelector("label");if(lab)lab.textContent=text}
 function updateVisibility(){
- $("#linearGeometry").classList.toggle("hidden",!linear(current()));
- $("#stairsGeometry").classList.toggle("hidden",current().type!=="stairs");
- $("#frameGeometry").classList.toggle("hidden",current().type!=="frame");
- $("#infillSection").classList.toggle("hidden",current().type==="frame")
+ const it=current(),t=it.type,map={
+ railing:["Balustrada","Geometria balustrady → profile i wypełnienie → mocowania → finalizacja."],
+ fence:["Ogrodzenie","Linia ogrodzenia → słupki i przęsła → posadowienie → finalizacja."],
+ stairs:["Schody","Bieg i podest → policzki, stopnie i balustrady → połączenia górne/dolne → finalizacja."],
+ gate:["Brama / furtka","Światło i skrzydła → rama, zawiasy i osprzęt → fundament słupów → finalizacja."],
+ frame:["Konstrukcja stalowa","Gabaryty → słupy, belki i stężenia → stopy słupów → dokumentacja."],
+ platform:["Podest / pomost","Gabaryty → rama, pomost i balustrada → podpory → finalizacja."],
+ screen:["Ścianka / osłona","Linia osłony → rama i panel → mocowania → finalizacja."],
+ custom:["Element nietypowy","Uniwersalny workflow dla konstrukcji nietypowej."]
+ };
+ const wd=map[t]||map.custom;[2,3,4,5].forEach(i=>{if($("#workflowTitle"+i))$("#workflowTitle"+i).textContent="Tryb: "+wd[0];if($("#workflowDesc"+i))$("#workflowDesc"+i).textContent=wd[1]});
+
+ showEl("linearGeometry",["railing","fence","screen","custom"].includes(t));
+ showEl("stairsGeometry",t==="stairs");showEl("frameGeometry",t==="frame");showEl("gateGeometry",t==="gate");showEl("platformGeometry",t==="platform");showEl("fenceGeometryExtra",t==="fence");
+
+ showEl("materialSection",true);
+ showEl("infillSection",["railing","fence","gate","screen","custom"].includes(t)||(t==="stairs"&&(+it.stairSides||0)>0)||(t==="platform"&&(+it.platformRailSides||0)>0));
+ showEl("criteriaSection",["railing","stairs","frame","platform","custom"].includes(t));
+ showEl("productionDetailsSection",t!=="gate");
+ $("#stairsStructureExtra")?.classList.toggle("workflowShow",t==="stairs");$("#gateStructureExtra")?.classList.toggle("workflowShow",t==="gate");
+
+ showField("postProfile",!["stairs","gate"].includes(t));showField("topProfile",!["stairs","gate"].includes(t));showField("bottomProfile",!["stairs","gate"].includes(t));
+ if(t==="frame"){setLabelFor("postProfile","Profil słupów");setLabelFor("topProfile","Profil belek / rygli");setLabelFor("bottomProfile","Profil dolnej ramy")}
+ else if(t==="fence"){setLabelFor("postProfile","Profil słupków ogrodzenia");setLabelFor("topProfile","Profil górny przęsła");setLabelFor("bottomProfile","Profil dolny przęsła")}
+ else if(t==="screen"){setLabelFor("postProfile","Profil słupków / ramy");setLabelFor("topProfile","Profil górny ramy");setLabelFor("bottomProfile","Profil dolny ramy")}
+ else if(t==="platform"){setLabelFor("postProfile","Profil podpór / nóg");setLabelFor("topProfile","Profil ramy nośnej");setLabelFor("bottomProfile","Profil pomocniczy")}
+ else{setLabelFor("postProfile","Profil słupków");setLabelFor("topProfile","Profil górny / poręcz");setLabelFor("bottomProfile","Profil dolny / rygiel")}
+
+ const generic=["railing","screen","frame","platform","custom"].includes(t);
+ showEl("substrateSection",generic||t==="stairs");
+ showEl("mountingSection",generic);showEl("plateSection",generic||t==="stairs");
+ $("#stairsMountExtra")?.classList.toggle("workflowShow",t==="stairs");$("#gateMountExtra")?.classList.toggle("workflowShow",t==="gate");$("#fenceMountExtra")?.classList.toggle("workflowShow",t==="fence");
+ showEl("customMountEditor",generic&&it.mountMode==="custom"&&["railing","screen","custom"].includes(t));
+ showField("mountMode",["railing","screen","custom"].includes(t));
+ showEl("platePreviewBox",generic||t==="stairs");
+
+ if($("#materialSectionTitle"))$("#materialSectionTitle").textContent=({railing:"Materiał i profile balustrady",fence:"Słupki i profile przęseł",stairs:"Materiał schodów",gate:"Materiał bramy",frame:"Profile konstrukcyjne",platform:"Profile podestu",screen:"Rama osłony",custom:"Materiał i profile"})[t]||"Materiał i profile";
+ if($("#infillSectionTitle"))$("#infillSectionTitle").textContent=({railing:"Wypełnienie balustrady",fence:"Wypełnienie przęseł",stairs:"Balustrada schodowa",gate:"Wypełnienie skrzydła",platform:"Balustrada podestu",screen:"Panel / wypełnienie osłony",custom:"Wypełnienie"})[t]||"Wypełnienie";
+ if($("#structurePreviewTitle"))$("#structurePreviewTitle").textContent=t==="stairs"?"Detal schodów":t==="gate"?"Detal bramy":t==="frame"?"Detal konstrukcji":t==="platform"?"Detal podestu":"Detal konstrukcji";
+ if($("#mountPreviewTitle"))$("#mountPreviewTitle").textContent=t==="stairs"?"Połączenie schodów":t==="gate"?"Fundament słupa bramy":t==="fence"?"Posadowienie słupka":"Przekrój mocowania";
 }
 
 const itemIds=["itemName","qty","shape","height","bottomGap","postSpacing","leftEnd","rightEnd",
 "stairSteps","stairRise","stairRun","stairWidth","stairSides","landingLen","stairStringers","treadType","topLanding",
 "frameL","frameW","frameH","baysL","baysW","levels","bracing","topFrame","bottomFrame",
+"gateOpening","gateHeight","gateLeaves","gateBottomGap","gateOpeningType","gateHingeSide","gateFrameProfile","gatePostProfile","gateHinges","gateLock","gateAutomation","gateStops","gateFoundation","gateFoundationW","gateFoundationD",
+"fenceTerrain","fencePostInstall","fenceEmbed","fenceMountSystem","fenceFoundationW","fenceFoundationD",
+"platformL","platformW","platformH","platformDeck","platformRailSides","platformLegs",
+"stairStringerProfile","stairHandrailProfile","stairPostProfile","stairTreadSupport","stairRiser","stairNosing","stairBottomFix","stairTopFix",
 "material","postProfile","topProfile","bottomProfile","weld","tolerance","designLineLoad","screenGamma","deflectionRatio","maxOpeningMm","maxMountGapMm","maxUnsupportedEndMm","minPlateEdgeClearMm","minAnchorSpacingMm","minSubstrateEdgeMm","allowedJointGapMm","optimizerTargetPct","stockLengthM","kerfMm","minReusableOffcutMm","transportLimitM","infill","infillSpacing","infillProfile","infillMount","hbarCount","panelSplit","caps","deburr","ventHoles","drainHoles",
 "substrate","substrateThickness","insulationThickness","edgeDistance","waterproofing","undersideAccess","mountMode","mountType","anchorType","anchorDia","embedDepth","plateW","plateH","plateT","holeCount","holeDia","holeType","holeOffsetX","holeOffsetY","plateAtCorners",
 "finish","ral","powderTexture","gloss","environment","masking","finishNotes","shopDrawings","structuralCalc","executionClass","cert31","wps","coatingDocs","engineeringApproval","scope","packing","floorLevel","liftingAccess","siteAccess","siteProtection"];
 function saveForm(){
  const it=current();if(!it)return;
- itemIds.forEach(id=>{const el=$("#"+id);if(!el)return;const k=id==="itemName"?"name":id;it[k]=el.type==="number"?(parseFloat(el.value)||0):el.value})
+ itemIds.forEach(id=>{const el=$("#"+id);if(!el)return;const k=id==="itemName"?"name":id;it[k]=el.type==="number"?(parseFloat(el.value)||0):el.value});
+ if(it.type==="stairs"){it.topProfile=it.stairStringerProfile;it.postProfile=it.stairPostProfile}
+ if(it.type==="gate"){it.height=it.gateHeight;it.bottomGap=it.gateBottomGap;it.topProfile=it.gateFrameProfile;it.postProfile=it.gatePostProfile;it.segments=[{name:"Światło bramy",length:+it.gateOpening||0,angle:0,jointType:"Koniec",jointGap:0}]}
+ if(it.type==="platform"){it.frameL=it.platformL;it.frameW=it.platformW;it.frameH=it.platformH}
 }
 function uid(){return "m"+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function migrateItem(it){
@@ -1272,7 +1473,7 @@ function renderItems(){
  state.items.forEach((it,i)=>{const d=document.createElement("div");d.className="itemRow"+(i===state.selected?" active":"");d.innerHTML=`<strong>${escHtml(it.name)}</strong><div class="meta">${typeName(it.type)} • ${itemLength(it).toFixed(2)} mb • ${it.qty} szt.</div>`;d.onclick=()=>{saveForm();state.selected=i;loadForm();updateAll()};box.appendChild(d)})
 }
 function setStep(n){
- state.step=n;$$(".stepBtn").forEach(b=>b.classList.toggle("active",+b.dataset.step===n));$$(".step").forEach(p=>p.classList.toggle("active",+p.dataset.stepPane===n));
+ state.step=n;updateVisibility();$$(".stepBtn").forEach(b=>b.classList.toggle("active",+b.dataset.step===n));$$(".step").forEach(p=>p.classList.toggle("active",+p.dataset.stepPane===n));
  drawMinis();if(n===6){renderSummary();setTimeout(()=>{draw3D($("#view3d"),current(),mainCam,true);syncViewerControls()},30)}
  if(window.v14Ready)v14RenderGuide()
 }
@@ -1285,7 +1486,7 @@ $("#addSegment").onclick=()=>{if(current().segments.length)current().segments[cu
 $("#shape").onchange=applyShape;$("#finish").onchange=()=>{updateFinishControls();updateAll()};$("#mountMode").addEventListener("change",()=>{if($("#mountMode").value==="custom"&&!current().customMounts.length)generateMountsFromPosts(current());updateAll()});
 
 const projectIds=["projectName","projectRef","clientName","location","drawingRef","requiredDate","projectUse","projectStandard","revisionCode","documentStatus","preparedBy","checkedBy","approvedBy","revisionNote","projectNotes"];
-[...itemIds,...projectIds].forEach(id=>{const el=$("#"+id);if(el&&!["shape","finish"].includes(id))el.addEventListener("input",updateAll)});
+[...itemIds,...projectIds].forEach(id=>{const el=$("#"+id);if(el&&!["shape","finish"].includes(id))el.addEventListener("input",()=>{if(["stairSides","platformRailSides"].includes(id))updateVisibility();updateAll()})});
 
 function ralColor(it){
  if(!["powder","galvpowder"].includes(it.finish))return it.finish==="galv"?"#a7b1b9":it.finish==="raw"?"#596168":it.finish==="stainless"?"#c1c8ce":"#45515c";
@@ -1321,6 +1522,19 @@ function buildGeom(it){
    const L=+it.frameL||4,W=+it.frameW||3,H=+it.frameH||2.5,bL=Math.max(1,+it.baysL||1),bW=Math.max(1,+it.baysW||1),lev=Math.max(1,+it.levels||1);
    for(let i=0;i<=bL;i++)for(let j=0;j<=bW;j++){const x=L*i/bL,y=W*j/bW;add([x,y,0],[x,y,H],"post");plates.push({p:[x,y,0],w:.2,d:.2})}
    for(let k=1;k<=lev;k++){const z=H*k/lev;for(let j=0;j<=bW;j++)add([0,W*j/bW,z],[L,W*j/bW,z],"beam");for(let i=0;i<=bL;i++)add([L*i/bL,0,z],[L*i/bL,W,z],"beam")}
+   return {lines,plates,panels,anchors}
+ }
+ if(it.type==="gate"){
+   const total=+it.gateOpening||3.5,H=(+it.gateHeight||150)/100,leaves=Math.max(1,+it.gateLeaves||1),leaf=total/leaves;
+   for(let k=0;k<leaves;k++){const x0=k*leaf;add([x0,0,0],[x0+leaf,0,0],"beam");add([x0,0,H],[x0+leaf,0,H],"accent");add([x0,0,0],[x0,0,H],"post");add([x0+leaf,0,0],[x0+leaf,0,H],"post");add([x0,0,0],[x0+leaf,0,H],"beam")}
+   return {lines,plates,panels,anchors}
+ }
+ if(it.type==="platform"){
+   const L=+it.platformL||3,W=+it.platformW||1.2,H=+it.platformH||1,legs=Math.max(2,+it.platformLegs||4);
+   const c=[[0,0,H],[L,0,H],[L,W,H],[0,W,H]];for(let i=0;i<4;i++)add(c[i],c[(i+1)%4],"beam");
+   [[0,0],[L,0],[L,W],[0,W]].slice(0,Math.min(4,legs)).forEach(v=>add([v[0],v[1],0],[v[0],v[1],H],"post"));
+   const sides=Math.max(0,+it.platformRailSides||0),edges=[[[0,0,H],[L,0,H]],[[L,0,H],[L,W,H]],[[L,W,H],[0,W,H]],[[0,W,H],[0,0,H]]];
+   edges.slice(0,sides).forEach(([a,b])=>{add([a[0],a[1],H+1.05],[b[0],b[1],H+1.05],"accent");add(a,[a[0],a[1],H+1.05],"post");add(b,[b[0],b[1],H+1.05],"post")});
    return {lines,plates,panels,anchors}
  }
  if(it.type==="stairs"){
@@ -1394,11 +1608,6 @@ function draw3D(c,it,cam,fit=false){
  ctx.fillStyle="#627587";ctx.font="10px Segoe UI,Arial";ctx.textAlign="left";ctx.fillText(`Explode ${state.explode}% • ${state.viewerScope==="all"?"cały projekt":"bieżąca pozycja"} • ${state.viewerGroup}`,14,h-14)
 }
 const mainCam={rotX:-.58,rotY:0,rotZ:-.68,zoom:80,panX:0,panY:15};
-let svViewerFrame=0;
-function svQueueViewerDraw(){
- if(svViewerFrame)return;
- svViewerFrame=requestAnimationFrame(()=>{svViewerFrame=0;if(state.step===6)draw3D(document.getElementById('view3d'),current(),mainCam)});
-}
 function deg(v){return Math.round(v*180/Math.PI)}function rad(v){return (+v||0)*Math.PI/180}
 function syncViewerControls(){
  const ids=[["rotX",deg(mainCam.rotX),"rotXVal","°"],["rotY",deg(mainCam.rotY),"rotYVal","°"],["rotZ",deg(mainCam.rotZ),"rotZVal","°"],["explodeRange",state.explode,"explodeVal","%"],["zoomRange",Math.round(mainCam.zoom),"zoomVal",""]];ids.forEach(([id,v,vid,suf])=>{const e=$("#"+id),o=$("#"+vid);if(e)e.value=Math.max(+e.min||-999,Math.min(+e.max||999,v));if(o)o.textContent=Math.round(v)+suf});if($("#viewerScope"))$("#viewerScope").value=state.viewerScope;if($("#viewerGroup"))$("#viewerGroup").value=state.viewerGroup
@@ -1887,7 +2096,6 @@ function renderQuoteDrivers(){
 }
 
 let v14HeavyRenderCount=0;
-let svHeavyReportTimer=0;
 function renderSummary(){
  const it=current(),mass=totalMass(),area=totalArea();
  $("#kpiMb").textContent=projectFinishedMb().toFixed(2)+" mb";$("#kpiQty").textContent=totalQty()+" szt.";$("#kpiWeight").textContent=mass.toFixed(0)+" kg";$("#kpiArea").textContent=area.toFixed(1)+" m²";
@@ -1896,15 +2104,7 @@ function renderSummary(){
  const ob=$("#orderBody");ob.innerHTML="";state.items.forEach((x,i)=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${i+1}</td><td><strong>${escHtml(x.name)}</strong><div class="small">${typeName(x.type)}</div></td><td>${pieceLength(x).toFixed(2)} mb</td><td>${x.qty}</td><td><strong>${itemLength(x).toFixed(2)} mb</strong></td><td>${finishName(x.finish)}${["powder","galvpowder"].includes(x.finish)?`<div class="small">${x.ral}</div>`:""}</td>`;ob.appendChild(tr)});
  $("#finalDetails").innerHTML=detailsHtml(it);
  // Keep status responsive; calculate large reports only when their step is open.
- if(state.step===6){
-   clearTimeout(svHeavyReportTimer);
-   svHeavyReportTimer=setTimeout(()=>{
-     if(state.step!==6)return;
-     renderBom();renderMountSchedule();renderQuoteDrivers();renderValidation();renderEngineeringAssistant();renderProductionPack();
-     if(typeof v16RenderAudit==='function')v16RenderAudit();
-     v14HeavyRenderCount++;
-   },160);
- }
+ if(state.step===6){renderBom();renderMountSchedule();renderQuoteDrivers();renderValidation();renderEngineeringAssistant();renderProductionPack();v14HeavyRenderCount++}
  renderProjectGate();if(state.step===1)renderRevisions();
  const c=completeness(it);$("#scoreFill").style.width=c.score+"%";$("#scoreNum").textContent=c.score+"%";
  let txt=[];if(c.missing.length)txt.push("<b>Brakuje:</b> "+c.missing.join(", ")+".");if(c.warnings.length)txt.push("<b>Uwagi:</b><ul class='warnList'>"+c.warnings.map(w=>"<li>"+w+"</li>").join("")+"</ul>");if(!txt.length)txt.push("Dane bieżącej pozycji są kompletne do przygotowania wyceny.");$("#warnings").innerHTML=txt.join("<br>")
@@ -1951,7 +2151,7 @@ function updateAll(){
 }
 
 $("#copyOrder").onclick=async()=>{const t=orderText();try{await navigator.clipboard.writeText(t);alert("Pełne zamówienie skopiowane.");}catch(e){alert(t)}};
-$("#exportBtn").onclick=()=>{saveForm();const project={};projectIds.forEach(id=>project[id]=$("#"+id).value);const d={version:"14.0",project,state};const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(project.projectRef||"steelvision_project")+".json";a.click();URL.revokeObjectURL(a.href)};
+$("#exportBtn").onclick=()=>{saveForm();const project={};projectIds.forEach(id=>project[id]=$("#"+id).value);const d={version:"18.0",project,state};const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(project.projectRef||"steelvision_project")+".json";a.click();URL.revokeObjectURL(a.href)};
 $("#importInput").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());state=d.state;migrateState();projectIds.forEach(id=>{$("#"+id).value=d.project?.[id]||""});loadForm();setStep(state.step||1);updateAll()}catch(err){alert("Nie udało się wczytać projektu.")}};
 $("#bomCsvBtn").onclick=()=>{const rows=[["Pozycja","Element","Specyfikacja","Długość_m","Ilość","Masa_kg","Powierzchnia_m2"]];state.items.forEach(it=>bomForItem(it).forEach(r=>rows.push([it.name,r.name,r.spec,r.length??"",r.count??"",r.mass!=null?r.mass.toFixed(2):"",r.area!=null?r.area.toFixed(3):""])));const csv=rows.map(r=>r.map(v=>`"${csvSafe(v).replaceAll('"','""')}"`).join(";")).join("\n");const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="SteelVision_BOM.csv";a.click();URL.revokeObjectURL(a.href)};
 $("#mountCsvBtn").addEventListener("click",()=>{const it=current(),mounts=it.mountMode==="custom"?it.customMounts:generateAutoMountSchedule(it),rows=[["Nr","Segment","Pozycja_od_poczatku_mm","Plaszczyzna","Kotwa","Srednica","Glebokosc_mm","Blacha_W_mm","Blacha_H_mm","Blacha_T_mm","Otwory","Srednica_otworu_mm","Typ_otworu","Offset_X_mm","Offset_Y_mm"]];mounts.forEach((m,i)=>{const s=effectiveMountSpec(it,m),seg=(it.segments||[])[+m.segment||0];rows.push([i+1,seg?.name||(+m.segment+1),mountPositionMm(it,m),mountSurfaceLabel(m.surface),s.anchorType,s.anchorDia,s.embedDepth,s.plateW,s.plateH,s.plateT,s.holeCount,s.holeDia,s.holeType,s.holeOffsetX,s.holeOffsetY])});const csv=rows.map(r=>r.map(v=>`"${csvSafe(v).replaceAll('"','""')}"`).join(";")).join("\n"),blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="SteelVision_mocowania.csv";a.click();URL.revokeObjectURL(a.href)});
@@ -2001,9 +2201,9 @@ $("#zoomRange").addEventListener('input',e=>{mainCam.zoom=Math.max(10,+e.target.
 (function orbit(){
  const c=$("#view3d");let active=false,pid=null,lx=0,ly=0;
  c.addEventListener('pointerdown',e=>{active=true;pid=e.pointerId;lx=e.clientX;ly=e.clientY;c.setPointerCapture(e.pointerId);c.classList.add('dragging');e.preventDefault()});
- c.addEventListener('pointermove',e=>{if(!active||e.pointerId!==pid)return;const dx=e.clientX-lx,dy=e.clientY-ly;if(e.shiftKey){mainCam.rotY+=dx*.008;mainCam.rotZ+=dy*.004}else{mainCam.rotZ+=dx*.008;mainCam.rotX+=dy*.008}lx=e.clientX;ly=e.clientY;svQueueViewerDraw();syncViewerControls();e.preventDefault()});
+ c.addEventListener('pointermove',e=>{if(!active||e.pointerId!==pid)return;const dx=e.clientX-lx,dy=e.clientY-ly;if(e.shiftKey){mainCam.rotY+=dx*.008;mainCam.rotZ+=dy*.004}else{mainCam.rotZ+=dx*.008;mainCam.rotX+=dy*.008}lx=e.clientX;ly=e.clientY;draw3D(c,current(),mainCam);syncViewerControls();e.preventDefault()});
  const stop=e=>{if(e.pointerId!==pid)return;active=false;try{c.releasePointerCapture(e.pointerId)}catch(_e){}pid=null;c.classList.remove('dragging')};c.addEventListener('pointerup',stop);c.addEventListener('pointercancel',stop);
- c.addEventListener('wheel',e=>{e.preventDefault();mainCam.zoom*=e.deltaY>0?.90:1.10;mainCam.zoom=Math.max(10,Math.min(500,mainCam.zoom));svQueueViewerDraw();syncViewerControls()},{passive:false});
+ c.addEventListener('wheel',e=>{e.preventDefault();mainCam.zoom*=e.deltaY>0?.90:1.10;mainCam.zoom=Math.max(10,Math.min(500,mainCam.zoom));draw3D(c,current(),mainCam);syncViewerControls()},{passive:false});
 })();
 syncViewerControls();
 window.addEventListener("resize",()=>{drawMinis();if(state.step===6){draw3D($("#view3d"),current(),mainCam,true);syncViewerControls()}});
@@ -2518,7 +2718,7 @@ function v15Preview(){const s=v15ExportSettings(),w=window.open('','_blank');if(
 function v15Csv(rows){return '\ufeff'+rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n')}
 function v15AllMountCsv(){const rows=[['Item','ID','Segment','Position_mm','Surface','Anchor','Diameter','Embed_mm','Plate_W','Plate_H','Plate_T','Hole_count','Hole_D','Hole_type']];state.items.forEach((it,i)=>mountScheduleForQa(it).forEach((m,j)=>{const s=effectiveMountSpec(it,m);rows.push([`${i+1}: ${it.name}`,`M${j+1}`,(it.segments||[])[m.segment]?.name||m.segment,mountPositionMm(it,m),mountSurfaceLabel(m.surface),s.anchorType,s.anchorDia,s.embedDepth,s.plateW,s.plateH,s.plateT,s.holeCount,s.holeDia,s.holeType])}));return v15Csv(rows)}
 function v15AllQaCsv(){const rows=[['Item','Severity','Code','Category','Description','Suggested_action']];state.items.forEach((it,i)=>validateItem(it).forEach(x=>rows.push([`${i+1}: ${it.name}`,x.sev,x.code,x.cat,x.msg,x.fix])));return v15Csv(rows)}
-function v15ProjectJson(){const project={};projectIds.forEach(id=>project[id]=document.getElementById(id)?.value||'');return JSON.stringify({version:'16.0',project,state},null,2)}
+function v15ProjectJson(){const project={};projectIds.forEach(id=>project[id]=document.getElementById(id)?.value||'');return JSON.stringify({version:'18.0',project,state},null,2)}
 /* Offline ZIP: uncompressed entries with CRC32, no remote library and no file-size dependency. */
 function v15Crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0xedb88320:0)}return (c^0xffffffff)>>>0}
 function v15Zip(files){const enc=new TextEncoder(),chunks=[],central=[];let offset=0;
@@ -2531,7 +2731,7 @@ function v15Zip(files){const enc=new TextEncoder(),chunks=[],central=[];let offs
  return new Blob([...chunks,...central,new Uint8Array(e)],{type:'application/zip'})
 }
 function v15SaveBundle(){saveForm();const s=v15ExportSettings(),lang=s.lang,paper=s.paper,files=[
- ['01_Client_Summary.html',v15DocumentHtml('client',lang,paper)],['02_Fabrication_Package.html',v15DocumentHtml('production',lang,paper)],['03_Drawings.html',v15DocumentHtml('drawings',lang,paper)],['04_Cutting_List.html',v15DocumentHtml('cutting',lang,paper)],['05_Editable_Project.json',v15ProjectJson()],['06_Parts.csv',productionPartsCsv()],['07_Cutting.csv',projectCutCsv()],['08_Fixings.csv',v15AllMountCsv()],['09_Technical_Checks.csv',v15AllQaCsv()],['README.txt','STEELVISION STUDIO v16\n\nOpen HTML files in Chrome or Edge. Use Print > Save as PDF (A4/A3; headers and footers disabled; background graphics enabled).\n05_Editable_Project.json is an editable backup that can be imported in SteelVision Studio.\nDocuments are not a substitute for engineering approval.\n']
+ ['01_Client_Summary.html',v15DocumentHtml('client',lang,paper)],['02_Fabrication_Package.html',v15DocumentHtml('production',lang,paper)],['03_Drawings.html',v15DocumentHtml('drawings',lang,paper)],['04_Cutting_List.html',v15DocumentHtml('cutting',lang,paper)],['05_Editable_Project.json',v15ProjectJson()],['06_Parts.csv',productionPartsCsv()],['07_Cutting.csv',projectCutCsv()],['08_Fixings.csv',v15AllMountCsv()],['09_Technical_Checks.csv',v15AllQaCsv()],['README.txt','STEELVISION STUDIO v18\n\nOpen HTML files in Chrome or Edge. Use Print > Save as PDF (A4/A3; headers and footers disabled; background graphics enabled).\n05_Editable_Project.json is an editable backup that can be imported in SteelVision Studio.\nDocuments are not a substitute for engineering approval.\n']
  ];const blob=v15Zip(files),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=v15SafeFileName()+'_REV_'+(packProjectMeta().revisionCode||'A')+'_Documentation.zip';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2500)}
 function v15SetLabels(){const lang=svPreferences?.lang||'pl',k=x=>v15T(x,lang);[['v15ExportTitle','export'],['v15ExportLead','lead'],['v15TypeLabel','kind'],['v15PaperLabel','paper'],['v15EditionLabel','lang'],['v15PreviewDoc','preview'],['v15SaveHtml','html'],['v15SaveBundle','zip'],['v15LegacyTitle','other'],['v15DocHelp','help']].forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.textContent=k(key)});document.querySelectorAll('#v15DocType option').forEach((o,i)=>o.textContent=k('types')[i]);if(!document.getElementById('v15DocLang').dataset.manual)document.getElementById('v15DocLang').value=lang}
 /* Replace old "print entire application" action with the actual prepared document. */
@@ -2592,14 +2792,14 @@ function v16AuditCsv(){const a=v16IntegrityAudit(),rows=[['Check','Status','Seve
 function v16ConnectionsCsv(){const rows=[['Item','ID','Connection','Type','Gap_mm','Welding','Verification'],...v16ConnectionSchedule().map(r=>[r.item,r.id,r.connection,r.type,r.gap,r.weld,r.verify])];return v15Csv(rows)}
 function v16Manifest(lang='pl'){
  const pm=packProjectMeta(),a=v16IntegrityAudit(),v=projectValidationSummary(),lines=[
- 'STEELVISION STUDIO v16 — PROJECT MANIFEST','',`Project: ${pm.projectName||'-'}`,`Reference: ${pm.projectRef||'-'}`,`Revision: ${pm.revisionCode||'-'}`,`Status: ${pm.documentStatus||'-'}`,`Generated: ${new Date().toISOString()}`,`Project hash: ${currentProjectHash()}`,`Released hash: ${state.releasedHash||'-'}`,`Released revision: ${state.releasedRevision||'-'}`,'',`Items: ${state.items.length}`,`Finished linear metres: ${projectFinishedMb().toFixed(3)} m`,`Material profile metres: ${projectMaterialMb().toFixed(3)} m`,`Fabrication parts: ${a.parts}`,`Connections: ${a.connections}`,`Technical blockers: ${v.blockers}`,`Technical warnings: ${v.warnings}`,`Integrity checks: ${a.passed}/${a.total}`,'','Files are generated from the same project snapshot. Any change to geometry, profiles, fixings or finish requires regeneration of the documentation package.'];return lines.join('\n')
+ 'STEELVISION STUDIO v18 — PROJECT MANIFEST','',`Project: ${pm.projectName||'-'}`,`Reference: ${pm.projectRef||'-'}`,`Revision: ${pm.revisionCode||'-'}`,`Status: ${pm.documentStatus||'-'}`,`Generated: ${new Date().toISOString()}`,`Project hash: ${currentProjectHash()}`,`Released hash: ${state.releasedHash||'-'}`,`Released revision: ${state.releasedRevision||'-'}`,'',`Items: ${state.items.length}`,`Finished linear metres: ${projectFinishedMb().toFixed(3)} m`,`Material profile metres: ${projectMaterialMb().toFixed(3)} m`,`Fabrication parts: ${a.parts}`,`Connections: ${a.connections}`,`Technical blockers: ${v.blockers}`,`Technical warnings: ${v.warnings}`,`Integrity checks: ${a.passed}/${a.total}`,'','Files are generated from the same project snapshot. Any change to geometry, profiles, fixings or finish requires regeneration of the documentation package.'];return lines.join('\n')
 }
-function v16SummaryJson(){const a=v16IntegrityAudit(),v=projectValidationSummary(),pm=packProjectMeta();return JSON.stringify({generator:'SteelVision Studio v16',generated:new Date().toISOString(),project:{name:pm.projectName,reference:pm.projectRef,revision:pm.revisionCode,status:pm.documentStatus,hash:currentProjectHash(),releasedHash:state.releasedHash||null,releasedRevision:state.releasedRevision||null},totals:{items:state.items.length,finishedMb:+projectFinishedMb().toFixed(3),materialMb:+projectMaterialMb().toFixed(3),weightKg:+totalMass().toFixed(2),parts:a.parts,connections:a.connections},validation:{blockers:v.blockers,warnings:v.warnings,infos:v.infos},integrity:{passed:a.passed,total:a.total,issues:a.issues}},null,2)}
+function v16SummaryJson(){const a=v16IntegrityAudit(),v=projectValidationSummary(),pm=packProjectMeta();return JSON.stringify({generator:'SteelVision Studio v18',generated:new Date().toISOString(),project:{name:pm.projectName,reference:pm.projectRef,revision:pm.revisionCode,status:pm.documentStatus,hash:currentProjectHash(),releasedHash:state.releasedHash||null,releasedRevision:state.releasedRevision||null},totals:{items:state.items.length,finishedMb:+projectFinishedMb().toFixed(3),materialMb:+projectMaterialMb().toFixed(3),weightKg:+totalMass().toFixed(2),parts:a.parts,connections:a.connections},validation:{blockers:v.blockers,warnings:v.warnings,infos:v.infos},integrity:{passed:a.passed,total:a.total,issues:a.issues}},null,2)}
 function v16SetLabels(){const ids={v16AuditTitle:'title',v16AuditLead:'lead',v16AuditChecksLabel:'checks',v16AuditPartsLabel:'parts',v16AuditConnectionsLabel:'conn',v16AuditBackupsLabel:'backups',v16RunAudit:'run',v16AuditCsv:'audit',v16ConnectionsCsv:'weldcsv',v16ProjectHashLabel:'hash',v16ConnectionTitle:'ctitle',v16ThItem:'item',v16ThConn:'connection',v16ThType:'type',v16ThGap:'gap',v16ThWeld:'weld',v16ThVerify:'verify',v16BackupBtn:'backup',v16RestoreBtn:'restore'};Object.entries(ids).forEach(([id,k])=>{const e=document.getElementById(id);if(e)e.textContent=v16L(k)})}
 function v16DownloadText(name,text,type='text/plain;charset=utf-8'){downloadTextFile(name,text,type)}
 document.getElementById('v16RunAudit')?.addEventListener('click',v16RenderAudit);document.getElementById('v16AuditCsv')?.addEventListener('click',()=>v16DownloadText(v15SafeFileName()+'_Integrity_Audit.csv',v16AuditCsv(),'text/csv;charset=utf-8'));document.getElementById('v16ConnectionsCsv')?.addEventListener('click',()=>v16DownloadText(v15SafeFileName()+'_Connections.csv',v16ConnectionsCsv(),'text/csv;charset=utf-8'));document.getElementById('v16BackupBtn')?.addEventListener('click',()=>v16SaveBackup(false));document.getElementById('v16RestoreBtn')?.addEventListener('click',v16RestoreBackup);
-const v16OldUpdateAll=updateAll;updateAll=function(){return v16OldUpdateAll.apply(this,arguments)};
-const v16OldSetStep=setStep;setStep=function(n){return v16OldSetStep.apply(this,arguments)};
+const v16OldUpdateAll=updateAll;updateAll=function(){const r=v16OldUpdateAll.apply(this,arguments);if(state.step===6)setTimeout(v16RenderAudit,0);return r};
+const v16OldSetStep=setStep;setStep=function(n){const r=v16OldSetStep.apply(this,arguments);if(+n===6)setTimeout(v16RenderAudit,20);return r};
 const v16OldLanguage=svLanguage;svLanguage=function(l){v16OldLanguage(l);v16SetLabels();v16RenderAudit()};
 /* Local recovery snapshot every two minutes when the project changed. */
 let v16LastAutoHash='';setInterval(()=>{try{const h=currentProjectHash();if(h&&h!==v16LastAutoHash){v16LastAutoHash=h;v16SaveBackup(true)}}catch(e){}},120000);
@@ -2607,56 +2807,458 @@ let v16LastAutoHash='';setInterval(()=>{try{const h=currentProjectHash();if(h&&h
 const v16OldProjectReleaseGate=projectReleaseGate;projectReleaseGate=function(){const g=v16OldProjectReleaseGate(),a=v16IntegrityAudit(),hard=a.issues.filter(x=>x.sev==='bad');if(hard.length){g.ok=false;g.reasons=[...(g.reasons||[]),...hard.map(x=>'Audit: '+x.msg)]}return g};
 /* More complete ZIP manifest while retaining all v15 files. */
 v15SaveBundle=function(){saveForm();const s=v15ExportSettings(),lang=s.lang,paper=s.paper,files=[
- ['00_MANIFEST.txt',v16Manifest(lang)],['00_PROJECT_SUMMARY.json',v16SummaryJson()],['01_Client_Summary.html',v15DocumentHtml('client',lang,paper)],['02_Fabrication_Package.html',v15DocumentHtml('production',lang,paper)],['03_Drawings.html',v15DocumentHtml('drawings',lang,paper)],['04_Cutting_List.html',v15DocumentHtml('cutting',lang,paper)],['05_Editable_Project.json',v15ProjectJson()],['06_Parts.csv',productionPartsCsv()],['07_Cutting.csv',projectCutCsv()],['08_Fixings.csv',v15AllMountCsv()],['09_Technical_Checks.csv',v15AllQaCsv()],['10_Integrity_Audit.csv',v16AuditCsv()],['11_Connections_Welding.csv',v16ConnectionsCsv()],['README.txt','STEELVISION STUDIO v16\n\nOpen HTML files in Chrome or Edge. Use Print > Save as PDF.\n00_MANIFEST.txt identifies the exact project revision/hash used for this package.\n00_PROJECT_SUMMARY.json provides machine-readable totals and QA status.\n05_Editable_Project.json is an editable project backup.\n10_Integrity_Audit.csv cross-checks document consistency.\n11_Connections_Welding.csv is a fabrication connection schedule; weld sizes/details still require technical approval.\nDocuments do not replace engineering approval.\n']
- ];const blob=v15Zip(files),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=v15SafeFileName()+'_REV_'+(packProjectMeta().revisionCode||'A')+'_Documentation_v16.zip';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2500)};
+ ['00_MANIFEST.txt',v16Manifest(lang)],['00_PROJECT_SUMMARY.json',v16SummaryJson()],['01_Client_Summary.html',v15DocumentHtml('client',lang,paper)],['02_Fabrication_Package.html',v15DocumentHtml('production',lang,paper)],['03_Drawings.html',v15DocumentHtml('drawings',lang,paper)],['04_Cutting_List.html',v15DocumentHtml('cutting',lang,paper)],['05_Editable_Project.json',v15ProjectJson()],['06_Parts.csv',productionPartsCsv()],['07_Cutting.csv',projectCutCsv()],['08_Fixings.csv',v15AllMountCsv()],['09_Technical_Checks.csv',v15AllQaCsv()],['10_Integrity_Audit.csv',v16AuditCsv()],['11_Connections_Welding.csv',v16ConnectionsCsv()],['README.txt','STEELVISION STUDIO v18\n\nOpen HTML files in Chrome or Edge. Use Print > Save as PDF.\n00_MANIFEST.txt identifies the exact project revision/hash used for this package.\n00_PROJECT_SUMMARY.json provides machine-readable totals and QA status.\n05_Editable_Project.json is an editable project backup.\n10_Integrity_Audit.csv cross-checks document consistency.\n11_Connections_Welding.csv is a fabrication connection schedule; weld sizes/details still require technical approval.\nDocuments do not replace engineering approval.\n']
+ ];const blob=v15Zip(files),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=v15SafeFileName()+'_REV_'+(packProjectMeta().revisionCode||'A')+'_Documentation_v18.zip';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2500)};
 /* Rebind bundle button because the original listener captured the old function object. */
 const v16BundleBtn=document.getElementById('v15SaveBundle');if(v16BundleBtn){const clone=v16BundleBtn.cloneNode(true);v16BundleBtn.parentNode.replaceChild(clone,v16BundleBtn);clone.addEventListener('click',v15SaveBundle)}
 /* Add manifest/audit to full production document as the first technical sheet after cover. */
-const v16OldDoc=v15DocumentHtml;v15DocumentHtml=function(kind='production',l='pl',paper='A4'){let out=v16OldDoc(kind,l,paper);if(kind!=='production')return out;const a=v16IntegrityAudit(),pm=packProjectMeta(),rows=a.checks.map(x=>`<tr><td>${v15E(x.name)}</td><td>${x.ok?'OK':'CHECK'}</td><td>${v15E(x.msg)}</td></tr>`).join('');const conn=v16ConnectionSchedule().map(r=>`<tr><td>${v15E(r.item)}</td><td>${v15E(r.connection)}</td><td>${v15E(r.type)}</td><td>${v15E(r.gap)} mm</td><td>${v15E(r.weld)}</td><td>${v15E(r.verify)}</td></tr>`).join('');const sheet=`<article class="sheet"><header class="sheet-title"><span>STEELVISION · QA</span><h1>Project integrity & connection schedule</h1></header><div class="properties"><div class="property"><span>Project hash</span><strong style="font-size:8px;word-break:break-all">${v15E(currentProjectHash())}</strong></div><div class="property"><span>Revision</span><strong>${v15E(pm.revisionCode||'-')}</strong></div><div class="property"><span>Integrity</span><strong>${a.passed}/${a.total}</strong></div><div class="property"><span>Connections</span><strong>${a.connections}</strong></div></div><h2>Cross-document integrity</h2><table class="data"><thead><tr><th>Check</th><th>Status</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table><h2>Connection / welding schedule</h2><table class="data"><thead><tr><th>Item</th><th>Connection</th><th>Type</th><th>Gap</th><th>Welding</th><th>Verification</th></tr></thead><tbody>${conn||'<tr><td colspan="6">—</td></tr>'}</tbody></table><div class="note"><b>Important:</b> weld sizes, WPS, bolts and final connection design require technical approval.</div></article>`;return out.replace('<main class="pages">','<main class="pages">'+sheet)};
+const v16OldDoc=v15DocumentHtml;v15DocumentHtml=function(kind='production',l='pl',paper='A4'){let out=v16OldDoc(kind,l,paper);if(kind!=='production')return out;const a=v16IntegrityAudit(),pm=packProjectMeta(),rows=a.checks.map(x=>`<tr><td>${v15E(x.name)}</td><td>${x.ok?'OK':'CHECK'}</td><td>${v15E(x.msg)}</td></tr>`).join('');const conn=v16ConnectionSchedule().map(r=>`<tr><td>${v15E(r.item)}</td><td>${v15E(r.connection)}</td><td>${v15E(r.type)}</td><td>${v15E(r.gap)} mm</td><td>${v15E(r.weld)}</td><td>${v15E(r.verify)}</td></tr>`).join('');const sheet=`<article class="sheet"><header class="sheet-title"><span>STEELVISION · QA</span><h1>${l==='de'?'Projektprüfung und Verbindungsplan':l==='en'?'Project integrity & connection schedule':'Kontrola projektu i zestawienie połączeń'}</h1></header><div class="properties"><div class="property"><span>Project hash</span><strong style="font-size:8px;word-break:break-all">${v15E(currentProjectHash())}</strong></div><div class="property"><span>Revision</span><strong>${v15E(pm.revisionCode||'-')}</strong></div><div class="property"><span>Integrity</span><strong>${a.passed}/${a.total}</strong></div><div class="property"><span>Connections</span><strong>${a.connections}</strong></div></div><h2>${l==='de'?'Abgleich der Unterlagen':l==='en'?'Cross-document integrity':'Spójność dokumentacji'}</h2><table class="data"><thead><tr><th>Check</th><th>Status</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table><h2>${l==='de'?'Verbindungs- und Schweißplan':l==='en'?'Connection / welding schedule':'Połączenia i spawanie'}</h2><table class="data"><thead><tr><th>Item</th><th>Connection</th><th>Type</th><th>Gap</th><th>Welding</th><th>Verification</th></tr></thead><tbody>${conn||'<tr><td colspan="6">—</td></tr>'}</tbody></table><div class="note"><b>${l==='de'?'Wichtig:':l==='en'?'Important:':'Ważne:'}</b> ${l==='de'?'Nahtgrößen, WPS, Schrauben und Anschlüsse müssen fachtechnisch geprüft werden.':l==='en'?'Weld sizes, WPS, bolts and final connection design require technical approval.':'Wymiary spoin, WPS, śruby i ostateczne detale połączeń wymagają zatwierdzenia technicznego.'}</div></article>`;return out.replace('<main class="pages">','<main class="pages">'+sheet)};
 v16SetLabels();v16RenderAudit();
 
-</script>
 
-<script>
-/* B-CORE bridge: computations remain local; only submitted quote state is sent to the API. */
-(function(){
- "use strict";
- const text={pl:'Wyślij projekt do B-CORE',en:'Send project to B-CORE',de:'Projekt an B-CORE senden'};
- function prepare(){
-   saveForm();
-   const project={};projectIds.forEach(id=>{project[id]=document.getElementById(id)?.value||''});
-   const clean=JSON.parse(JSON.stringify({version:'B-CORE-SteelVision-16',project,state},(key,value)=>key.startsWith('_')?undefined:value));
-   const lines=['STEELVISION STUDIO v16 — ZAPYTANIE O WYCENĘ',orderText(),'','SEGMENTY, ROZSTAWY I MOCOWANIA:'];
-   state.items.forEach((it,i)=>{
-     lines.push('Pozycja '+(i+1)+': '+it.name+' — '+typeName(it.type));
-     (it.segments||[]).forEach((seg,j)=>lines.push('Segment '+(j+1)+': '+seg.name+'; długość '+seg.length+' m; kąt '+seg.angle+'°; połączenie '+seg.jointType+'; szczelina '+seg.jointGap+' mm'));
-     if(it.mountMode==='custom'&&Array.isArray(it.customMounts))it.customMounts.forEach((m,j)=>{
-       const spec=effectiveMountSpec(it,m);
-       lines.push('Mocowanie '+(j+1)+': segment '+((+m.segment||0)+1)+'; pozycja '+mountPositionMm(it,m)+' mm; '+mountSurfaceLabel(m.surface)+'; kotwa '+spec.anchorType+' '+spec.anchorDia+'; blacha '+spec.plateW+'x'+spec.plateH+'x'+spec.plateT+' mm');
-     });
-     bomForItem(it).forEach(r=>lines.push('BOM: '+r.name+'; '+r.spec+'; szt.: '+r.count+'; mb: '+(r.length??'-')+'; kg: '+(r.mass!=null?r.mass.toFixed(2):'-')));
-   });
-   lines.push('','Kompletny projekt, rewizje i audyt zapisują się w bazie B-CORE podczas wysłania formularza. Wyniki do weryfikacji technicznej.');
-   const full=lines.join('\n'),summary=full.length<9600?full:orderText().slice(0,9000)+'\n\n[Pełna dokumentacja jako model JSON w bazie B-CORE]';
-   return {clean,summary};
+/* === v18: product-isolated workflows and coordinate-based custom 3D drawing === */
+const V18_VER='18.0';
+const v18BeamSeq=()=>('E'+Math.random().toString(36).slice(2,9));
+const v18IsCustom=it=>it?.type==='custom';
+function v18Beams(it){if(!Array.isArray(it.customBeams))it.customBeams=[];return it.customBeams}
+function v18ValidNumber(n){return typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=100}
+function v18Len(b){return Math.hypot(...[0,1,2].map(i=>(+b.b[i]||0)-(+b.a[i]||0)))}
+function v18Density(it){const m=String(it.material||'');return m.includes('Aluminium')?2.70/7.85:m.includes('nierdzewna')?7.95/7.85:1}
+function v18CodePart(it,index,ii,b){const L=v18Len(b),density=v18Density(it),pr=profileProps(b.profile),q=Math.max(1,+it.qty||1);
+ return {code:`I${String(ii+1).padStart(2,'0')}-3D-${String(index+1).padStart(3,'0')}`,category:'Profil',desc:`Profil przestrzenny ${index+1}`,spec:b.profile,lengthM:L,qtyPerUnit:1,totalQty:q,itemName:it.name,itemIndex:ii,material:it.material,finish:finishName(it.finish),note:`A (${b.a.map(x=>(+x).toFixed(3)).join(',')}) → B (${b.b.map(x=>(+x).toFixed(3)).join(',')}) m`,totalMassKg:pr.kgm==null?null:L*q*pr.kgm*density};
+}
+/* Replace mixed calculations with type-specific takeoffs. */
+const v18OldPieceLength=pieceLength;
+pieceLength=function(it){
+ if(v18IsCustom(it))return v18Beams(it).reduce((sum,b)=>sum+v18Len(b),0);
+ if(it.type==='gate'){const leaf=Math.max(1,+it.gateLeaves||1),h=(+it.gateHeight||150)/100,W=Math.max(0,+it.gateOpening||0);return 2*W+2*h*leaf+2*h}
+ if(it.type==='platform'){const L=+it.platformL||0,W=+it.platformW||0,H=+it.platformH||0,sides=+it.platformRailSides||0,legs=+it.platformLegs||4;const edge=[L,W,L,W];return 2*(L+W)+legs*H+edge.slice(0,sides).reduce((s,x)=>s+x,0)}
+ return v18OldPieceLength(it);
+};
+const v18OldBom=bomForItem;
+bomForItem=function(it){
+ const q=Math.max(1,+it.qty||1),density=v18Density(it);
+ if(v18IsCustom(it)){
+  const groups=new Map();v18Beams(it).forEach(b=>{const l=v18Len(b);if(l<=0)return;const key=b.profile+'|'+l.toFixed(5);if(!groups.has(key))groups.set(key,{name:'Profil 3D',spec:b.profile,length:0,count:0,mass:0,area:0});const row=groups.get(key),p=profileProps(b.profile);row.length+=l*q;row.count+=q;row.mass+=p.kgm==null?0:l*q*p.kgm*density;row.area+=p.m2m==null?0:l*q*p.m2m});return [...groups.values()]
  }
- function send(){
-   try{
-     const p=prepare();
-     const json=JSON.stringify(p.clean);
-     if(new Blob([json]).size>2_800_000){alert('Projekt z fotografiami jest zbyt duży do wysłania online. Zapisz ZIP / JSON i zmniejsz liczbę lub rozmiar zdjęć.');return;}
-     sessionStorage.setItem('bcore-steelvision-draft',json);
-     sessionStorage.setItem('bcore-config-enquiry',p.summary);
-     window.location.assign('/#/kontakt');
-   }catch(e){
-     console.error('B-CORE quote handoff failed',e);
-     alert('Nie udało się przygotować zapytania. Zapisz projekt przez Eksport JSON / ZIP, a następnie spróbuj ponownie.');
+ let out=v18OldBom(it);
+ if(['stairs','platform','fence','gate'].includes(it.type))out=out.filter(r=>!['Blachy mocujące','Kotwy / łączniki'].includes(r.name));
+ if(it.type==='platform'){const L=+it.platformL||0,W=+it.platformW||0;const sides=[L,W,L,W].slice(0,+it.platformRailSides||0);const pr=profileProps(it.topProfile);if(sides.length)out.push({name:'Poręcze pomostu',spec:it.topProfile,length:sides.reduce((x,y)=>x+y,0)*q,count:sides.length*q,mass:pr.kgm==null?null:sides.reduce((x,y)=>x+y,0)*q*pr.kgm,area:pr.m2m==null?null:sides.reduce((x,y)=>x+y,0)*q*pr.m2m})}
+ if(it.type==='fence'&&it.fenceMountSystem==='Betonowane słupki'){const row=out.find(r=>r.name==='Słupki');if(row){const d=(+it.fenceEmbed||0)/1000*postsPerPiece(it)*q,pr=profileProps(it.postProfile);row.length+=d;if(row.mass!=null&&pr.kgm!=null)row.mass+=d*pr.kgm;if(row.area!=null&&pr.m2m!=null)row.area+=d*pr.m2m}}
+ out.forEach(r=>{if(r.mass!=null)r.mass*=density});return out
+};
+const v18OldFinished=finishedMbForItem;
+finishedMbForItem=function(it){return v18IsCustom(it)?0:v18OldFinished(it)};
+const v18OldMountCount=mountCountPerPiece,v18OldAnchorCount=anchorsForPiece;
+mountCountPerPiece=function(it){return ['gate','fence','stairs','platform','custom'].includes(it.type)?0:v18OldMountCount(it)};
+anchorsForPiece=function(it){return ['gate','fence','stairs','platform','custom'].includes(it.type)?0:v18OldAnchorCount(it)};
+const v18OldCutPieces=cutPiecesForItem;
+cutPiecesForItem=function(it){const q=Math.max(1,+it.qty||1),out=[];function push(profile,length,count,label){if(!profile||!(length>0)||!(count>0))return;for(let j=0;j<Math.min(500,count*q);j++)out.push({profile,length,label,item:it.name})}
+ if(v18IsCustom(it)){v18Beams(it).forEach((b,i)=>push(b.profile,v18Len(b),1,'profil 3D '+(i+1)));return out}
+ if(it.type==='gate'){const leaves=Math.max(1,+it.gateLeaves||1),w=(+it.gateOpening||0)/leaves,h=(+it.gateHeight||150)/100;push(it.gateFrameProfile,w,2*leaves,'rama pozioma');push(it.gateFrameProfile,h,2*leaves,'rama pionowa');push(it.gatePostProfile,h,2,'słup bramy');return out}
+ if(it.type==='platform'){const L=+it.platformL||0,W=+it.platformW||0,H=+it.platformH||0;push(it.topProfile,L,2,'rama L');push(it.topProfile,W,2,'rama W');push(it.postProfile,H,Math.max(2,+it.platformLegs||4),'noga');[L,W,L,W].slice(0,+it.platformRailSides||0).forEach((len,i)=>push(it.topProfile,len,1,'barierka '+(i+1)));return out}
+ if(it.type==='stairs'){const slope=Math.hypot((+it.stairSteps||0)*(+it.stairRun||0)/100,(+it.stairSteps||0)*(+it.stairRise||0)/100),railSides=+it.stairSides||0;push(it.stairStringerProfile,slope,Math.max(1,+it.stairStringers||2),'policzek');push(it.stairHandrailProfile,slope+(+it.landingLen||0),railSides,'poręcz');if(railSides)push(it.stairPostProfile,(+it.height||105)/100,postsPerPiece(it),'słupek');return out}
+ if(it.type==='fence'&&it.fenceMountSystem==='Betonowane słupki'){
+  const old=v18OldCutPieces(it);return old.map(c=>c.label==='słupek'?{...c,length:c.length+(+it.fenceEmbed||0)/1000}:c)
+ }
+ return v18OldCutPieces(it)
+};
+const v18OldParts=productionPartsForItem;
+productionPartsForItem=function(it,ii){
+ const prefix=`I${String(ii+1).padStart(2,'0')}`,q=Math.max(1,+it.qty||1),factor=v18Density(it);
+ let parts;
+ if(v18IsCustom(it))return v18Beams(it).filter(b=>v18Len(b)>.0001).map((b,i)=>v18CodePart(it,i,ii,b));
+ if(['gate','platform','stairs'].includes(it.type)){
+  parts=[];const add=(x)=>parts.push({...x,totalQty:(+x.qtyPerUnit||0)*q,itemName:it.name,itemIndex:ii,material:it.material,finish:finishName(it.finish)});
+  if(it.type==='stairs'){
+   const slope=Math.hypot((+it.stairSteps||0)*(+it.stairRun||0)/100,(+it.stairSteps||0)*(+it.stairRise||0)/100),sides=+it.stairSides||0;
+   add({code:prefix+'-STR',category:'Profil',desc:'Policzek / belka schodowa',spec:it.stairStringerProfile,lengthM:slope,qtyPerUnit:Math.max(1,+it.stairStringers||2),note:'skos biegu'});
+   if(sides){add({code:prefix+'-RAIL',category:'Profil',desc:'Poręcz schodowa',spec:it.stairHandrailProfile,lengthM:slope+(+it.landingLen||0),qtyPerUnit:sides,note:'balustrada schodowa'});add({code:prefix+'-POST',category:'Profil',desc:'Słupek schodowy',spec:it.stairPostProfile,lengthM:(+it.height||105)/100,qtyPerUnit:postsPerPiece(it),note:'przy biegu'})}
+   add({code:prefix+'-TREAD',category:'Stopień',desc:'Stopień',spec:it.treadType,widthM:(+it.stairWidth||0)/100,depthM:(+it.stairRun||0)/100,qtyPerUnit:+it.stairSteps||0,note:'mocowanie stopni do sprawdzenia'});
+   add({code:prefix+'-FIX-L',category:'Połączenie',desc:'Mocowanie dolne',spec:it.stairBottomFix,qtyPerUnit:1,note:'wymagany detal projektowy'});
+   add({code:prefix+'-FIX-U',category:'Połączenie',desc:'Mocowanie górne',spec:it.stairTopFix,qtyPerUnit:1,note:'wymagany detal projektowy'});
+  } else if(it.type==='gate'){
+   const leaves=Math.max(1,+it.gateLeaves||1),w=(+it.gateOpening||0)/leaves,h=(+it.gateHeight||150)/100;
+   add({code:prefix+'-HOR',category:'Profil',desc:'Poziomy ramy',spec:it.gateFrameProfile,lengthM:w,qtyPerUnit:2*leaves,note:'skrzydło bramy'});
+   add({code:prefix+'-VER',category:'Profil',desc:'Pionowy ramy',spec:it.gateFrameProfile,lengthM:h,qtyPerUnit:2*leaves,note:'skrzydło bramy'});
+   add({code:prefix+'-POST',category:'Profil',desc:'Słup bramy',spec:it.gatePostProfile,lengthM:h,qtyPerUnit:2,note:it.gateFoundation});
+   add({code:prefix+'-HINGE',category:'Okucie',desc:'Zawias',spec:it.gateHinges,qtyPerUnit:2*leaves,note:it.gateHingeSide});
+   add({code:prefix+'-LOCK',category:'Okucie',desc:'Zamek / rygiel',spec:it.gateLock,qtyPerUnit:1,note:'wg wybranej konfiguracji'});
+   if(String(it.gateAutomation).startsWith('Tak'))add({code:prefix+'-MOTOR',category:'Osprzęt',desc:'Automatyka',spec:it.gateAutomation,qtyPerUnit:1,note:'dobór wg producenta systemu'});
+  }else if(it.type==='platform'){
+   const L=+it.platformL||0,W=+it.platformW||0,H=+it.platformH||0;
+   add({code:prefix+'-L',category:'Profil',desc:'Rama długa',spec:it.topProfile,lengthM:L,qtyPerUnit:2,note:'rama pomostu'});
+   add({code:prefix+'-W',category:'Profil',desc:'Rama krótka',spec:it.topProfile,lengthM:W,qtyPerUnit:2,note:'rama pomostu'});
+   add({code:prefix+'-LEG',category:'Profil',desc:'Podpory',spec:it.postProfile,lengthM:H,qtyPerUnit:Math.max(2,+it.platformLegs||4),note:'przy stopach'});
+   [L,W,L,W].slice(0,+it.platformRailSides||0).forEach((len,j)=>add({code:prefix+'-GR'+(j+1),category:'Profil',desc:'Poręcz boku '+(j+1),spec:it.topProfile,lengthM:len,qtyPerUnit:1,note:'barierka'}));
+   add({code:prefix+'-DECK',category:'Panel',desc:'Pomost',spec:it.platformDeck,widthM:L,heightM:W,areaM2:L*W,qtyPerUnit:1,note:'wymagana specyfikacja nośności'});
+  }
+ }else{
+  parts=v18OldParts(it,ii);
+  if(it.type==='fence'){
+   parts=parts.filter(p=>!['Blacha','Łącznik'].includes(p.category));
+   if(it.fenceMountSystem==='Betonowane słupki'){parts.forEach(p=>{if(p.category==='Profil'&&p.desc==='Słupek'){p.lengthM+=(+it.fenceEmbed||0)/1000;p.note+='; część w gruncie'}})}
+   parts.push({code:prefix+'-FD',category:'Fundament',desc:'Posadowienie słupka',spec:it.fenceMountSystem,qtyPerUnit:postsPerPiece(it),totalQty:postsPerPiece(it)*q,itemName:it.name,itemIndex:ii,material:it.material,finish:'—',note:`${it.fenceFoundationW}×${it.fenceFoundationD} mm — weryfikacja na budowie`});
+  }
+  if(it.type==='frame'){
+   const L=+it.frameL||0,W=+it.frameW||0,bL=Math.max(1,+it.baysL||1),bW=Math.max(1,+it.baysW||1);
+   if(it.bottomFrame==='Tak'){
+    parts.push({code:prefix+'-BASEL',category:'Profil',desc:'Belki dolne L',spec:it.bottomProfile,lengthM:L,qtyPerUnit:bW+1,totalQty:(bW+1)*q,itemName:it.name,itemIndex:ii,material:it.material,finish:finishName(it.finish),note:'dolna rama'});
+    parts.push({code:prefix+'-BASEW',category:'Profil',desc:'Belki dolne W',spec:it.bottomProfile,lengthM:W,qtyPerUnit:bL+1,totalQty:(bL+1)*q,itemName:it.name,itemIndex:ii,material:it.material,finish:finishName(it.finish),note:'dolna rama'});
    }
+   const mounts=mountCountPerPiece(it);parts.push({code:prefix+'-PL',category:'Blacha',desc:'Stopy słupów',spec:`${it.plateW}×${it.plateH}×${it.plateT} mm`,widthMm:it.plateW,heightMm:it.plateH,thickMm:it.plateT,qtyPerUnit:mounts,totalQty:mounts*q,itemName:it.name,itemIndex:ii,material:it.material,finish:finishName(it.finish),note:'do obliczeń'});
+   parts.push({code:prefix+'-ANC',category:'Łącznik',desc:'Kotwy słupów',spec:`${it.anchorType} ${it.anchorDia}`,lengthMm:it.embedDepth,qtyPerUnit:anchorsForPiece(it),totalQty:anchorsForPiece(it)*q,itemName:it.name,itemIndex:ii,material:it.material,finish:'—',note:'do zatwierdzenia'});
+  }
  }
- ['bcoreSendQuote','bcoreSendQuoteFinal'].forEach(id=>document.getElementById(id)?.addEventListener('click',send));
- function setLabels(){const l=window.svPreferences?.lang||'pl';const b=document.getElementById('bcoreSendQuote'),f=document.getElementById('bcoreSendQuoteFinal');if(b)b.textContent=text[l]||text.pl;if(f)f.textContent=text[l]||text.pl;}
- document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>requestAnimationFrame(setLabels)));
- setLabels();
+ parts.forEach(part=>{
+  if(part.category==='Profil'&&part.lengthM>0){let pr=profileProps(part.spec);part.totalMassKg=pr.kgm==null?null:pr.kgm*part.lengthM*part.totalQty*factor}
+  if(part.category==='Blacha'&&part.widthMm&&part.heightMm&&part.thickMm)part.totalMassKg=part.widthMm*part.heightMm*part.thickMm*7.85e-6*part.totalQty*factor;
+ });return parts
+};
+/* 3D beams are the single source of truth for custom model. */
+const v18OldBuildGeom=buildGeom;
+buildGeom=function(it){if(!v18IsCustom(it))return v18OldBuildGeom(it);return {lines:v18Beams(it).map((b,i)=>({a:b.a.slice(),b:b.b.slice(),kind:i%3===0?'accent':i%3===1?'beam':'post',profile:b.profile,elementId:b.id})),plates:[],panels:[],anchors:[]}};
+const v18OldMountSchedule=mountScheduleForQa;
+mountScheduleForQa=function(it){return ['gate','fence','stairs','platform','custom'].includes(it.type)?[]:v18OldMountSchedule(it)};
+/* Custom construction connectivity / overlap checks. No claim of structural approval. */
+function v18Issue(sev,cat,msg,fix,code){return {sev,cat,msg,fix,code}}
+function v18CustomQa(it){const bs=v18Beams(it),issues=[];if(!bs.length)return [v18Issue('blocker','Geometria','Brak profili w modelu 3D.','Narysuj co najmniej jeden odcinek lub wpisz jego współrzędne.','C3D-001')];
+ bs.forEach((b,i)=>{if(!(b.a?.length===3&&b.b?.length===3&&[...b.a,...b.b].every(v18ValidNumber)))issues.push(v18Issue('blocker','Geometria',`Odcinek ${i+1} ma nieprawidłowe współrzędne.`,`Popraw X/Y/Z w tabeli.`,'C3D-002'));else if(v18Len(b)<.005)issues.push(v18Issue('blocker','Geometria',`Odcinek ${i+1} ma mniej niż 5 mm.`,`Rozsuń końce odcinka.`,'C3D-003'));if(!profileProps(b.profile).kgm)issues.push(v18Issue('warning','Materiał',`Nie można policzyć masy profilu ${b.profile}.`,'Wybierz obsługiwany przekrój lub dostarcz katalogową masę kg/m.','C3D-004'))});
+ // Connected components by shared endpoints with 2 mm tolerance.
+ const parent=bs.map((_,i)=>i),find=x=>parent[x]===x?x:(parent[x]=find(parent[x]));const unite=(i,j)=>{parent[find(i)]=find(j)};
+ for(let i=0;i<bs.length;i++)for(let j=i+1;j<bs.length;j++){
+  const a=bs[i],b=bs[j];if(!a.a||!b.a)continue;
+  const dd=Math.min(...[a.a,a.b].flatMap(p=>[b.a,b.b].map(q=>Math.hypot(...p.map((v,k)=>v-q[k])))));
+  if(dd<.002)unite(i,j);
+  if(dd<.005&&dd>=.002)issues.push(v18Issue('warning','Połączenia',`Odcinki ${i+1} i ${j+1}: końce są oddalone o ${(dd*1000).toFixed(1)} mm.`,`Wyrównaj współrzędne węzłów albo opisz zamierzoną szczelinę.`,'C3D-005'));
+  const dA=v18Len(a),dB=v18Len(b);if(dA>.001&&dB>.001&&dd<.002&&Math.abs(dA-dB)<.002&&Math.hypot(...a.a.map((v,k)=>v-b.a[k]))<.002&&Math.hypot(...a.b.map((v,k)=>v-b.b[k]))<.002)issues.push(v18Issue('blocker','Antykolizje',`Odcinki ${i+1} i ${j+1} leżą dokładnie na sobie.`,`Usuń zduplikowany profil.`,'C3D-006'))
+ }
+ const c=new Set(parent.map((_,i)=>find(i))).size;
+ if(c>1)issues.push(v18Issue('warning','Połączenia',`Wykryto ${c} niepołączone grupy profili 3D.`,`Połącz ich końce we wspólnych współrzędnych lub opisz świadomy podział na zespoły.`,'C3D-007'));
+ if(it.structuralCalc==='Nie')issues.push(v18Issue('warning','Nośność','Dla konstrukcji przestrzennej nie wskazano obliczeń.','Wymagane zatwierdzenie schematu statycznego, węzłów i kotew.','C3D-008'));
+ return issues
+}
+const v18OldValidate=validateItem;
+validateItem=function(it){if(v18IsCustom(it))return v18CustomQa(it);let issues=v18OldValidate(it);
+ if(['stairs','gate','fence','platform'].includes(it.type))issues=issues.filter(x=>!['Mocowania','Antykolizja mocowań','Wypełnienie'].includes(x.cat)&&!['MNT-001','MNT-002','SUB-001','COL-101','COL-104'].includes(x.code));
+ if(it.type==='stairs'){
+  if((+it.stairSteps||0)<1)issues.push(v18Issue('blocker','Schody','Brak stopni.','Wpisz liczbę stopni.','ST-100'));
+  if((+it.stairWidth||0)<60)issues.push(v18Issue('warning','Schody','Mała szerokość biegu.','Sprawdź wymagania funkcji obiektu.','ST-101'));
+  if((+it.stairRise||0)>21)issues.push(v18Issue('warning','Schody','Wysoka podstopnica.','Zweryfikuj ergonomię i przeznaczenie.','ST-102'));
+ }else if(it.type==='gate'){
+  if((+it.gateOpening||0)<=0)issues.push(v18Issue('blocker','Brama','Światło bramy ma 0 m.','Podaj rzeczywisty wymiar.','GT-001'));
+  if(it.gateAutomation?.startsWith('Tak'))issues.push(v18Issue('info','Brama','Wybrano automatykę.','Wymagana weryfikacja napędu i zabezpieczeń zgodnie z dokumentacją systemu.','GT-002'));
+ }else if(it.type==='fence'){
+  if(it.fenceMountSystem==='Betonowane słupki'&&(+it.fenceEmbed||0)<=0)issues.push(v18Issue('blocker','Fundament','Brak głębokości osadzenia słupka.','Podaj wartość wg warunków gruntu i projektu.','FN-001'));
+ }else if(it.type==='platform'){
+  if((+it.platformL||0)<=0||(+it.platformW||0)<=0)issues.push(v18Issue('blocker','Pomost','Brak gabarytów pomostu.','Podaj długość i szerokość.','PL-001'));
+  issues.push(v18Issue('info','Pomost','Rodzaj pomostu wymaga sprawdzenia nośności.','Zweryfikuj obciążenie użytkowe, rozpiętość i mocowanie krat/blach.','PL-002'))
+ }
+ return issues
+};
+/* Product-specific captions and geometry controls */
+const v18OldVisibility=updateVisibility;
+updateVisibility=function(){v18OldVisibility();const it=current(),t=it?.type;if(!it)return;
+ showEl('linearGeometry', ['railing','fence','screen'].includes(t));showEl('custom3dSection',t==='custom');
+ showEl('infillSection',['railing','fence','gate','screen'].includes(t));
+ showEl('criteriaSection',['railing','stairs','frame','platform','custom'].includes(t));
+ showEl('mountingSection',['railing','screen','frame','platform'].includes(t));
+ showEl('plateSection',['railing','screen','frame','platform'].includes(t));
+ showEl('substrateSection',['railing','screen','frame','platform','stairs'].includes(t));
+ showEl('customMountEditor',['railing','screen'].includes(t)&&it.mountMode==='custom');
+ // Hide irrelevant generic mounting preview on products that use foundations/end connections.
+ const prev=document.querySelector('[data-step-pane="4"] .twoPreview');if(prev)prev.classList.toggle('hidden', ['stairs','fence','gate','custom'].includes(t));
+ if(t==='custom')v18RenderCustom();
+};
+const v18OldLoad=loadForm;
+loadForm=function(){v18OldLoad();v18Beams(current());v18RenderCustom();};
+const v18OldMigrate=migrateItem;
+migrateItem=function(it){v18OldMigrate(it);v18Beams(it);return it};
+const v18OldSetStep=setStep;
+setStep=function(n){v18OldSetStep(n);if(+n===2&&v18IsCustom(current()))requestAnimationFrame(()=>{v18FitEditor(false);v18RenderCustom()})};
+const v18OldDetails=detailsHtml;
+detailsHtml=function(it){
+ const base=`<b>${escHtml(it.name)}</b><br><b>Typ:</b> ${escHtml(typeName(it.type))} • <b>Ilość:</b> ${it.qty}<br><b>Materiał:</b> ${escHtml(it.material)} • ${escHtml(finishName(it.finish))}<br>`;
+ if(v18IsCustom(it))return base+`${v18Beams(it).length} profili 3D • ${pieceLength(it).toFixed(3)} m profili / szt.<br>Współrzędne, przekroje, masy i rysunki w karcie części.`;
+ if(it.type==='stairs')return base+`<b>Schody:</b> ${it.stairSteps} stopni ${it.stairRise}×${it.stairRun} cm, szerokość ${it.stairWidth} cm<br><b>Policzki:</b> ${it.stairStringers} × ${it.stairStringerProfile}<br><b>Stopnie:</b> ${it.treadType} • noski: ${it.stairNosing}<br><b>Poręcze:</b> ${it.stairSides} stron, ${it.stairHandrailProfile}<br><b>Mocowanie:</b> dół ${it.stairBottomFix}; góra ${it.stairTopFix}<br><b>Materiały profilowe:</b> ${pieceLength(it).toFixed(2)} m / szt.`;
+ if(it.type==='gate')return base+`<b>Brama:</b> światło ${it.gateOpening} m, wysokość ${it.gateHeight} cm, skrzydła ${it.gateLeaves}, ${it.gateOpeningType}<br><b>Rama:</b> ${it.gateFrameProfile}; słupy ${it.gatePostProfile}<br><b>Okucia:</b> ${it.gateHinges}, ${it.gateLock}; automatyka ${it.gateAutomation}<br><b>Fundament:</b> ${it.gateFoundation}, ${it.gateFoundationW}×${it.gateFoundationD} mm<br><b>Materiały profilowe:</b> ${pieceLength(it).toFixed(2)} m / szt.`;
+ if(it.type==='fence')return base+`<b>Przęsła:</b> ${it.segments.map(x=>x.name+' '+x.length+' m').join(' • ')}<br><b>Wysokość:</b> ${it.height} cm; teren ${it.fenceTerrain}<br><b>Posadowienie:</b> ${it.fenceMountSystem}; fundament ${it.fenceFoundationW}×${it.fenceFoundationD} mm; osadzenie ${it.fenceEmbed} mm<br><b>Profile:</b> ${it.postProfile} / ${it.topProfile} / ${it.bottomProfile}`;
+ if(it.type==='platform')return base+`<b>Pomost:</b> ${it.platformL}×${it.platformW}×${it.platformH} m, ${it.platformDeck}<br><b>Podpory:</b> ${it.platformLegs}; balustrady: ${it.platformRailSides} boków<br><b>Rama:</b> ${it.topProfile}; podpory ${it.postProfile}<br><b>Materiały profilowe:</b> ${pieceLength(it).toFixed(2)} m / szt.`;
+ if(it.type==='frame')return base+`<b>Rama:</b> ${it.frameL}×${it.frameW}×${it.frameH} m; pola ${it.baysL}×${it.baysW}<br><b>Słupy:</b> ${it.postProfile}; belki ${it.topProfile}; stężenia ${it.bracing}<br><b>Materiały profilowe:</b> ${pieceLength(it).toFixed(2)} m / szt.`;
+ return v18OldDetails(it)
+};
+const v18OldOrder=orderText;
+orderText=function(){const meta=packProjectMeta();return [`STEELVISION · ${meta.projectName||'Projekt'}`,`Numer: ${meta.projectRef||'—'} • Rewizja: ${meta.revisionCode||'A'}`,`Klient: ${meta.clientName||'—'}`,`Gotowe elementy liniowe: ${projectFinishedMb().toFixed(3)} mb`,`Łączne profile materiałowe: ${projectMaterialMb().toFixed(3)} m`,'',...state.items.map((it,i)=>[`${i+1}. ${it.name} — ${typeName(it.type)} (${it.qty} szt.)`,`${pieceLength(it).toFixed(3)} m profili / szt.`,it.type==='stairs'?`Stopnie ${it.stairSteps}, policzki ${it.stairStringerProfile}, mocowania ${it.stairBottomFix} / ${it.stairTopFix}`:it.type==='gate'?`Skrzydła ${it.gateLeaves}, rama ${it.gateFrameProfile}, zawiasy ${it.gateHinges}`:it.type==='fence'?`Posadowienie ${it.fenceMountSystem}, przęsła ${(it.segments||[]).length}`:it.type==='platform'?`Pomost ${it.platformL}×${it.platformW}, typ ${it.platformDeck}`:it.type==='custom'?v18Beams(it).map((b,j)=>`E${j+1} ${b.profile} ${v18Len(b).toFixed(3)} m • A:${b.a.join('/')} B:${b.b.join('/')}`).join('\n'):`Materiał: ${it.material}; powłoka ${finishName(it.finish)}`].join('\n'))].join('\n\n')};
+/* Explicit 3D vector DXF. */
+const v18OldDxf=currentPlanDxf;
+currentPlanDxf=function(){if(!v18IsCustom(current()))return v18OldDxf();const data=['0','SECTION','2','ENTITIES'];v18Beams(current()).forEach((b,i)=>{data.push('0','LINE','8','CUSTOM_PROFILES','10',String(b.a[0]*1000),'20',String(b.a[1]*1000),'30',String(b.a[2]*1000),'11',String(b.b[0]*1000),'21',String(b.b[1]*1000),'31',String(b.b[2]*1000))});data.push('0','ENDSEC','0','EOF');return data.join('\n')};
+/* Isometric diagrams for a spatial frame, not a fake balcony plan. */
+function v18BeamSvg(it,w=900,h=360,front=false){const bs=v18Beams(it);if(!bs.length)return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}"><text x="24" y="38">No custom geometry / Brak geometrii</text></svg>`;
+ const proj=(p)=>front?[p[0],p[2]]:[p[0]-.56*p[1],p[2]+.34*p[1]],raw=bs.flatMap(b=>[proj(b.a),proj(b.b)]),xs=raw.map(x=>x[0]),ys=raw.map(x=>x[1]),minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys),sc=Math.min((w-130)/Math.max(.3,maxx-minx),(h-90)/Math.max(.3,maxy-miny),130),cx=w/2-(minx+maxx)/2*sc,cy=h/2+(miny+maxy)/2*sc;
+ const lines=bs.map((b,i)=>{const a=proj(b.a),v=proj(b.b),ax=cx+a[0]*sc,ay=cy-a[1]*sc,bx=cx+v[0]*sc,by=cy-v[1]*sc;return `<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="#3e6179" stroke-width="4" stroke-linecap="round"/><text x="${(ax+bx)/2+7}" y="${(ay+by)/2-8}" font-family="Arial" font-size="10" fill="#1e4965">E${i+1} · ${Math.round(v18Len(b)*1000)} mm</text>`}).join('');return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}"><rect width="100%" height="100%" fill="white"/><text x="22" y="26" font-family="Arial" font-size="16" fill="#153b60">${front?'Elevation X/Z':'3D isometric'} · ${escXml(it.name)}</text>${lines}<text x="22" y="${h-16}" font-family="Arial" font-size="12" fill="#566f83">${bs.length} profiles · ${pieceLength(it).toFixed(3)} m material</text></svg>`}
+const v18OldTop=assemblyTopSvg,v18OldElev=assemblyElevationSvg;
+assemblyTopSvg=function(it,...arg){return v18IsCustom(it)?v18BeamSvg(it,arg[1]||900,arg[2]||360,false):v18OldTop(it,...arg)};
+assemblyElevationSvg=function(it,...arg){return v18IsCustom(it)?v18BeamSvg(it,arg[1]||900,arg[2]||360,true):v18OldElev(it,...arg)};
+/* Product data summary: non-linear types must not display fake finished railing metres. */
+const v18OldSummary=renderSummary;
+renderSummary=function(){const r=v18OldSummary();const it=current();if(['stairs','gate','frame','platform','custom'].includes(it.type)){
+  const a=$('#curMb'),b=$('#curTotal');if(a)a.textContent=pieceLength(it).toFixed(2)+' m profili';if(b)b.textContent=itemLength(it).toFixed(2)+' m profili';
+ }
+ const panel=document.querySelector('#v18ProductAudit');if(panel){const n=validateItem(it),bad=n.filter(v=>v.sev==='blocker').length,w=n.filter(v=>v.sev==='warning').length;panel.innerHTML=`<b>${escHtml(typeName(it.type))}</b> • ${it.type==='custom'?v18Beams(it).length+' profili przestrzennych':(it.type==='stairs'?it.stairSteps+' stopni':'osobny workflow')} • kontrola: ${bad} krytycznych, ${w} ostrzeżeń. Weryfikacja inżynierska pozostaje obowiązkowa.`}
+ return r;
+};
+
+/* --- Coordinate-plane drawing interactions (two clicks = one 3D segment) --- */
+const v18Editor={plane:'XY',depth:0,grid:.1,scale:88,panU:0,panV:0,pending:null,mode:'draw',drag:null};
+const v18EditorCanvas=document.getElementById('custom3dCanvas');
+function v18Axes(){return v18Editor.plane==='XY'?[0,1,2]:v18Editor.plane==='XZ'?[0,2,1]:[1,2,0]}
+function v18ToPoint(uv){let r=[0,0,0],[u,v,d]=v18Axes();r[u]=uv[0];r[v]=uv[1];r[d]=v18Editor.depth;return r}
+function v18Pixel(q,w,h){const [u,v]=v18Axes();return [w/2+(q[u]-v18Editor.panU)*v18Editor.scale,h/2-(q[v]-v18Editor.panV)*v18Editor.scale]}
+function v18ClickPoint(x,y,w,h){const step=v18Editor.grid,[u,v,d]=v18Axes(),arr=[0,0,0];arr[u]=Math.round(((x-w/2)/v18Editor.scale+v18Editor.panU)/step)*step;arr[v]=Math.round((-(y-h/2)/v18Editor.scale+v18Editor.panV)/step)*step;arr[d]=v18Editor.depth;return arr.map(v=>+v.toFixed(4))}
+function v18DrawEditor(){const c=v18EditorCanvas;if(!c||current()?.type!=='custom'||!c.clientWidth)return;const dpr=Math.min(2,devicePixelRatio||1),w=Math.max(280,c.clientWidth),h=Math.max(280,c.clientHeight);c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.fillStyle='#f8fbfd';g.fillRect(0,0,w,h);
+ const st=v18Editor.grid,scale=v18Editor.scale,stepPx=st*scale,spacing=stepPx<9?st*Math.ceil(12/Math.max(1,stepPx)):st;
+ const [u,v]=v18Axes();g.lineWidth=1;
+ for(let uu=Math.floor(v18Editor.panU-(w/2)/scale)-1;uu<=v18Editor.panU+(w/2)/scale+1;uu+=spacing){const x=w/2+(uu-v18Editor.panU)*scale;g.strokeStyle=Math.abs(uu)<1e-6?'#acc0d1':'#e5edf3';g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke()}
+ for(let vv=Math.floor(v18Editor.panV-(h/2)/scale)-1;vv<=v18Editor.panV+(h/2)/scale+1;vv+=spacing){const y=h/2-(vv-v18Editor.panV)*scale;g.strokeStyle=Math.abs(vv)<1e-6?'#acc0d1':'#e5edf3';g.beginPath();g.moveTo(0,y);g.lineTo(w,y);g.stroke()}
+ v18Beams(current()).forEach((b,i)=>{const a=v18Pixel(b.a,w,h),q=v18Pixel(b.b,w,h),offPlane=Math.abs(b.a[v18Axes()[2]]-v18Editor.depth)>.01||Math.abs(b.b[v18Axes()[2]]-v18Editor.depth)>.01;g.strokeStyle=offPlane?'#b7c2cd':'#3c759b';g.globalAlpha=offPlane?.35:1;g.lineWidth=offPlane?2:4;g.lineCap='round';g.beginPath();g.moveTo(...a);g.lineTo(...q);g.stroke();g.globalAlpha=1;for(const pt of [a,q]){g.fillStyle=offPlane?'#b6c0ca':'#d58d43';g.beginPath();g.arc(pt[0],pt[1],4,0,2*Math.PI);g.fill()}if(!offPlane){g.font='11px Arial';g.fillStyle='#315a79';g.fillText('E'+(i+1), (a[0]+q[0])/2+5,(a[1]+q[1])/2-5)}});
+ if(v18Editor.pending){const a=v18Pixel(v18Editor.pending,w,h);g.fillStyle='#ca873b';g.beginPath();g.arc(a[0],a[1],7,0,2*Math.PI);g.fill();}
+ g.font='12px Arial';g.fillStyle='#2a4e68';g.fillText(`${v18Editor.plane} • ${'XYZ'[v18Axes()[2]]} = ${v18Editor.depth.toFixed(2)} m`,12,22);g.fillText(`${'XYZ'[u]} →`,w-45,h-12);g.fillText(`${'XYZ'[v]} ↑`,12,40);
+ const sum=pieceLength(current());const e=document.getElementById('custom3dCount');if(e)e.textContent=`${v18Beams(current()).length} profili · ${sum.toFixed(3)} m`;
+}
+function v18FitEditor(draw=true){const bs=v18Beams(current()),ax=v18Axes(),pts=bs.flatMap(b=>[b.a,b.b]);if(pts.length){const u=pts.map(p=>p[ax[0]]),v=pts.map(p=>p[ax[1]]),du=Math.max(...u)-Math.min(...u),dv=Math.max(...v)-Math.min(...v),w=v18EditorCanvas.clientWidth||650,h=v18EditorCanvas.clientHeight||400;v18Editor.panU=(Math.max(...u)+Math.min(...u))/2;v18Editor.panV=(Math.max(...v)+Math.min(...v))/2;v18Editor.scale=Math.min(140,Math.max(15,.75*Math.min(w/Math.max(.5,du),h/Math.max(.5,dv))))}else{v18Editor.scale=88;v18Editor.panU=0;v18Editor.panV=0}if(draw)v18DrawEditor()}
+function v18RenderCustomRows(){const tb=document.getElementById('custom3dRows');if(!tb||current()?.type!=='custom')return;tb.textContent='';const beams=v18Beams(current());beams.forEach((b,i)=>{const tr=document.createElement('tr');const makeCell=(content)=>{const td=document.createElement('td');td.appendChild(content);tr.appendChild(td);return td};const lab=document.createElement('div');lab.textContent=`E${i+1}`;lab.style.fontWeight='750';const sel=document.createElement('select');['40x40x2','50x40x2','50x50x2','60x40x2','60x60x3','80x40x3','100x50x3','100x100x4','Ø42.4x2','Ø48.3x2'].forEach(p=>sel.add(new Option(p,p)));sel.value=b.profile;sel.addEventListener('change',()=>{b.profile=sel.value;v18Edited(false)});const first=document.createElement('div');first.append(lab,sel);makeCell(first);
+ for(const side of ['a','b']){const wrap=document.createElement('div');wrap.style.display='flex';wrap.style.gap='3px';for(let k=0;k<3;k++){const inp=document.createElement('input');inp.type='number';inp.step='.05';inp.min='-100';inp.max='100';inp.value=(+b[side][k]).toFixed(3);inp.title=(side==='a'?'Początek ':'Koniec ')+('XYZ'[k]);inp.addEventListener('change',()=>{let val=Number(inp.value);if(!Number.isFinite(val)||Math.abs(val)>100){inp.value=b[side][k];return}b[side][k]=+val.toFixed(4);v18Edited(false)});wrap.appendChild(inp)}makeCell(wrap)}const len=document.createElement('span');len.textContent=v18Len(b).toFixed(3)+' m';makeCell(len);const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='×';del.setAttribute('aria-label','Usuń profil E'+(i+1));del.addEventListener('click',()=>{beams.splice(i,1);v18Edited(true)});makeCell(del);tb.appendChild(tr)})}
+function v18RenderCustom(){if(!document.getElementById('custom3dSection')||current()?.type!=='custom')return;requestAnimationFrame(v18DrawEditor)}
+function v18Edited(fullRows){if(fullRows)v18RenderCustomRows();v18DrawEditor();updateAll()}
+function v18BindEditor(){const canvas=v18EditorCanvas;if(!canvas)return;
+ [['customPlane',v=>v18Editor.plane=v],['customDepth',v=>v18Editor.depth=Math.max(-30,Math.min(30,Number(v)||0))],['customGrid',v=>v18Editor.grid=Math.max(.01,Number(v)||.1)]].forEach(([id,fn])=>document.getElementById(id)?.addEventListener('change',e=>{fn(e.target.value);v18Editor.pending=null;v18DrawEditor()}));
+ document.getElementById('customToolDraw')?.addEventListener('click',()=>{v18Editor.mode='draw';v18Editor.pending=null;v18DrawEditor()});
+ document.getElementById('customToolPick')?.addEventListener('click',()=>{v18Editor.mode='pick';v18Editor.pending=null;v18DrawEditor()});
+ document.getElementById('customCancel')?.addEventListener('click',()=>{v18Editor.pending=null;v18DrawEditor()});
+ document.getElementById('customFit')?.addEventListener('click',()=>v18FitEditor());
+ document.getElementById('customZoomIn')?.addEventListener('click',()=>{v18Editor.scale=Math.min(350,v18Editor.scale*1.25);v18DrawEditor()});
+ document.getElementById('customZoomOut')?.addEventListener('click',()=>{v18Editor.scale=Math.max(15,v18Editor.scale/1.25);v18DrawEditor()});
+ document.getElementById('customAddCoords')?.addEventListener('click',()=>{const [u,v,d]=v18Axes(),a=[0,0,0],b=[0,0,0];a[d]=v18Editor.depth;b[d]=v18Editor.depth;b[u]=1;v18Beams(current()).push({id:v18BeamSeq(),a,b,profile:document.getElementById('customProfile').value});v18Edited(true)});
+ let active=null,startXY=null;
+ const down=e=>{if(current().type!=='custom')return;const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,w=canvas.clientWidth,h=canvas.clientHeight;
+   if(v18Editor.mode==='pick'){let match=null,best=14;v18Beams(current()).forEach((b,i)=>{for(const side of ['a','b']){if(Math.abs(b[side][v18Axes()[2]]-v18Editor.depth)>.01)continue;const pt=v18Pixel(b[side],w,h),dist=Math.hypot(pt[0]-x,pt[1]-y);if(dist<best){best=dist;match={i,side}}}});if(match){active=match;startXY=[x,y];canvas.setPointerCapture(e.pointerId)}else{v18Editor.pending=null;const st=document.getElementById('custom3dStatus');st.textContent='Nie znaleziono węzła — zmień płaszczyznę lub przybliż'}}
+   else {const pt=v18ClickPoint(x,y,w,h);if(!v18Editor.pending){v18Editor.pending=pt;document.getElementById('custom3dStatus').textContent=`Punkt A: (${pt.join(', ')}) m. Kliknij punkt końcowy B.`}else{if(Math.hypot(...pt.map((v,k)=>v-v18Editor.pending[k]))<.005){document.getElementById('custom3dStatus').textContent='Profil musi mieć długość większą niż 5 mm.';return}v18Beams(current()).push({id:v18BeamSeq(),a:v18Editor.pending,b:pt,profile:document.getElementById('customProfile').value});v18Editor.pending=null;document.getElementById('custom3dStatus').textContent='Profil dodany. Kliknij punkt A kolejnego profilu.';v18Edited(true)}}v18DrawEditor();e.preventDefault()};
+ canvas.addEventListener('pointerdown',down);
+ canvas.addEventListener('pointermove',e=>{if(!active)return;const r=canvas.getBoundingClientRect(),p=v18ClickPoint(e.clientX-r.left,e.clientY-r.top,canvas.clientWidth,canvas.clientHeight),beam=v18Beams(current())[active.i];if(beam){beam[active.side]=p;v18DrawEditor()}e.preventDefault()});
+ const stop=e=>{if(!active)return;active=null;v18Edited(true);try{canvas.releasePointerCapture(e.pointerId)}catch(_){}};canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);
+ canvas.addEventListener('wheel',e=>{if(current()?.type!=='custom')return;e.preventDefault();v18Editor.scale=Math.max(15,Math.min(350,v18Editor.scale*(e.deltaY>0?.9:1.1)));v18DrawEditor()},{passive:false});
+ window.addEventListener('resize',()=>{if(current()?.type==='custom'&&state.step===2)v18DrawEditor()});
+}
+v18BindEditor();
+const v18OldSelectProduct=initProductGrid;
+/* Existing product-picker calls loadForm->updateAll. React to selection using a click listener in capture-free bubbling phase. */
+document.getElementById('productGrid').addEventListener('click',()=>{setTimeout(()=>{if(v18IsCustom(current())){v18Beams(current());v18RenderCustomRows();v18FitEditor()}else v18Editor.pending=null},40)});
+// Fresh geometry on an actual product change; never recycle the previous product's segments.
+document.getElementById('productGrid').addEventListener('click', e=>{
+ const el=e.target.closest('.productCard');if(!el)return;
+ const t=el.dataset.type,it=current(),prev=it.type;if(t===prev&&!(t==='railing'&&(!it.segments?.length||!it.segments[0].length)))return;
+ if(t==='railing'){it.shape='U';it.height=105;it.bottomGap=20;it.infill='bars';it.segments=[{name:'Lewe skrzydełko',length:.38,angle:90,jointType:'Spawane',jointGap:0},{name:'Front',length:5.13,angle:0,jointType:'Spawane',jointGap:0},{name:'Prawe skrzydełko',length:.38,angle:-90,jointType:'Koniec',jointGap:0}]}
+ if(t==='fence'){it.shape='I';it.segments=[{name:'Przęsło',length:2.5,angle:0,jointType:'Koniec',jointGap:0}]}
+ if(t==='screen'){it.shape='I';it.segments=[{name:'Panel osłony',length:3,angle:0,jointType:'Koniec',jointGap:0}]}
+ if(t==='custom'){it.customBeams=Array.isArray(it.customBeams)?it.customBeams:[]}
+},true);
+// Immediate field feedback for coordinate plane offset; do not wait for blur.
+document.getElementById('customDepth').addEventListener('input',e=>{v18Editor.depth=Math.max(-30,Math.min(30,Number(e.target.value)||0));v18Editor.pending=null;v18DrawEditor()});
+// Start in user-selected product mode, not generic balcony mode.
+if(v18IsCustom(current())){v18Beams(current());v18RenderCustomRows()}
+updateVisibility();
+
+/* Additional fabrication parity: every chosen brace and gate infill has a 3D and production representation. */
+function v18BraceMembers(it){if(it.type!=='frame'||!String(it.bracing).startsWith('X na'))return [];
+ const L=+it.frameL||4,W=+it.frameW||3,H=+it.frameH||2.5,nL=Math.max(1,+it.baysL||1),nW=Math.max(1,+it.baysW||1),list=[];
+ const add=(a,b)=>list.push({a,b,len:Math.hypot(...a.map((v,i)=>v-b[i]))});
+ const pairX=(x0,x1,y)=>{add([x0,y,0],[x1,y,H]);add([x0,y,H],[x1,y,0])};
+ const pairY=(y0,y1,x)=>{add([x,y0,0],[x,y1,H]);add([x,y0,H],[x,y1,0])};
+ if(it.bracing==='X na bokach'){pairX(0,L,0);pairY(0,W,0)}
+ else {for(let j=0;j<=nW;j++)for(let i=0;i<nL;i++)pairX(i*L/nL,(i+1)*L/nL,j*W/nW);for(let i=0;i<=nL;i++)for(let j=0;j<nW;j++)pairY(j*W/nW,(j+1)*W/nW,i*L/nL)}
+ return list
+}
+function v18GateFill(it){if(it.type!=='gate')return {bars:[],panels:[]};const width=Math.max(0,+it.gateOpening||0),h=(+it.gateHeight||150)/100,n=Math.max(1,+it.gateLeaves||1),w=width/n,s=Math.max(.04,(+it.infillSpacing||100)/1000),bars=[],panels=[];
+ for(let leaf=0;leaf<n;leaf++){const x0=leaf*w;
+  if(it.infill==='bars'){const ct=Math.min(150,Math.max(0,Math.ceil(w/s)-1));for(let j=1;j<=ct;j++){const x=x0+w*j/(ct+1);bars.push({a:[x,0,.07],b:[x,0,h-.07],profile:parseInfillProfile(it.infillProfile)||'20x20x2'})}}
+  else if(it.infill==='hbars'){const ct=Math.max(1,+it.hbarCount||3);for(let j=1;j<=ct;j++){const z=h*j/(ct+1);bars.push({a:[x0+.04,0,z],b:[x0+w-.04,0,z],profile:parseInfillProfile(it.infillProfile)||'20x20x2'})}}
+  else if(['sheet','glass','perforated','mesh','wood'].includes(it.infill))panels.push({a:[x0+.04,0,.06],b:[x0+w-.04,0,.06],h:Math.max(.1,h-.12),kind:it.infill,width:w,profile:it.infillProfile});
+ }return {bars,panels}
+}
+// Dedicated frame bracing selector is persistently stored with the item.
+document.getElementById('frameBraceProfile')?.addEventListener('change',e=>{current().frameBraceProfile=e.target.value;updateAll()});
+const v18PrevMigrate=migrateItem;
+migrateItem=function(it){const x=v18PrevMigrate(it);x.frameBraceProfile=x.frameBraceProfile||'40x40x2';return x};
+const v18PrevLoad=loadForm;
+loadForm=function(){v18PrevLoad();const e=document.getElementById('frameBraceProfile');if(e)e.value=current().frameBraceProfile||'40x40x2'};
+const v18PrevVisibility=updateVisibility;
+updateVisibility=function(){v18PrevVisibility();document.getElementById('frameBraceField')?.classList.toggle('fieldHidden',current()?.type!=='frame')};
+const v18PrevGeometry=buildGeom;
+buildGeom=function(it){const g=v18PrevGeometry(it);if(it.type==='frame')v18BraceMembers(it).forEach(b=>g.lines.push({a:b.a,b:b.b,kind:'beam'}));if(it.type==='gate'){const f=v18GateFill(it);f.bars.forEach(b=>g.lines.push({a:b.a,b:b.b,kind:'infill'}));g.panels.push(...f.panels)}if(it.type==='platform'){
+  const L=+it.platformL||0,W=+it.platformW||0,H=+it.platformH||0;for(let i=1;i<8;i++){const y=W*i/8;g.lines.push({a:[0,y,H],b:[L,y,H],kind:'infill'})}
+ }return g};
+const v18PrevCut=cutPiecesForItem;
+cutPiecesForItem=function(it){let result=v18PrevCut(it),q=Math.max(1,+it.qty||1);if(it.type==='frame'){v18BraceMembers(it).forEach(b=>{for(let j=0;j<q;j++)result.push({profile:it.frameBraceProfile||'40x40x2',length:b.len,label:'stężenie',item:it.name})})}if(it.type==='gate'){
+  v18GateFill(it).bars.forEach(b=>{for(let j=0;j<q;j++)result.push({profile:b.profile,length:Math.hypot(...b.a.map((v,i)=>v-b.b[i])),label:'wypełnienie skrzydła',item:it.name})})
+ }return result};
+const v18PrevBom=bomForItem;
+bomForItem=function(it){const rows=v18PrevBom(it),q=Math.max(1,+it.qty||1),density=v18Density(it),add=(name,profile,L,count)=>{const p=profileProps(profile);rows.push({name,spec:profile,length:L*q,count:count*q,mass:p.kgm==null?null:L*p.kgm*q*density,area:p.m2m==null?null:L*p.m2m*q})};
+ if(it.type==='frame'){const b=v18BraceMembers(it);if(b.length)add('Stężenia',it.frameBraceProfile||'40x40x2',b.reduce((s,x)=>s+x.len,0),b.length)}
+ if(it.type==='gate'){const f=v18GateFill(it);if(f.bars.length)add('Wypełnienie skrzydeł',f.bars[0].profile,f.bars.reduce((s,b)=>s+Math.hypot(...b.a.map((v,i)=>v-b.b[i])),0),f.bars.length);if(f.panels.length){const a=f.panels.reduce((s,p)=>s+Math.max(0,p.width-.08)*p.h,0);rows.push({name:'Panele bramy',spec:it.infill+' · '+it.infillProfile,length:null,count:f.panels.length*q,mass:null,area:a*q})}}
+ return rows};
+const v18PrevParts=productionPartsForItem;
+productionPartsForItem=function(it,ii){const parts=v18PrevParts(it,ii),q=Math.max(1,+it.qty||1),prefix=`I${String(ii+1).padStart(2,'0')}`,density=v18Density(it),addProfile=(code,desc,profile,len,n,note)=>{const p=profileProps(profile);parts.push({code:prefix+'-'+code,category:'Profil',desc,spec:profile,lengthM:len,qtyPerUnit:n,totalQty:n*q,itemName:it.name,itemIndex:ii,material:it.material,finish:finishName(it.finish),note,totalMassKg:p.kgm==null?null:len*n*q*p.kgm*density})};
+ if(it.type==='frame'){const braces=v18BraceMembers(it);if(braces.length){const groups=new Map();braces.forEach(b=>{const key=b.len.toFixed(6);groups.set(key,(groups.get(key)||0)+1)});let j=0;for(const [L,n] of groups)addProfile('BR'+(++j),'Stężenia X',it.frameBraceProfile||'40x40x2',+L,n,'połączenie stężeń do zatwierdzenia')}}
+ if(it.type==='gate'){const f=v18GateFill(it);if(f.bars.length){const gr=new Map();f.bars.forEach(b=>{const len=Math.hypot(...b.a.map((v,i)=>v-b.b[i])),key=b.profile+'|'+len.toFixed(6);gr.set(key,(gr.get(key)||0)+1)});let j=0;for(const [key,n] of gr){const [prof,len]=key.split('|');addProfile('INF'+(++j),'Wypełnienie skrzydła',prof,+len,n,'rozstaw wg konfiguracji')}}f.panels.forEach((panel,j)=>parts.push({code:prefix+'-PNL'+(j+1),category:'Panel',desc:'Panel skrzydła',spec:it.infill+' '+it.infillProfile,widthM:Math.max(0,panel.width-.08),heightM:panel.h,areaM2:Math.max(0,panel.width-.08)*panel.h,qtyPerUnit:1,totalQty:q,itemName:it.name,itemIndex:ii,material:it.material,finish:finishName(it.finish),note:'mocowanie panelu do zatwierdzenia'}))}
+ return parts};
+const v18PrevDetails=detailsHtml;
+detailsHtml=function(it){let h=v18PrevDetails(it);if(it.type==='frame')h+=`<br><b>Stężenia:</b> ${it.bracing} • ${it.frameBraceProfile||'40x40x2'} (${v18BraceMembers(it).length} prętów)`;if(it.type==='gate')h+=`<br><b>Wypełnienie:</b> ${it.infill} • ${it.infillProfile}`;return h};
+
+/* v18 dictionary extends the inherited full PL/EN/DE interface with new workflows. */
+Object.assign(SV_LOCALES, {
+'Własna konstrukcja — rysowanie przestrzenne 3D':{en:'Custom structure — spatial 3D drawing',de:'Eigene Konstruktion — räumliches 3D-Zeichnen'},
+'Płaszczyzna rysowania':{en:'Drawing plane',de:'Zeichenebene'},
+'Poziom trzeciej osi [m]':{en:'Third-axis position [m]',de:'Position der dritten Achse [m]'},
+'Siatka [m]':{en:'Snap grid [m]',de:'Fangraster [m]'},
+'Profil nowego elementu':{en:'New member profile',de:'Profil des neuen Bauteils'},
+'✎ Rysuj profil':{en:'✎ Draw member',de:'✎ Profil zeichnen'},
+'↗ Zaznacz / przesuń punkt':{en:'↗ Select / move node',de:'↗ Knoten wählen / verschieben'},
+'＋ Dodaj odcinek':{en:'＋ Add member',de:'＋ Stab hinzufügen'},
+'Anuluj linię':{en:'Cancel segment',de:'Linie abbrechen'},
+'Dopasuj':{en:'Fit to screen',de:'Ansicht anpassen'},
+'Usuń':{en:'Remove',de:'Entfernen'},
+'Długość':{en:'Length',de:'Länge'},
+'ID / profil':{en:'ID / section',de:'ID / Profil'},
+'X1/Y1/Z1 [m]':{en:'X1/Y1/Z1 [m]',de:'X1/Y1/Z1 [m]'},
+'X2/Y2/Z2 [m]':{en:'X2/Y2/Z2 [m]',de:'X2/Y2/Z2 [m]'},
+'Profil stężeń':{en:'Bracing profile',de:'Aussteifungsprofil'},
+'Własna konstrukcja':{en:'Custom structure',de:'Eigene Konstruktion'},
+'Widoczne są tylko pola właściwe dla wybranego produktu.':{en:'Only fields relevant to this product are displayed.',de:'Nur für dieses Produkt relevante Felder werden angezeigt.'},
+'Geometria bramy / furtki':{en:'Gate / wicket geometry',de:'Tor- / Türgeometrie'},
+'Światło otworu [m]':{en:'Clear opening [m]',de:'Lichte Öffnung [m]'},
+'Wysokość skrzydła [cm]':{en:'Leaf height [cm]',de:'Flügelhöhe [cm]'},
+'Liczba skrzydeł':{en:'Number of leaves',de:'Anzahl Torflügel'},
+'1 skrzydło':{en:'One leaf',de:'Ein Flügel'},
+'2 skrzydła':{en:'Two leaves',de:'Zwei Flügel'},
+'Szczelina dolna [mm]':{en:'Bottom clearance [mm]',de:'Bodenfreiheit [mm]'},
+'Typ otwierania':{en:'Opening mechanism',de:'Öffnungsart'},
+'Kierunek / strona zawiasów':{en:'Handing / hinge side',de:'Anschlag / Scharnierseite'},
+'Rozwierna':{en:'Swing gate',de:'Drehtor'},
+'Przesuwna':{en:'Sliding gate',de:'Schiebetor'},
+'Furtka':{en:'Wicket',de:'Pforte'},
+'Geometria podestu / pomostu':{en:'Platform / walkway geometry',de:'Podest- / Steggeometrie'},
+'Rodzaj pomostu':{en:'Deck surface',de:'Belagart'},
+'Balustrada — liczba boków':{en:'Guardrail — number of edges',de:'Geländer — Anzahl Seiten'},
+'Liczba podpór':{en:'Number of supports',de:'Anzahl Stützen'},
+'Warunki ogrodzenia':{en:'Fence site conditions',de:'Zaunbedingungen'},
+'Teren':{en:'Ground profile',de:'Geländeverlauf'},
+'Spadek — stopniowanie':{en:'Slope — stepped',de:'Gefälle — abgestuft'},
+'Spadek — po terenie':{en:'Slope — following grade',de:'Gefälle — geländefolgend'},
+'Osadzenie słupków':{en:'Post installation',de:'Pfostenbefestigung'},
+'Betonowane w gruncie':{en:'Cast into ground',de:'Einbetoniert'},
+'Na stopach stalowych':{en:'On steel base plates',de:'Auf Stahlfußplatten'},
+'Na murku / fundamencie':{en:'On wall / foundation',de:'Auf Mauer / Fundament'},
+'Głębokość osadzenia [mm]':{en:'Post embedment [mm]',de:'Einbindetiefe [mm]'},
+'Elementy schodów':{en:'Stair components',de:'Treppenbauteile'},
+'Profil policzków / belek':{en:'Stringer profile',de:'Wangen- / Trägerprofil'},
+'Profil poręczy':{en:'Handrail section',de:'Handlaufprofil'},
+'Profil słupków balustrady':{en:'Guardrail posts',de:'Geländerpfosten'},
+'Wspornik / rama stopnia':{en:'Tread support / frame',de:'Stufenauflager / Rahmen'},
+'Podstopnica':{en:'Riser',de:'Setzstufe'},
+'Noski / krawędzie antypoślizgowe':{en:'Nosing / anti-slip edge',de:'Stufenkante / Rutschhemmung'},
+'Antypoślizgowe':{en:'Anti-slip',de:'Rutschhemmend'},
+'Elementy ramy i osprzęt bramy':{en:'Gate frame and hardware',de:'Torrahmen und Beschläge'},
+'Rama i osprzęt bramy':{en:'Gate frame and hardware',de:'Torrahmen und Beschläge'},
+'Profil ramy skrzydła':{en:'Leaf frame section',de:'Torflügelprofil'},
+'Profil słupów bramy':{en:'Gate post section',de:'Torpfostenprofil'},
+'Zawiasy':{en:'Hinges',de:'Scharniere'},
+'Zamek / rygiel':{en:'Lock / latch',de:'Schloss / Riegel'},
+'Automatyka':{en:'Automation',de:'Antrieb / Automatisierung'},
+'Odboje / ograniczniki':{en:'Stops / limiters',de:'Anschläge / Begrenzungen'},
+'Fundament / mocowanie słupów bramy':{en:'Gate foundations / posts',de:'Torfundamente / Pfosten'},
+'Sposób posadowienia':{en:'Foundation type',de:'Gründungsart'},
+'Fundament szerokość [mm]':{en:'Foundation width [mm]',de:'Fundamentbreite [mm]'},
+'Fundament głębokość [mm]':{en:'Foundation depth [mm]',de:'Fundamenttiefe [mm]'},
+'Posadowienie ogrodzenia':{en:'Fence foundations',de:'Zaunfundamente'},
+'Sposób montażu':{en:'Installation method',de:'Montageart'},
+'Średnica / szerokość fundamentu [mm]':{en:'Foundation diameter / width [mm]',de:'Fundamentbreite / Durchmesser [mm]'},
+'Głębokość fundamentu [mm]':{en:'Foundation depth [mm]',de:'Fundamenttiefe [mm]'},
+'Połączenia schodów z obiektem':{en:'Stair connections to the building',de:'Treppenanschlüsse an das Bauwerk'},
+'Mocowanie dolne biegu':{en:'Lower stair fixing',de:'Unterer Treppenanschluss'},
+'Mocowanie górne biegu':{en:'Upper stair fixing',de:'Oberer Treppenanschluss'},
+'Stopa do betonu':{en:'Concrete base plate',de:'Fußplatte auf Beton'},
+'Blacha czołowa':{en:'End plate',de:'Stirnplatte'},
+'Na belce / podciągu':{en:'On structural beam',de:'Auf Stahlträger'},
+'Do podestu':{en:'To landing',de:'Am Podest'},
+'Wymagany detal projektowy':{en:'Engineered detail required',de:'Bemessener Anschluss erforderlich'},
+'Rysunek geometryczny z wymiarami':{en:'Dimensioned geometry',de:'Bemaßte Geometrie'}
+});
+svTranslateInterface();
+
+/* Localize dynamically generated product-flow headings as well as static form labels. */
+function v18LocalizeFlow(){
+ const lang=svPreferences.lang,it=current();if(!it)return;
+ const maps={
+ railing:{en:['Railing','Railing geometry → infill → anchoring → finish.'],de:['Geländer','Geländergeometrie → Füllung → Verankerung → Oberfläche.']},
+ fence:{en:['Fence','Fence alignment → panels/posts → footings → coating.'],de:['Zaun','Zaunverlauf → Felder/Pfosten → Fundamente → Beschichtung.']},
+ stairs:{en:['Stairs','Flight/landing → stringers/treads → upper and lower fixings → documents.'],de:['Treppe','Lauf/Podest → Wangen/Stufen → oberer und unterer Anschluss → Unterlagen.']},
+ gate:{en:['Gate / wicket','Clear opening → leaves/hinges → foundations → finish.'],de:['Tor / Pforte','Lichte Öffnung → Flügel/Beschläge → Fundamente → Oberfläche.']},
+ frame:{en:['Steel frame','Dimensions → columns/bracing → base plates → fabrication documents.'],de:['Stahlkonstruktion','Abmessungen → Stützen/Aussteifung → Fußplatten → Werkstattunterlagen.']},
+ platform:{en:['Platform','Deck frame → supports/guardrails → connections → finish.'],de:['Podest','Rahmen → Stützen/Geländer → Anschlüsse → Oberfläche.']},
+ screen:{en:['Screen','Panel dimensions → frame → fixings → finish.'],de:['Sichtschutz','Paneelmaße → Rahmen → Befestigungen → Oberfläche.']},
+ custom:{en:['Custom 3D structure','Draw members on XY/XZ/YZ planes → assign sections → review connections and production parts.'],de:['Individuelle 3D-Konstruktion','Stäbe in XY/XZ/YZ zeichnen → Profile auswählen → Verbindungen und Teile prüfen.']}
+ };
+ if(lang==='pl')return;
+ const v=maps[it.type]?.[lang];if(!v)return;
+ for(const n of [2,3,4,5]){const t=document.getElementById('workflowTitle'+n),d=document.getElementById('workflowDesc'+n);if(t)t.textContent=(lang==='de'?'Produkttyp: ':'Mode: ')+v[0];if(d)d.textContent=v[1]}
+}
+const v18LanguageBefore=svLanguage;
+svLanguage=function(lang){const r=v18LanguageBefore(lang);v18LocalizeFlow();return r};
+const v18VisibilityBefore=updateVisibility;
+updateVisibility=function(){const r=v18VisibilityBefore();v18LocalizeFlow();return r};
+v18LocalizeFlow();
+</script>
+<script>
+/* B-CORE integration: all geometry and 3D run locally; only final enquiry
+   is sent to the site's existing /api/steel-enquiries endpoint. */
+(() => {
+  "use strict";
+  const host = document.querySelector('[data-step-pane="6"] .actions.noPrint');
+  if (!host || document.getElementById("bcoreSendQuoteFinal")) return;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.id = "bcoreSendQuoteFinal";
+  btn.textContent = "WYŚLIJ PROJEKT DO WYCENY B-CORE";
+  btn.title = "Przenieś kompletny projekt do formularza B-CORE";
+  btn.style.background = "#ad733f";
+  const info = document.createElement("div");
+  info.id = "bcoreQuoteInfo";
+  info.setAttribute("role", "status");
+  info.style.cssText = "font-size:11px;line-height:1.5;flex-basis:100%;color:#486177;margin-top:5px";
+  info.textContent = "Projekt zostanie przygotowany do wysłania. Zapis w B-CORE nastąpi po zatwierdzeniu formularza kontaktowego.";
+  host.append(btn, info);
+  btn.addEventListener("click", () => {
+    try {
+      saveForm();
+      if (!state || !Array.isArray(state.items) || !state.items.length) throw new Error("Brak pozycji w projekcie.");
+      const project = {};
+      projectIds.forEach(id => { project[id] = document.getElementById(id)?.value || ""; });
+      const design = JSON.parse(JSON.stringify({version:"B-CORE-SteelVision-18",project,state},(key,value)=>key.startsWith("_")?undefined:value));
+      const payload = JSON.stringify(design);
+      if (new TextEncoder().encode(payload).length > 2_800_000) {
+        throw new Error("Projekt zbyt duży do wysyłki. Zmniejsz zdjęcia lub wyeksportuj JSON projektu.");
+      }
+      const full = orderText();
+      const summary = "ZAPYTANIE B-CORE / STEELVISION v18\n" +
+        (full.length <= 9500 ? full : full.slice(0,9100)+"\n[Pełny model, profile, mocowania i części są zapisane w projekcie JSON.] ");
+      sessionStorage.setItem("bcore-steelvision-draft",payload);
+      sessionStorage.setItem("bcore-config-enquiry",summary);
+      window.location.assign("/#/kontakt");
+    } catch(error) {
+      info.textContent = "Nie udało się przekazać projektu: " + (error?.message || "błąd przechowywania danych") + ". Pobierz kopię JSON i spróbuj ponownie.";
+      info.style.color = "#a44242";
+    }
+  });
 })();
 </script>
 </body>
