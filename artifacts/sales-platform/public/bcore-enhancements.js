@@ -67,7 +67,10 @@
     if (!app || app.querySelector("#bcore-steelvision-cta")) return;
     const target = app.querySelector("#bcore-configurator .bcore-sim-actions")
       || app.querySelector("#bcore-configurator .bcore-sim-header")
-      || app.querySelector(".detail-hero .actions");
+      || app.querySelector(".detail-hero .actions")
+      || app.querySelector("#bcore-configurator")
+      || app.querySelector(".detail-hero")
+      || app;
     if (!target) return;
     const link = document.createElement("a");
     link.id = "bcore-steelvision-cta";

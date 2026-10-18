@@ -4,7 +4,7 @@ import { rateLimit } from "../rate-limit";
 import { isAdminSession } from "./admin";
 
 const router = Router();
-const MAX_DESIGN_BYTES = 250_000;
+const MAX_DESIGN_BYTES = 3_000_000;
 
 // Browser renders all steel geometry; backend stores only the final enquiry.
 router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) => {
