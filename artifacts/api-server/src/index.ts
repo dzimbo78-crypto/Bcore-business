@@ -27,6 +27,13 @@ async function ensureDatabase() {
       updated_at TIMESTAMP DEFAULT NOW()
     )
   `);
+  await pool.query(
+    "CREATE TABLE IF NOT EXISTS steel_enquiries (" +
+    "id BIGSERIAL PRIMARY KEY, " +
+    "contact_name TEXT NOT NULL, contact_email TEXT NOT NULL, " +
+    "contact_phone TEXT, category TEXT, summary TEXT NOT NULL, " +
+    "design JSONB NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())",
+  );
 }
 
 async function start() {

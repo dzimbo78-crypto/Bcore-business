@@ -3,10 +3,10 @@
   // This file integrates the approved B-CORE cinematic experience with the production API.
   const mail = "przemyslaw.bugajski78@gmail.com";
   const words = {
-    pl: {name:"Imię i nazwisko",email:"Adres e-mail",phone:"Telefon (opcjonalnie)",topic:"Temat",msg:"Opisz swój projekt",send:"Wyślij zapytanie",sending:"Wysyłanie…",sent:"Formularz przyjął zapytanie. Dziękujemy!",error:"Nie udało się wysłać przez AJAX. Możesz ponowić wysyłkę formularza w nowej karcie:",privacy:"Wysyłając formularz, zgadzasz się na kontakt w sprawie zapytania.",hint:"Pola oznaczone * są wymagane.",activation:"FormSubmit wysłał prośbę o aktywację na skrzynkę odbiorcy. Wiadomość nie jest jeszcze dostarczona. Sprawdź Gmail i Spam.",alt:"Napisz e-mail",browser:"Wyślij formularz w nowej karcie"},
-    en: {name:"Full name",email:"Email address",phone:"Phone (optional)",topic:"Subject",msg:"Describe your project",send:"Send enquiry",sending:"Sending…",sent:"The form accepted your enquiry. Thank you!",error:"AJAX delivery failed. You can submit this form in a new tab:",privacy:"By submitting, you agree to be contacted about your enquiry.",hint:"Fields marked * are required.",activation:"FormSubmit has requested recipient activation. Delivery is not confirmed yet; please check the receiving inbox and spam.",alt:"Send an email",browser:"Submit form in a new tab"},
-    da: {name:"Fulde navn",email:"E-mailadresse",phone:"Telefon (valgfrit)",topic:"Emne",msg:"Beskriv dit projekt",send:"Send forespørgsel",sending:"Sender…",sent:"Formularen har modtaget din forespørgsel. Tak!",error:"AJAX-afsendelse mislykkedes. Du kan sende formularen i en ny fane:",privacy:"Når du sender formularen, accepterer du kontakt om din henvendelse.",hint:"Felter med * skal udfyldes.",activation:"FormSubmit kræver aktivering af modtageradressen. Kontroller indbakke og spam. Levering er ikke bekræftet.",alt:"Send en e-mail",browser:"Send formular i ny fane"},
-    de: {name:"Vor- und Nachname",email:"E-Mail-Adresse",phone:"Telefon (optional)",topic:"Betreff",msg:"Beschreiben Sie Ihr Projekt",send:"Anfrage senden",sending:"Wird gesendet…",sent:"Das Formular hat Ihre Anfrage angenommen. Vielen Dank!",error:"Die AJAX-Übertragung ist fehlgeschlagen. Bitte Formular in einem neuen Tab senden:",privacy:"Mit dem Absenden stimmen Sie einer Kontaktaufnahme zu Ihrer Anfrage zu.",hint:"Mit * gekennzeichnete Felder sind Pflichtfelder.",activation:"FormSubmit erfordert die Aktivierung der Empfängeradresse. Bitte Posteingang und Spam prüfen.",alt:"E-Mail schreiben",browser:"Formular in neuem Tab senden"}
+    pl: {name:"Imię i nazwisko",email:"Adres e-mail",phone:"Telefon (opcjonalnie)",topic:"Temat",msg:"Opisz swój projekt",send:"Wyślij zapytanie",sending:"Wysyłanie…",sent:"Formularz przyjął zapytanie. Dziękujemy!",error:"Nie udało się wysłać przez AJAX. Możesz ponowić wysyłkę formularza w nowej karcie:",privacy:"Wysyłając formularz, zgadzasz się na kontakt w sprawie zapytania.",hint:"Pola oznaczone * są wymagane.",activation:"FormSubmit wysłał prośbę o aktywację na skrzynkę odbiorcy. Wiadomość nie jest jeszcze dostarczona. Sprawdź Gmail i Spam.",alt:"Napisz e-mail",browser:"Wyślij formularz w nowej karcie",stored:"Projekt stalowy został zapisany w B-CORE. Numer zgłoszenia:"},
+    en: {name:"Full name",email:"Email address",phone:"Phone (optional)",topic:"Subject",msg:"Describe your project",send:"Send enquiry",sending:"Sending…",sent:"The form accepted your enquiry. Thank you!",error:"AJAX delivery failed. You can submit this form in a new tab:",privacy:"By submitting, you agree to be contacted about your enquiry.",hint:"Fields marked * are required.",activation:"FormSubmit has requested recipient activation. Delivery is not confirmed yet; please check the receiving inbox and spam.",alt:"Send an email",browser:"Submit form in a new tab",stored:"Your steel enquiry was saved by B-CORE. Reference:"},
+    da: {name:"Fulde navn",email:"E-mailadresse",phone:"Telefon (valgfrit)",topic:"Emne",msg:"Beskriv dit projekt",send:"Send forespørgsel",sending:"Sender…",sent:"Formularen har modtaget din forespørgsel. Tak!",error:"AJAX-afsendelse mislykkedes. Du kan sende formularen i en ny fane:",privacy:"Når du sender formularen, accepterer du kontakt om din henvendelse.",hint:"Felter med * skal udfyldes.",activation:"FormSubmit kræver aktivering af modtageradressen. Kontroller indbakke og spam. Levering er ikke bekræftet.",alt:"Send en e-mail",browser:"Send formular i ny fane",stored:"Din stålkonstruktionsforespørgsel er gemt hos B-CORE. Nummer:"},
+    de: {name:"Vor- und Nachname",email:"E-Mail-Adresse",phone:"Telefon (optional)",topic:"Betreff",msg:"Beschreiben Sie Ihr Projekt",send:"Anfrage senden",sending:"Wird gesendet…",sent:"Das Formular hat Ihre Anfrage angenommen. Vielen Dank!",error:"Die AJAX-Übertragung ist fehlgeschlagen. Bitte Formular in einem neuen Tab senden:",privacy:"Mit dem Absenden stimmen Sie einer Kontaktaufnahme zu Ihrer Anfrage zu.",hint:"Mit * gekennzeichnete Felder sind Pflichtfelder.",activation:"FormSubmit erfordert die Aktivierung der Empfängeradresse. Bitte Posteingang und Spam prüfen.",alt:"E-Mail schreiben",browser:"Formular in neuem Tab senden",stored:"Ihre Stahlbauanfrage wurde bei B-CORE gespeichert. Referenz:"}
   };
   const lang = () => words[document.getElementById("bcLang")?.value] ? document.getElementById("bcLang").value : "pl";
   function installContactForm() {
@@ -74,6 +74,36 @@
       send.textContent = val.sending;
       status.replaceChildren();
       try {
+        // A full SteelVision project is stored in Neon with one small API
+        // request. All 3D calculations remain client-side; no email provider
+        // is required to preserve customer quote requests.
+        let steelDraft = null;
+        try {
+          const stored = sessionStorage.getItem("bcore-steelvision-draft");
+          steelDraft = stored ? JSON.parse(stored) : null;
+        } catch (_) { steelDraft = null; }
+        if (steelDraft && Array.isArray(steelDraft.state?.items)) {
+          const response = await fetch("/api/steel-enquiries", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              name: body.name,
+              email: body.email,
+              phone: body.phone || "",
+              category: body.category || "Konstrukcje stalowe",
+              message: body.message,
+              website: body._honey || "",
+              design: steelDraft
+            })
+          });
+          const reply = await response.json().catch(() => ({}));
+          if (!response.ok || !reply?.stored || !reply.reference)
+            throw new Error("Steel design could not be stored");
+          sessionStorage.removeItem("bcore-steelvision-draft");
+          el.reset();
+          status.textContent = val.stored + " " + reply.reference;
+          return;
+        }
         const response = await fetch("https://formsubmit.co/ajax/" + mail, {
           method: "POST",
           mode: "cors",

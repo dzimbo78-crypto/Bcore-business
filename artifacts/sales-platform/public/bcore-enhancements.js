@@ -61,10 +61,33 @@
     document.head.appendChild(script);
   }
 
+  function attachAdvancedSteelConfigurator() {
+    if (!location.hash.startsWith("#/konstrukcje-stalowe")) return;
+    const app = document.getElementById("app");
+    if (!app || app.querySelector("#bcore-steelvision-cta")) return;
+    const target = app.querySelector("#bcore-configurator .bcore-sim-actions")
+      || app.querySelector("#bcore-configurator .bcore-sim-header")
+      || app.querySelector(".detail-hero .actions");
+    if (!target) return;
+    const link = document.createElement("a");
+    link.id = "bcore-steelvision-cta";
+    link.href = "/bcore-steelvision.html";
+    link.className = "button bcore-steelvision-launch";
+    const pl = document.getElementById("bcLang")?.value || "pl";
+    link.textContent = ({
+      pl:"ZAAWANSOWANY KONFIGURATOR ZAMÓWIEŃ 3D",
+      en:"ADVANCED 3D STEEL ORDER CONFIGURATOR",
+      da:"AVANCERET 3D-KONFIGURATOR",
+      de:"ERWEITERTER 3D-STAHLKONFIGURATOR"
+    })[pl] || "ADVANCED 3D STEEL CONFIGURATOR";
+    link.setAttribute("aria-label",link.textContent);
+    target.appendChild(link);
+  }
   function enhance() {
     pending = false;
     refineArrows();
     loadSimulator();
+    attachAdvancedSteelConfigurator();
     // Refill the enquiry only after the production contact form has been mounted.
     const saved = sessionStorage.getItem("bcore-config-enquiry");
     if (saved && location.hash.startsWith("#/kontakt")) {
