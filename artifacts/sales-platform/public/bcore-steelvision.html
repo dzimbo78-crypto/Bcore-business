@@ -1023,20 +1023,6 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
 </div>
 
 <script>
-/* Preserve locally saved projects from the previously deployed B-CORE v16. */
-try {
-  if (!localStorage.getItem("steelvision-v14") && !localStorage.getItem("steelvision-v13") && !localStorage.getItem("steelvision-v12")) {
-    const previous = localStorage.getItem("bcore-steelvision-v12");
-    if (previous) {
-      const parsed = JSON.parse(previous);
-      if (Array.isArray(parsed?.state?.items) && parsed.state.items.length) {
-        localStorage.setItem("steelvision-v14", JSON.stringify({state:parsed.state,project:parsed.project || {}}));
-      }
-    }
-  }
-} catch (_) { /* unavailable storage: continue without migration */ }
-</script>
-<script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const products=[
  {id:"railing",icon:"▥",name:"Balustrada",desc:"Balkon, taras, schody; I/L/U/dowolna."},
@@ -3217,48 +3203,139 @@ svLanguage=function(lang){const r=v18LanguageBefore(lang);v18LocalizeFlow();retu
 const v18VisibilityBefore=updateVisibility;
 updateVisibility=function(){const r=v18VisibilityBefore();v18LocalizeFlow();return r};
 v18LocalizeFlow();
+
 </script>
+<!-- B-CORE | v18 clarity patch: dimensioned, independent top plan and quote handoff -->
+<style>
+  .bcore-clear-plan-v18{padding:14px;border:1px solid #c8d8e5;border-radius:12px;background:#fff;margin:15px 0 20px;box-shadow:0 5px 18px rgba(28,52,75,.055)}
+  .bcore-plan-head{display:flex;justify-content:space-between;gap:12px;align-items:start;flex-wrap:wrap;margin-bottom:9px}
+  .bcore-plan-head strong{font-size:14px;color:#173b5d}.bcore-plan-head span{font-size:11px;color:#66798a}
+  .bcore-clear-plan-v18 svg{display:block;width:100%;height:auto;min-height:200px;background:linear-gradient(0deg,#f4f8fb,#fff);border:1px solid #e2eaf1;border-radius:8px}
+  .bcore-plan-segments{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0 5px}
+  .bcore-plan-segments span{font-size:11px;color:#244862;padding:5px 9px;background:#edf5fa;border:1px solid #d1e2ee;border-radius:99px}
+  .bcore-plan-hint{font-size:11px;color:#657c8c;line-height:1.45;margin:8px 0 0}
+  body[data-theme=dark] .bcore-clear-plan-v18{background:#1b2b3a;border-color:#3f5d74}
+  body[data-theme=dark] .bcore-plan-head strong{color:#e5eef6}
+  body[data-theme=dark] .bcore-plan-segments span{background:#243d50;color:#e5eff6;border-color:#526e83}
+  @media(max-width:650px){.bcore-clear-plan-v18{padding:10px}.bcore-clear-plan-v18 svg{min-height:160px}.bcore-plan-segments span{font-size:10px}}
+</style>
 <script>
-/* B-CORE integration: all geometry and 3D run locally; only final enquiry
-   is sent to the site's existing /api/steel-enquiries endpoint. */
-(() => {
-  "use strict";
-  const host = document.querySelector('[data-step-pane="6"] .actions.noPrint');
-  if (!host || document.getElementById("bcoreSendQuoteFinal")) return;
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.id = "bcoreSendQuoteFinal";
-  btn.textContent = "WYŚLIJ PROJEKT DO WYCENY B-CORE";
-  btn.title = "Przenieś kompletny projekt do formularza B-CORE";
-  btn.style.background = "#ad733f";
-  const info = document.createElement("div");
-  info.id = "bcoreQuoteInfo";
-  info.setAttribute("role", "status");
-  info.style.cssText = "font-size:11px;line-height:1.5;flex-basis:100%;color:#486177;margin-top:5px";
-  info.textContent = "Projekt zostanie przygotowany do wysłania. Zapis w B-CORE nastąpi po zatwierdzeniu formularza kontaktowego.";
-  host.append(btn, info);
-  btn.addEventListener("click", () => {
-    try {
-      saveForm();
-      if (!state || !Array.isArray(state.items) || !state.items.length) throw new Error("Brak pozycji w projekcie.");
-      const project = {};
-      projectIds.forEach(id => { project[id] = document.getElementById(id)?.value || ""; });
-      const design = JSON.parse(JSON.stringify({version:"B-CORE-SteelVision-18",project,state},(key,value)=>key.startsWith("_")?undefined:value));
-      const payload = JSON.stringify(design);
-      if (new TextEncoder().encode(payload).length > 2_800_000) {
-        throw new Error("Projekt zbyt duży do wysyłki. Zmniejsz zdjęcia lub wyeksportuj JSON projektu.");
-      }
-      const full = orderText();
-      const summary = "ZAPYTANIE B-CORE / STEELVISION v18\n" +
-        (full.length <= 9500 ? full : full.slice(0,9100)+"\n[Pełny model, profile, mocowania i części są zapisane w projekcie JSON.] ");
-      sessionStorage.setItem("bcore-steelvision-draft",payload);
-      sessionStorage.setItem("bcore-config-enquiry",summary);
-      window.location.assign("/#/kontakt");
-    } catch(error) {
-      info.textContent = "Nie udało się przekazać projektu: " + (error?.message || "błąd przechowywania danych") + ". Pobierz kopię JSON i spróbuj ponownie.";
-      info.style.color = "#a44242";
-    }
-  });
+(function(){
+ 'use strict';
+ const NS='http://www.w3.org/2000/svg';
+ const isLinear=it=>it&&['railing','fence','screen','custom'].includes(it.type)&&Array.isArray(it.segments)&&it.segments.length>0;
+ const $id=id=>document.getElementById(id);
+ let raf=0;
+ function svgEl(parent,tag,attr={},label){
+   const el=document.createElementNS(NS,tag);
+   Object.entries(attr).forEach(([k,v])=>el.setAttribute(k,String(v)));
+   if(label!==undefined)el.textContent=label;
+   parent.appendChild(el);return el;
+ }
+ function addView(id,target){
+   if(!target||$id(id))return;
+   const box=document.createElement('section');box.className='bcore-clear-plan-v18';box.id=id;
+   box.innerHTML='<div class="bcore-plan-head"><strong>Rzut z góry — rzeczywista geometria</strong><span id="'+id+'-badge">Odcinki i wymiary w mm</span></div><svg viewBox="0 0 900 350" role="img" aria-label="Rzut konstrukcji z góry z wymiarami każdego segmentu"></svg><div class="bcore-plan-segments"></div><p class="bcore-plan-hint">Dokładna proporcja boków. Skrzydełka o długości 38 cm są znacznie krótsze niż front 5 m — wszystkie są oznaczone osobno. Kliknij „Góra” w 3D, aby zobaczyć ten sam model przestrzenny.</p>';
+   target.insertAdjacentElement('afterend',box);
+ }
+ function mount(){
+   const linear=$id('linearGeometry');
+   if(linear){
+     const preview=linear.querySelector('#segments');
+     if(preview){
+       let target=$id('addSegment')||preview;
+       addView('bcore-plan-step2',target);
+     }
+   }
+   const view=$id('view3d')?.closest('.canvasWrap');
+   if(view)addView('bcore-plan-step6',view);
+ }
+ function drawInto(box,it){
+   const svg=box.querySelector('svg'),key=box.querySelector('.bcore-plan-segments');
+   svg.replaceChildren();key.replaceChildren();
+   const list=segmentGeometry(it).filter(seg=>seg.len>0);
+   if(!list.length){svgEl(svg,'text',{x:450,y:180,'text-anchor':'middle',fill:'#6f8090','font-size':16},'Brak odcinków do wyświetlenia');return}
+   const xarr=list.flatMap(s=>[s.a[0],s.b[0]]),yarr=list.flatMap(s=>[s.a[1],s.b[1]]);
+   const minX=Math.min(...xarr),maxX=Math.max(...xarr),minY=Math.min(...yarr),maxY=Math.max(...yarr);
+   const w=Math.max(.001,maxX-minX),h=Math.max(.001,maxY-minY);
+   // A single consistent scale preserves exact relative dimensions.
+   const scale=Math.min(660/Math.max(w,.35),200/Math.max(h,.35),200);
+   const px=x=>450+(x-(minX+maxX)/2)*scale;
+   // Positive world Y points down in this plan so the U opens upward.
+   const py=y=>175+(y-(minY+maxY)/2)*scale;
+   for(let gx=0;gx<=900;gx+=50)svgEl(svg,'line',{x1:gx,y1:0,x2:gx,y2:350,stroke:'#e9eff5','stroke-width':.7});
+   for(let gy=0;gy<=350;gy+=50)svgEl(svg,'line',{x1:0,y1:gy,x2:900,y2:gy,stroke:'#e9eff5','stroke-width':.7});
+   const shades=['#c67f3a','#255d86','#36866f','#8a6ca8','#a15f5f','#7d7132'];
+   list.forEach((seg,i)=>{
+     const a=[px(seg.a[0]),py(seg.a[1])],b=[px(seg.b[0]),py(seg.b[1])];
+     const color=shades[i%shades.length];
+     svgEl(svg,'line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:'#fff','stroke-width':13,'stroke-linecap':'round'});
+     svgEl(svg,'line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:color,'stroke-width':7,'stroke-linecap':'round'});
+     svgEl(svg,'circle',{cx:a[0],cy:a[1],r:5,fill:'#fff',stroke:color,'stroke-width':2});
+     svgEl(svg,'circle',{cx:b[0],cy:b[1],r:5,fill:'#fff',stroke:color,'stroke-width':2});
+     const length=Math.round(seg.len*1000);
+     const keyLine=document.createElement('span');
+     keyLine.textContent=(seg.name||'Odcinek '+(i+1))+' — '+length+' mm';
+     keyLine.style.borderLeft='4px solid '+color;
+     key.appendChild(keyLine);
+     const middle=[(a[0]+b[0])/2,(a[1]+b[1])/2];
+     const dx=b[0]-a[0],dy=b[1]-a[1],horiz=Math.abs(dx)>Math.abs(dy)*1.15;
+     if(horiz){
+       const tx=middle[0],ty=middle[1]-22;
+       svgEl(svg,'rect',{x:tx-49,y:ty-12,width:98,height:24,rx:5,fill:'#fff',stroke:'#dce6ee'});
+       svgEl(svg,'text',{x:tx,y:ty+5,'text-anchor':'middle',fill:'#183f5c','font-size':15,'font-weight':700},length+' mm');
+     }else{
+       // Short return legs have a callout with a leader, not a tiny label
+       // hidden underneath an anchor or another steel profile.
+       const left=middle[0]<450,tx=left?Math.max(83,middle[0]-74):Math.min(816,middle[0]+74),ty=middle[1]+5;
+       svgEl(svg,'line',{x1:middle[0],y1:middle[1],x2:tx,y2:ty-4,stroke:color,'stroke-width':1.5,'stroke-dasharray':'3 4'});
+       svgEl(svg,'rect',{x:tx-47,y:ty-15,width:94,height:23,rx:4,fill:'#fff',stroke:'#dce6ee'});
+       svgEl(svg,'text',{x:tx,y:ty+1,'text-anchor':'middle',fill:'#183f5c','font-size':14,'font-weight':700},length+' mm');
+     }
+   });
+   svgEl(svg,'text',{x:16,y:327,fill:'#5c7080','font-size':12},'Rzut poziomy • wszystkie odcinki zachowują rzeczywiste proporcje');
+   const badge=box.querySelector('[id$="-badge"]');
+   if(badge)badge.textContent=it.shape+' • '+list.length+' odc. • '+Math.round(list.reduce((sum,seg)=>sum+seg.len,0)*1000)+' mm';
+ }
+ function render(){
+   mount();const it=typeof current==='function'?current():null;
+   for(const id of ['bcore-plan-step2','bcore-plan-step6']){
+     const box=$id(id);if(!box)continue;
+     box.hidden=!isLinear(it);if(isLinear(it))drawInto(box,it);
+   }
+ }
+ function schedule(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;render()})}
+ document.addEventListener('input',schedule);
+ document.addEventListener('change',schedule);
+ document.addEventListener('click',schedule);
+ window.addEventListener('resize',schedule,{passive:true});
+ // Provide a production-safe quote handoff. The 3D and materials remain local.
+ function sendQuote(){
+   try{
+     saveForm();
+     const project={};projectIds.forEach(id=>project[id]=$id(id)?.value||'');
+     const design=JSON.parse(JSON.stringify({version:'B-CORE-SteelVision-18',project,state},(k,v)=>k.startsWith('_')?undefined:v));
+     const brief=orderText();
+     if(!design?.state?.items?.length)throw Error('Brak pozycji');
+     sessionStorage.setItem('bcore-steelvision-draft',JSON.stringify(design));
+     sessionStorage.setItem('bcore-config-enquiry',brief.length<=12500?brief:brief.slice(0,12000)+'\n[Pełna specyfikacja projektu zostanie zachowana w bazie B-CORE]');
+     window.location.assign('/#/kontakt');
+   }catch(err){
+     alert('Nie udało się przekazać projektu do formularza. Możesz zapisać pełny projekt przez „Eksport projektu” i spróbować ponownie.');
+   }
+ }
+ function insertQuote(){
+   if($id('bcoreSendQuoteV18'))return;
+   const link=document.createElement('button');link.id='bcoreSendQuoteV18';link.type='button';link.textContent='Wyślij cały projekt do wyceny w B-CORE';
+   link.style.cssText='background:#ba7f43;color:#fff;padding:12px 18px;min-height:45px;font-size:12px;max-width:100%;margin:8px 0';
+   link.addEventListener('click',sendQuote);
+   const form=$id('copyOrder');
+   if(form)form.insertAdjacentElement('afterend',link);
+   const top=$id('exportBtn');
+   if(top){const action=document.createElement('button');action.type='button';action.textContent='Zapytaj o wycenę';action.className='soft';action.addEventListener('click',sendQuote);top.insertAdjacentElement('afterend',action)}
+ }
+ function init(){mount();insertQuote();render()}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
 </body>
