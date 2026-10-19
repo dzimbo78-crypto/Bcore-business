@@ -1658,7 +1658,7 @@ function svPlanDraw(canvas,it,mode='true'){
  const xSpan=Math.max(.001,maxX-minX),ySpan=Math.max(.001,maxY-minY);
  const marginX=w>700?120:72,marginY=h>400?100:82;
  const normalScale=Math.min((w-marginX*2)/xSpan,(h-marginY*2)/ySpan,180);
- const gain=(mode==='schematic'&&xSpan>ySpan*2&&ySpan>.05&&segs.length>1)?Math.max(1,Math.min(5,Math.round(90/(ySpan*normalScale)*10)/10)):1;
+ const gain=(mode==='schematic'&&xSpan>ySpan*2&&ySpan>.0001)?Math.max(1,Math.min(5,Math.round(90/(ySpan*normalScale)*10)/10)):1;
  const scale=Math.min((w-marginX*2)/xSpan,(h-marginY*2)/(ySpan*gain),185);
  const trans=p=>[w/2+(p[0]-(minX+maxX)/2)*scale,h/2-(p[1]-(minY+maxY)/2)*scale*gain+10];
  c.fillStyle='#f4f8fb';c.fillRect(0,0,w,33);c.fillStyle='#234866';c.font='600 12px Arial';c.textAlign='left';c.fillText(`2D / ${it.shape||'-'}   ·   ${svPlanTr('total')} ${pieceLength(it).toFixed(2)} m`,13,21);
@@ -3304,6 +3304,63 @@ svLanguage=function(lang){const result=v19LanguageBefore(lang);svPlanRefreshLabe
 svPlanInit();
 </script>
 
-<script src="/bcore-steelvision-bridge.js?v=19" defer></script>
+<script>
+/* B-CORE website integration. SteelVision stays a client-side, lazy-loaded application. */
+(() => {
+  'use strict';
+  const LANG = {
+    pl: {send:'WYŚLIJ PROJEKT DO WYCENY B-CORE',top:'Zapytaj o wycenę',back:'← Wróć do B-CORE',error:'Nie można przekazać projektu do formularza. Zapisz plik JSON przez „Eksport projektu” i spróbuj ponownie.',large:'Projekt przekracza rozmiar zgłoszenia. Zmniejsz liczbę lub rozmiar zdjęć referencyjnych albo wyeksportuj plik JSON.',empty:'Dodaj przynajmniej jedną pozycję konstrukcji.'},
+    en: {send:'SEND DESIGN FOR B-CORE QUOTE',top:'Request a quote',back:'← Back to B-CORE',error:'Could not transfer the project to the enquiry form. Export the JSON design and try again.',large:'The design is too large for the online enquiry. Reduce reference photos or export the JSON file.',empty:'Please add at least one structure.'},
+    de: {send:'PROJEKT FÜR B-CORE-ANGEBOT SENDEN',top:'Angebot anfragen',back:'← Zurück zu B-CORE',error:'Projekt konnte nicht in das Anfrageformular übertragen werden. Bitte JSON exportieren und erneut versuchen.',large:'Das Projekt ist zu groß für eine Online-Anfrage. Bitte Bilder reduzieren oder JSON exportieren.',empty:'Mindestens eine Konstruktion hinzufügen.'}
+  };
+  const l10n=()=>LANG[document.getElementById('langCurrent')?.textContent?.trim()?.toLowerCase()]||LANG.pl;
+  const byId=id=>document.getElementById(id);
+  function handoff(){
+    const l=l10n();
+    try {
+      if(typeof saveForm==='function')saveForm();
+      if(!state?.items?.length)throw Error(l.empty);
+      const project={};
+      projectIds.forEach(id=>{const el=byId(id);project[id]=el?.value??''});
+      const design=JSON.parse(JSON.stringify({version:'B-CORE-SteelVision-v19',project,state},(key,value)=>key.startsWith('_')?undefined:value));
+      const text=String(orderText());
+      const bytes=new TextEncoder().encode(JSON.stringify(design)).length;
+      if(bytes>2900000)throw Error(l.large);
+      const brief=text.length<=12000?text:text.slice(0,11800)+'\n[The complete project is included in the B-CORE database request.]';
+      // Keep the complete model until the form confirms persistent storage.
+      sessionStorage.setItem('bcore-steelvision-draft',JSON.stringify(design));
+      sessionStorage.setItem('bcore-config-enquiry',brief);
+      window.location.assign('/#/kontakt');
+    }catch(error){
+      const message=error?.message;
+      alert(message===l.large||message===l.empty?message:l.error);
+    }
+  }
+  function createButton(id,label,anchor){
+    if(byId(id)||!anchor)return;
+    const b=document.createElement('button');
+    b.id=id;b.type='button';b.textContent=label;b.className='soft';
+    b.style.cssText='background:#af7947;color:#fff;border-radius:8px;min-height:44px;padding:11px 15px;font-weight:750;white-space:normal;max-width:100%;';
+    b.addEventListener('click',handoff);
+    anchor.insertAdjacentElement('afterend',b);
+    return b;
+  }
+  function setup(){
+    const l=l10n();
+    createButton('bcoreSteelSend',l.send,byId('copyOrder'));
+    createButton('bcoreSteelSendTop',l.top,byId('exportBtn'));
+    if(!byId('bcoreSteelReturn')){
+      const anchor=byId('v14NewProject');
+      if(anchor){
+        const a=document.createElement('a');a.id='bcoreSteelReturn';a.href='/#/konstrukcje-stalowe';
+        a.className='btn ghost';a.textContent=l.back;
+        a.style.cssText='display:inline-flex;align-items:center;padding:10px 12px;text-decoration:none;min-height:44px;';
+        anchor.insertAdjacentElement('beforebegin',a);
+      }
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();
+})();
+</script>
 </body>
 </html>
