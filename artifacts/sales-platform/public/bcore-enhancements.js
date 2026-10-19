@@ -78,10 +78,10 @@
     link.className = "button bcore-steelvision-launch";
     const pl = document.getElementById("bcLang")?.value || "pl";
     link.textContent = ({
-      pl:"STEELVISION V19 — KONFIGURATOR 3D",
-      en:"STEELVISION V19 — 3D STEEL CONFIGURATOR",
-      da:"STEELVISION V19 — 3D-KONFIGURATOR",
-      de:"STEELVISION V19 — 3D-STAHLKONFIGURATOR"
+      pl:"ZAAWANSOWANY KONFIGURATOR KONSTRUKCJI 3D",
+      en:"ADVANCED STEEL CONSTRUCTION CONFIGURATOR",
+      da:"AVANCERET KONFIGURATOR TIL STÅLKONSTRUKTIONER",
+      de:"ERWEITERTER KONFIGURATOR FÜR STAHLKONSTRUKTIONEN"
     })[pl] || "ADVANCED 3D STEEL CONFIGURATOR";
     link.setAttribute("aria-label",link.textContent);
     target.appendChild(link);
