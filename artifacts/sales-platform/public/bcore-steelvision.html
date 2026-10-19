@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SteelVision Studio v18</title>
+<title>SteelVision Studio v19</title>
 <style>
 :root{
   --bg:#eef2f5;--card:#fff;--soft:#f7f9fb;--ink:#17222d;--muted:#6f8090;--line:#d8e1e8;
@@ -292,6 +292,27 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
 .v18QA{padding:10px;margin:12px 0;border:1px solid var(--line);background:var(--soft);border-radius:10px;font-size:11px;color:var(--ink)}
 .v18QA b{color:var(--navy)}
 @media(max-width:650px){#custom3dCanvas{height:320px}.custom3dToolbar label{flex:1 1 42%}.workflowBanner{display:block}}
+
+/* v19 — plan readability, true scale + schematic, enlarged technical plan */
+#miniGeometry{height:345px!important;display:block;width:100%}
+.sv-planbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:9px 0;padding:7px 8px;border:1px solid #d3e0e9;border-radius:9px;background:#f5f9fc}
+.sv-planbar button{font-size:10px;padding:6px 9px;border:1px solid #bdcedc;border-radius:7px;background:white;color:#244966;font-weight:600;cursor:pointer}
+.sv-planbar button.is-current{background:#1b496c;color:white;border-color:#1b496c}
+.sv-planbar button:last-child{margin-left:auto}
+.sv-planbar small{font-size:9px;color:#647b8b}
+.sv-plan-note{font-size:10px;color:#667786;line-height:1.4;margin-top:7px}
+#svPlanModal{position:fixed;inset:0;z-index:990000;background:rgba(9,27,42,.82);display:flex;align-items:center;justify-content:center;padding:18px}
+#svPlanModal.hidden{display:none!important}
+.sv-plan-window{position:relative;background:#fff;border-radius:12px;padding:14px;width:min(1280px,96vw);max-height:94vh;overflow:auto;color:#203d55;box-shadow:0 18px 56px #0005}
+.sv-plan-window-head{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:9px}
+.sv-plan-window-head h3{margin:0;font-size:18px}
+#svPlanLarge{display:block;width:100%;height:min(67vh,620px);background:white;border:1px solid #dde5eb;border-radius:8px}
+.sv-plan-extra{font-size:12px;padding:8px 2px;color:#51697d;line-height:1.55}
+#svPlanModal button{border-radius:7px;padding:9px 13px;cursor:pointer}
+#svPlanModal button.sv-active{background:#214f72;color:#fff}
+#svPlanClose{background:#8a3c3c!important;color:#fff}
+@media(max-width:700px){#miniGeometry{height:315px!important}.sv-planbar button:last-child{margin-left:0}#svPlanLarge{height:56vh}}
+
 </style>
 </head>
 <body>
@@ -530,7 +551,9 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
       </div></div>
     </div>
 
-    <div class="inlinePreview"><div class="previewCap"><span>Rysunek geometryczny z wymiarami</span><span id="geometryCaption"></span></div><canvas id="miniGeometry"></canvas><div class="previewExplain">Widok pokazuje tylko geometrię: odcinki, kąty i wymiary. Etykiety są odsunięte od konstrukcji, aby się nie nakładały.</div></div>
+    <div class="inlinePreview" id="svGeometryPreview"><div class="previewCap"><span>Rzut z góry / geometria</span><span id="geometryCaption"></span></div>
+      <div class="sv-planbar" id="svPlanControls"><button id="svPlanSchematic" type="button" class="is-current">Schemat czytelny</button><button id="svPlanTrue" type="button">Proporcje rzeczywiste</button><button id="svPlanFlip" type="button">↕ Odwróć U</button><button id="svPlanExpand" type="button">⤢ Powiększ rzut z góry</button></div>
+      <canvas id="miniGeometry"></canvas><div class="sv-plan-note" id="svPlanNote">Schemat zachowuje wymiarowanie, ale może celowo powiększać krótkie skrzydełka. Włącz „Proporcje rzeczywiste”, aby zobaczyć dokładny rzut w skali.</div><div class="sv-plan-note" id="svPlanLengthWarning" style="color:#a04434;font-weight:700;display:none">⚠ Uzupełnij brakujące długości segmentów. Rysunek nie może być podstawą zamówienia przy zerowych wymiarach.</div></div>
   </div>
   <div class="stepNav"><button class="ghost" data-prev="1">← Wstecz</button><button data-next="3">Dalej →</button></div>
 </div>
@@ -776,7 +799,7 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
         <button type="button" class="down" id="orbitDown" title="Obróć wokół osi X">↓</button>
       </div>
       <div class="canvasTools">
-        <button type="button" data-view="iso">Izometria</button><button type="button" data-view="front">Przód</button><button type="button" data-view="top">Góra</button><button type="button" data-view="side">Bok</button>
+        <button type="button" data-view="iso">Izometria</button><button type="button" data-view="front">Przód</button><button type="button" data-view="top">Góra</button><button type="button" id="svTopPlan3D" title="Osobny rzut techniczny z góry">Rzut 2D ⤢</button><button type="button" data-view="side">Bok</button>
         <button type="button" id="zoomIn">＋</button><button type="button" id="zoomOut">−</button>
         <button type="button" id="explodeToggle">Explode</button><button type="button" id="toggleAnchors">Kotwy: ON</button><button type="button" id="toggleGrid">Siatka: ON</button>
       </div>
@@ -1022,6 +1045,13 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
 </aside>
 </div>
 
+<div id="svPlanModal" class="hidden" role="dialog" aria-modal="true" aria-label="Rzut z góry konstrukcji">
+  <div class="sv-plan-window">
+    <div class="sv-plan-window-head"><h3 id="svPlanModalTitle">Rzut z góry — podgląd szczegółowy</h3><div><button id="svPlanModalTrue" type="button" class="sv-active">Proporcje rzeczywiste</button> <button id="svPlanModalSchem" type="button">Schemat czytelny</button> <button id="svPlanClose" type="button">✕ Zamknij</button></div></div>
+    <canvas id="svPlanLarge"></canvas><div class="sv-plan-extra" id="svPlanDetails"></div>
+  </div>
+</div>
+
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const products=[
@@ -1055,9 +1085,9 @@ const D={
 };
 function defaultItem(type="railing",name="Balustrada 1",front=5.13){
  return {...JSON.parse(JSON.stringify(D)),type,name,segments:[
-   {name:"Lewe skrzydełko",length:.38,angle:90,jointType:"Spawane",jointGap:0},
+   {name:"Lewe skrzydełko",length:.38,angle:-90,jointType:"Spawane",jointGap:0},
    {name:"Front",length:front,angle:0,jointType:"Spawane",jointGap:0},
-   {name:"Prawe skrzydełko",length:.38,angle:-90,jointType:"Koniec",jointGap:0}
+   {name:"Prawe skrzydełko",length:.38,angle:90,jointType:"Koniec",jointGap:0}
  ]}
 }
 function current(){return state.items[state.selected]}
@@ -1447,7 +1477,7 @@ function applyShape(){
  const it=current(),front=it.segments.find(x=>x.name==="Front")?.length||5,sh=$("#shape").value;it.shape=sh;
  if(sh==="I")it.segments=[{name:"Front",length:front,angle:0,jointType:"Koniec",jointGap:0}];
  if(sh==="L")it.segments=[{name:"Front",length:front,angle:0,jointType:"Spawane",jointGap:0},{name:"Bok",length:.38,angle:-90,jointType:"Koniec",jointGap:0}];
- if(sh==="U")it.segments=[{name:"Lewe skrzydełko",length:.38,angle:90,jointType:"Spawane",jointGap:0},{name:"Front",length:front,angle:0,jointType:"Spawane",jointGap:0},{name:"Prawe skrzydełko",length:.38,angle:-90,jointType:"Koniec",jointGap:0}];
+ if(sh==="U")it.segments=[{name:"Lewe skrzydełko",length:.38,angle:-90,jointType:"Spawane",jointGap:0},{name:"Front",length:front,angle:0,jointType:"Spawane",jointGap:0},{name:"Prawe skrzydełko",length:.38,angle:90,jointType:"Koniec",jointGap:0}];
  if(sh==="CUSTOM"&&!it.segments.length)it.segments=[{name:"Segment 1",length:1,angle:0,jointType:"Koniec",jointGap:0}];
  renderSegments();updateAll()
 }
@@ -1583,6 +1613,7 @@ function fitCam(it,c,cam){
 function draw3D(c,it,cam,fit=false){
  if(!c||!it)return;const dpr=window.devicePixelRatio||1,w=Math.max(320,c.clientWidth||700),h=Math.max(260,c.clientHeight||535);c.width=w*dpr;c.height=h*dpr;const ctx=c.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle=document.body.dataset.theme==="dark"?"#233444":"#f8fafc";ctx.fillRect(0,0,w,h);if(fit)fitCam(it,c,cam);
  if(state.showGrid&&state.viewerGroup==="all"){ctx.strokeStyle=document.body.dataset.theme==="dark"?"#385063":"#e3e9ee";ctx.lineWidth=1;for(let i=-12;i<=12;i++){let a=projectPoint([i,-12,0],cam,w,h),b=projectPoint([i,12,0],cam,w,h);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();a=projectPoint([-12,i,0],cam,w,h);b=projectPoint([12,i,0],cam,w,h);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}}
+ const planBtn=document.getElementById('svTopPlan3D');if(planBtn)planBtn.style.display=linear(it)?'':'none';
  const scene=mergeViewerGeom();
  if(groupVisible("infill"))scene.panels.forEach(p=>{const a=explodedPoint(p.a,"infill",p.kind,p.itemIndex),b=explodedPoint(p.b,"infill",p.kind,p.itemIndex),c2=explodedPoint([p.b[0],p.b[1],p.b[2]+p.h],"infill",p.kind,p.itemIndex),d=explodedPoint([p.a[0],p.a[1],p.a[2]+p.h],"infill",p.kind,p.itemIndex),pp=[a,b,c2,d].map(q=>projectPoint(q,cam,w,h));ctx.beginPath();ctx.moveTo(pp[0][0],pp[0][1]);pp.slice(1).forEach(q=>ctx.lineTo(q[0],q[1]));ctx.closePath();ctx.fillStyle=p.kind==="glass"?"rgba(70,150,202,.20)":"rgba(105,118,128,.28)";ctx.strokeStyle=p.kind==="glass"?"rgba(70,150,202,.72)":"rgba(90,105,115,.82)";ctx.fill();ctx.stroke()});
  if(groupVisible("plates"))scene.plates.forEach(pl=>{const p0=explodedPoint(pl.p,"plates",null,pl.itemIndex),w2=pl.w/2,d2=pl.d/2,t=pl.tangent||[1,0,0],n=pl.normal||[0,1,0];let corners;if(pl.orientation==="vertical")corners=[[-w2,-d2],[w2,-d2],[w2,d2],[-w2,d2]].map(([u,v])=>[p0[0]+t[0]*u,p0[1]+t[1]*u,p0[2]+v]);else corners=[[-w2,-d2],[w2,-d2],[w2,d2],[-w2,d2]].map(([u,v])=>[p0[0]+t[0]*u+n[0]*v,p0[1]+t[1]*u+n[1]*v,p0[2]]);const pp=corners.map(q=>projectPoint(q,cam,w,h));ctx.beginPath();ctx.moveTo(pp[0][0],pp[0][1]);pp.slice(1).forEach(q=>ctx.lineTo(q[0],q[1]));ctx.closePath();ctx.fillStyle=pl.surface==="underside"?"rgba(128,101,165,.68)":pl.orientation==="vertical"?"rgba(183,115,49,.68)":"rgba(148,139,119,.68)";ctx.strokeStyle="#6f6558";ctx.fill();ctx.stroke()});
@@ -1591,6 +1622,14 @@ function draw3D(c,it,cam,fit=false){
  visibleLines.forEach(l=>{ctx.strokeStyle=l.group==="infill"?"#6687a0":l.color;ctx.lineWidth=l.kind==="accent"?6:l.kind==="post"?5:l.kind==="infill"?2.5:4;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(l.a[0],l.a[1]);ctx.lineTo(l.b[0],l.b[1]);ctx.stroke();if($("#viewerMode")?.value==="technical"){ctx.strokeStyle="rgba(255,255,255,.45)";ctx.lineWidth=1;ctx.stroke()}});
  if(state.viewerScope==="all"&&state.viewerGroup==="all")scene.labels.forEach(l=>{const q=projectPoint(l.p,cam,w,h);ctx.fillStyle="rgba(255,255,255,.92)";ctx.fillRect(q[0]-62,q[1]-11,124,22);ctx.strokeStyle="#d0dbe3";ctx.strokeRect(q[0]-62,q[1]-11,124,22);ctx.fillStyle="#40576b";ctx.font="10px Segoe UI,Arial";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(l.text.slice(0,24),q[0],q[1])});
  const axisO=projectPoint([0,0,0],cam,w,h),axisLen=.55,axes=[[axisLen,0,0,"#b34e4e","X"],[0,axisLen,0,"#3c8a5e","Y"],[0,0,axisLen,"#476fa5","Z"]];axes.forEach(([ax,ay,az,col,label])=>{const q=projectPoint([ax,ay,az],cam,w,h);ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(axisO[0],axisO[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();ctx.fillStyle=col;ctx.font="10px Segoe UI";ctx.fillText(label,q[0]+4,q[1]-4)});
+ if(Math.abs(cam.rotX+Math.PI/2)<.06&&Math.abs(cam.rotY)<.06&&Math.abs(cam.rotZ)<.06&&state.viewerScope!=='all'&&linear(it)){
+   const seq=segmentGeometry(it);ctx.save();ctx.textAlign='center';ctx.font='bold 11px Arial';seq.forEach((seg,i)=>{
+     const m=[(seg.a[0]+seg.b[0])/2,(seg.a[1]+seg.b[1])/2,0],p=projectPoint(m,cam,w,h);
+     let yoff=i===0?-39:i===seq.length-1?40:-22;
+     ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillRect(p[0]-37,p[1]+yoff-11,74,21);
+     ctx.fillStyle='#214b6b';ctx.fillText(`S${i+1}: ${seg.len.toFixed(2)} m`,p[0],p[1]+yoff+3)
+   });ctx.restore()
+ }
  ctx.fillStyle="#627587";ctx.font="10px Segoe UI,Arial";ctx.textAlign="left";ctx.fillText(`Explode ${state.explode}% • ${state.viewerScope==="all"?"cały projekt":"bieżąca pozycja"} • ${state.viewerGroup}`,14,h-14)
 }
 const mainCam={rotX:-.58,rotY:0,rotZ:-.68,zoom:80,panX:0,panY:15};
@@ -1605,7 +1644,62 @@ function mtxt(ctx,text,x,y,size=11,align="left",color="#33495d"){ctx.fillStyle=c
 function mline(ctx,a,b,color="#566c7e",width=1,dash=[]){ctx.save();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.restore()}
 function mdim(ctx,a,b,label,offset=20){const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,A=[a[0]+nx*offset,a[1]+ny*offset],B=[b[0]+nx*offset,b[1]+ny*offset];mline(ctx,A,B,"#7c8d9c",1);mline(ctx,[A[0]-nx*4,A[1]-ny*4],[A[0]+nx*4,A[1]+ny*4],"#7c8d9c");mline(ctx,[B[0]-nx*4,B[1]-ny*4],[B[0]+nx*4,B[1]+ny*4],"#7c8d9c");const mx=(A[0]+B[0])/2,my=(A[1]+B[1])/2;ctx.fillStyle="#fff";ctx.fillRect(mx-40,my-9,80,18);mtxt(ctx,label,mx,my,10,"center","#24394c")}
 function drawMiniType(){const d=prepMini("miniType");if(!d)return;const {ctx,w,h}=d,it=current();ctx.fillStyle="#f8fafb";ctx.fillRect(0,0,w,h);mtxt(ctx,typeName(it.type),24,25,14,"left","#153b60");if(it.type==="stairs"){let ox=70,oy=h-45,sw=Math.min(32,(w-150)/11),sh=12;for(let i=0;i<9;i++){ctx.strokeStyle="#526a7d";ctx.strokeRect(ox+i*sw,oy-(i+1)*sh,sw,sh)}mline(ctx,[ox,oy-18],[ox+9*sw,oy-9*sh-48],"#c07b36",5)}else if(it.type==="frame"){const ox=100,oy=65,ww=Math.min(360,w-210),hh=125,dx=60,dy=34,P=[[ox,oy+hh],[ox+ww,oy+hh],[ox+ww,oy],[ox,oy],[ox+dx,oy-dy],[ox+ww+dx,oy-dy],[ox+ww+dx,oy+hh-dy],[ox+dx,oy+hh-dy]];[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,7],[1,6],[2,5],[3,4]].forEach(e=>mline(ctx,P[e[0]],P[e[1]],"#4c6275",4))}else{const ox=65,oy=h-45,ww=w-130,hh=125;mline(ctx,[ox,oy-hh],[ox+ww,oy-hh],"#c07b36",6);mline(ctx,[ox,oy],[ox+ww,oy],"#536a7d",5);for(let i=0;i<6;i++){let px=ox+i*ww/5;mline(ctx,[px,oy],[px,oy-hh],"#4d6b84",5)}if(it.type==="gate"){mline(ctx,[ox,oy],[ox+ww,oy-hh],"#71879a",3);mline(ctx,[ox,oy-hh],[ox+ww,oy],"#71879a",3)}if(it.type==="screen"){ctx.fillStyle="rgba(80,100,115,.18)";ctx.fillRect(ox+8,oy-hh+8,ww-16,hh-16)}}}
-function drawMiniGeometry(){const d=prepMini("miniGeometry");if(!d)return;const {ctx,w,h}=d,it=current();if(it.type==="stairs"){const n=Math.max(1,+it.stairSteps||10),rise=+it.stairRise||17.5,run=+it.stairRun||28,sx=Math.min((w-160)/(n*run),1.3),sy=Math.min((h-90)/(n*rise),1.1),ox=65,oy=h-45;for(let i=0;i<n;i++){let x=ox+i*run*sx,y=oy-i*rise*sy;mline(ctx,[x,y],[x+run*sx,y],"#536a7d",2);mline(ctx,[x+run*sx,y],[x+run*sx,y-rise*sy],"#536a7d",2)}mline(ctx,[ox,oy-20],[ox+n*run*sx,oy-n*rise*sy-20],"#c07b36",4);mdim(ctx,[ox,oy+16],[ox+n*run*sx,oy+16],`${(n*run/100).toFixed(2)} m`,18);mtxt(ctx,`${n} stopni • ${rise}×${run} cm`,w/2,23,11,"center","#153b60");return}if(it.type==="frame"){const L=+it.frameL||4,W=+it.frameW||3,H=+it.frameH||2.5,ox=105,oy=h-45,ww=Math.min(w-230,390),hh=115,dx=62,dy=32,P=[[ox,oy],[ox+ww,oy],[ox+ww,oy-hh],[ox,oy-hh],[ox+dx,oy-dy],[ox+ww+dx,oy-dy],[ox+ww+dx,oy-hh-dy],[ox+dx,oy-hh-dy]];[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(e=>mline(ctx,P[e[0]],P[e[1]],"#536a7d",3));mdim(ctx,P[0],P[1],`${L.toFixed(2)} m`,20);mdim(ctx,P[1],P[5],`${W.toFixed(2)} m`,18);mdim(ctx,P[1],P[2],`${H.toFixed(2)} m`,-22);return}let pts=[[0,0]],cur=[0,0];it.segments.forEach(seg=>{const a=(+seg.angle||0)*Math.PI/180,l=+seg.length||0;cur=[cur[0]+l*Math.cos(a),cur[1]-l*Math.sin(a)];pts.push(cur)});const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys),sc=Math.min((w-160)/Math.max(.5,maxx-minx),(h-110)/Math.max(.5,maxy-miny),95),cx=w/2-(minx+maxx)/2*sc,cy=h/2-(miny+maxy)/2*sc;for(let i=0;i<pts.length-1;i++){const a=[cx+pts[i][0]*sc,cy+pts[i][1]*sc],b=[cx+pts[i+1][0]*sc,cy+pts[i+1][1]*sc];mline(ctx,a,b,"#c07b36",7);mdim(ctx,a,b,`${(+it.segments[i].length).toFixed(2)} m`,i%2?26:-26);mtxt(ctx,it.segments[i].name,(a[0]+b[0])/2,(a[1]+b[1])/2+(i%2?45:-45),9,"center","#566c7e");if(i<it.segments.length-1&&(+it.segments[i].jointGap||0)>0)mtxt(ctx,`szczelina ${it.segments[i].jointGap} mm`,b[0],b[1]-12,9,"center","#a34242")}mtxt(ctx,`Suma ${pieceLength(it).toFixed(2)} mb • wys. ${it.height} cm`,w/2,22,11,"center","#153b60")}
+
+/* v19 accurate measured top view / readable annotated scheme */
+const svPlanState={mode:'schematic',modalMode:'true'};
+function svPlanTr(key){const lang=(typeof svPreferences!=='undefined'&&svPreferences.lang)||'pl';const dict={pl:{schem:'Schemat czytelny',true:'Proporcje rzeczywiste',expand:'⤢ Powiększ rzut z góry',flip:'↕ Odwróć U',close:'✕ Zamknij',title:'Rzut z góry — szczegóły',schemInfo:'SCHEMAT: krótkie skrzydełka powiększone dla czytelności, wymiary pozostają rzeczywiste.',trueInfo:'RZUT W RZECZYWISTYCH PROPORCJACH — geometria w metrach, bez zniekształceń.',total:'Suma',shape:'Kształt'},en:{schem:'Readable diagram',true:'True proportions',expand:'⤢ Enlarge top view',flip:'↕ Flip U',close:'✕ Close',title:'Top view — details',schemInfo:'SCHEMATIC: short wings enlarged for readability; dimension labels are actual.',trueInfo:'TRUE PROPORTIONS — measured geometry without distortion.',total:'Total',shape:'Shape'},de:{schem:'Gut lesbares Schema',true:'Echte Proportionen',expand:'⤢ Draufsicht vergrößern',flip:'↕ U umdrehen',close:'✕ Schließen',title:'Draufsicht — Details',schemInfo:'SCHEMA: kurze Seitenflügel zur Lesbarkeit vergrößert; Maße sind real.',trueInfo:'ECHTE PROPORTIONEN — Geometrie ohne Verzerrung.',total:'Gesamt',shape:'Form'}};return (dict[lang]||dict.pl)[key]||key}
+function svPlanCaption(it){const type=it.shape||'I';return `${svPlanTr('shape')}: ${type}  •  ${svPlanTr('total')}: ${pieceLength(it).toFixed(2)} m  •  ${it.segments.map((s,i)=>`S${i+1} ${Number(s.length||0).toFixed(2)} m`).join('  |  ')}`}
+function svPlanDraw(canvas,it,mode='true'){
+ if(!canvas||!it||!linear(it)||!it.segments?.length)return;
+ const r=canvas.getBoundingClientRect(),dpr=Math.max(1,window.devicePixelRatio||1),w=Math.max(320,Math.round(r.width)||650),h=Math.max(240,Math.round(r.height)||350);
+ canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);const c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.fillStyle='#fff';c.fillRect(0,0,w,h);
+ const segs=segmentGeometry(it),points=segs.flatMap(s=>[s.a,s.b]);
+ const ys=points.map(p=>p[1]),xs=points.map(p=>p[0]);const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+ const xSpan=Math.max(.001,maxX-minX),ySpan=Math.max(.001,maxY-minY);
+ const marginX=w>700?120:72,marginY=h>400?100:82;
+ const normalScale=Math.min((w-marginX*2)/xSpan,(h-marginY*2)/ySpan,180);
+ const gain=(mode==='schematic'&&xSpan>ySpan*2&&ySpan>.05&&segs.length>1)?Math.max(1,Math.min(5,Math.round(90/(ySpan*normalScale)*10)/10)):1;
+ const scale=Math.min((w-marginX*2)/xSpan,(h-marginY*2)/(ySpan*gain),185);
+ const trans=p=>[w/2+(p[0]-(minX+maxX)/2)*scale,h/2-(p[1]-(minY+maxY)/2)*scale*gain+10];
+ c.fillStyle='#f4f8fb';c.fillRect(0,0,w,33);c.fillStyle='#234866';c.font='600 12px Arial';c.textAlign='left';c.fillText(`2D / ${it.shape||'-'}   ·   ${svPlanTr('total')} ${pieceLength(it).toFixed(2)} m`,13,21);
+ c.font='10px Arial';c.textAlign='right';c.fillStyle=mode==='schematic'&&gain>1?'#a16428':'#476b86';c.fillText(mode==='schematic'&&gain>1?`SCHEMAT  ·  Y ×${gain.toFixed(1)}`:'BEZ ZNIEKSZTAŁCEŃ',w-12,21);
+ // measured model segments, not duplicated manual coordinate math
+ segs.forEach((s,i)=>{
+   const a=trans(s.a),b=trans(s.b),dx=b[0]-a[0],dy=b[1]-a[1],mag=Math.max(.001,Math.hypot(dx,dy)),nx=-dy/mag,ny=dx/mag;
+   c.lineCap='round';c.lineWidth=9;c.strokeStyle='#2c668e';c.beginPath();c.moveTo(...a);c.lineTo(...b);c.stroke();
+   c.lineWidth=2;c.strokeStyle='#8db6d2';c.beginPath();c.moveTo(...a);c.lineTo(...b);c.stroke();
+   const len=Math.max(0,+s.len),mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,offset=mag<65?36:27;
+   const off=mag<110?Math.min(78,Math.max(35,w*.095)):offset,orient=mag<110&&Math.abs(dx)<Math.abs(dy)?(mx>w*.62?-1:1):1;const lx=mx+nx*off*orient,ly=my+ny*off*orient;
+   c.font='bold 12px Arial';c.fillStyle='#194b6e';c.textAlign='center';c.fillText(`S${i+1} · ${len.toFixed(2)} m`,lx,ly);
+   c.font='10px Arial';c.fillStyle='#566c80';c.fillText(s.name||'',lx,ly+13);
+   c.fillStyle='#f9fafc';c.strokeStyle='#1e668e';c.lineWidth=2;c.beginPath();c.arc(a[0],a[1],5,0,Math.PI*2);c.fill();c.stroke();
+   if(i===segs.length-1){c.beginPath();c.arc(b[0],b[1],5,0,Math.PI*2);c.fill();c.stroke()}
+   // 0-dimension segments are visibly called out, not represented as a valid product
+   if(!len){c.fillStyle='#ba453b';c.font='bold 11px Arial';c.fillText('! 0 m',mx+15,my-8)}
+ });
+ // extension endpoints makes short returns recognizable
+ if(it.shape==='U'&&segs.length===3){const left=trans(segs[0].a),right=trans(segs[2].b);c.fillStyle='#87621d';c.font='10px Arial';c.textAlign='center';c.fillText('↰',left[0]-14,left[1]+7);c.fillText('↱',right[0]+14,right[1]+7)}
+ c.fillStyle='#64798a';c.font='10px Arial';c.textAlign='left';c.fillText(`X →   Y ↑  ·  ${mode==='schematic'&&gain>1?svPlanTr('schemInfo'):svPlanTr('trueInfo')}`,12,h-12,w-22);
+}
+function svPlanRefreshLabels(){
+ const mode=svPlanState.mode;[['svPlanSchematic','schem',mode==='schematic'],['svPlanTrue','true',mode==='true'],['svPlanExpand','expand',false],['svPlanFlip','flip',false],['svPlanModalTrue','true',svPlanState.modalMode==='true'],['svPlanModalSchem','schem',svPlanState.modalMode==='schematic'],['svPlanClose','close',false]].forEach(([id,key,on])=>{const el=document.getElementById(id);if(el){el.textContent=svPlanTr(key);el.classList.toggle('is-current',on);el.classList.toggle('sv-active',on)}});
+ const title=document.getElementById('svPlanModalTitle');if(title)title.textContent=svPlanTr('title');
+ const note=document.getElementById('svPlanNote');if(note)note.textContent=svPlanTr(mode==='schematic'?'schemInfo':'trueInfo');
+}
+function svPlanMini(){const it=current(),bar=document.getElementById('svPlanControls');const preview=document.getElementById('svGeometryPreview');if(preview)preview.style.display=it.type==='custom'?'none':'';if(bar)bar.style.display=linear(it)?'flex':'none';const warn=document.getElementById('svPlanLengthWarning');if(warn)warn.style.display=linear(it)&&it.segments.some(s=>!Number(s.length))?'block':'none';if(document.getElementById('svPlanFlip'))document.getElementById('svPlanFlip').style.display=(linear(it)&&it.shape==='U'&&it.segments.length===3)?'':'none';if(!linear(it))return;svPlanRefreshLabels();svPlanDraw(document.getElementById('miniGeometry'),it,svPlanState.mode)}
+function svPlanFull(){const dialog=document.getElementById('svPlanModal');if(!dialog||dialog.classList.contains('hidden'))return;svPlanRefreshLabels();svPlanDraw(document.getElementById('svPlanLarge'),current(),svPlanState.modalMode);const e=document.getElementById('svPlanDetails');if(e)e.textContent=svPlanCaption(current())}
+function svPlanInit(){
+ const bind=(id,fn)=>document.getElementById(id)?.addEventListener('click',fn);
+ bind('svPlanFlip',()=>{const it=current();if(it.shape!=='U'||it.segments.length!==3)return;it.segments[0].angle=-Number(it.segments[0].angle||0);it.segments[2].angle=-Number(it.segments[2].angle||0);renderSegments();updateAll();svPlanMini()});
+ bind('svPlanSchematic',()=>{svPlanState.mode='schematic';svPlanMini()});bind('svPlanTrue',()=>{svPlanState.mode='true';svPlanMini()});
+ const openFull=()=>{if(!linear(current()))return;svPlanState.modalMode='true';document.getElementById('svPlanModal').classList.remove('hidden');requestAnimationFrame(svPlanFull)};bind('svPlanExpand',openFull);bind('svTopPlan3D',openFull);
+ bind('svPlanModalTrue',()=>{svPlanState.modalMode='true';svPlanFull()});bind('svPlanModalSchem',()=>{svPlanState.modalMode='schematic';svPlanFull()});
+ const close=()=>document.getElementById('svPlanModal').classList.add('hidden');bind('svPlanClose',close);
+ document.getElementById('svPlanModal')?.addEventListener('click',e=>{if(e.target.id==='svPlanModal')close()});document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+ window.addEventListener('resize',()=>{if(state.step===2)svPlanMini();svPlanFull()});
+}
+
+function drawMiniGeometry(){const d=prepMini("miniGeometry");if(!d)return;const {ctx,w,h}=d,it=current();if(it.type==="stairs"){const n=Math.max(1,+it.stairSteps||10),rise=+it.stairRise||17.5,run=+it.stairRun||28,sx=Math.min((w-160)/(n*run),1.3),sy=Math.min((h-90)/(n*rise),1.1),ox=65,oy=h-45;for(let i=0;i<n;i++){let x=ox+i*run*sx,y=oy-i*rise*sy;mline(ctx,[x,y],[x+run*sx,y],"#536a7d",2);mline(ctx,[x+run*sx,y],[x+run*sx,y-rise*sy],"#536a7d",2)}mline(ctx,[ox,oy-20],[ox+n*run*sx,oy-n*rise*sy-20],"#c07b36",4);mdim(ctx,[ox,oy+16],[ox+n*run*sx,oy+16],`${(n*run/100).toFixed(2)} m`,18);mtxt(ctx,`${n} stopni • ${rise}×${run} cm`,w/2,23,11,"center","#153b60");return}if(it.type==="frame"){const L=+it.frameL||4,W=+it.frameW||3,H=+it.frameH||2.5,ox=105,oy=h-45,ww=Math.min(w-230,390),hh=115,dx=62,dy=32,P=[[ox,oy],[ox+ww,oy],[ox+ww,oy-hh],[ox,oy-hh],[ox+dx,oy-dy],[ox+ww+dx,oy-dy],[ox+ww+dx,oy-hh-dy],[ox+dx,oy-hh-dy]];[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(e=>mline(ctx,P[e[0]],P[e[1]],"#536a7d",3));mdim(ctx,P[0],P[1],`${L.toFixed(2)} m`,20);mdim(ctx,P[1],P[5],`${W.toFixed(2)} m`,18);mdim(ctx,P[1],P[2],`${H.toFixed(2)} m`,-22);return}svPlanMini()}
 function drawMiniStructure(){const d=prepMini("miniStructure");if(!d)return;const {ctx,w,h}=d,it=current(),ox=75,oy=h-35,hh=145,ww=w-150;mtxt(ctx,`${it.material} • detal 1 pola`,w/2,20,11,"center","#153b60");mline(ctx,[ox,oy-hh],[ox+ww,oy-hh],"#c07b36",10);mline(ctx,[ox,oy],[ox+ww,oy],"#536a7d",8);mline(ctx,[ox,oy],[ox,oy-hh],"#496b85",10);mline(ctx,[ox+ww,oy],[ox+ww,oy-hh],"#496b85",10);if(it.infill==="bars"){for(let i=1;i<=7;i++){const px=ox+i*ww/8;mline(ctx,[px,oy-8],[px,oy-hh+8],"#6b8193",3)}}else if(it.infill==="hbars"){for(let j=1;j<=Math.max(1,+it.hbarCount||5);j++){const py=oy-j*hh/(+it.hbarCount+1);mline(ctx,[ox+8,py],[ox+ww-8,py],"#6b8193",3)}}else if(["glass","sheet","perforated","mesh","wood"].includes(it.infill)){ctx.fillStyle=it.infill==="glass"?"rgba(65,150,205,.16)":"rgba(95,110,120,.18)";ctx.strokeStyle="#71889b";ctx.lineWidth=2;ctx.fillRect(ox+12,oy-hh+12,ww-24,hh-24);ctx.strokeRect(ox+12,oy-hh+12,ww-24,hh-24);mtxt(ctx,it.infill.toUpperCase(),w/2,oy-hh/2,14,"center","#516778")}mtxt(ctx,`góra ${it.topProfile}`,ox+ww*.72,oy-hh-20,9,"center");mtxt(ctx,`słupek ${it.postProfile}`,ox-12,oy-hh*.55,9,"right");mtxt(ctx,`dół ${it.bottomProfile}`,ox+ww*.72,oy+18,9,"center");mtxt(ctx,it.infillMount,w/2,oy-hh/2+32,9,"center","#7a5a37")}
 function drawMiniMount(){
  const d=prepMini("miniMount");if(!d)return;const {ctx,w,h}=d,it=current(),m=it.mountMode==="custom"?selectedCustomMount():null,spec=effectiveMountSpec(it,m),surface=m?.surface||mountSurfaceFromDefault(it.mountType),base=h-48,px=w*.52,slabH=Math.min(72,(+it.substrateThickness||180)*.34),ins=Math.min(32,(+it.insulationThickness||0)*.35);
@@ -1956,7 +2050,9 @@ function partDrawingsHtml(parts,it){return `<div class="partdraw">${parts.map(p=
 function renderPartDrawings(parts,it){const box=$("#packPartDrawings");if(!box)return;box.innerHTML=parts.map(p=>`<div class="partDrawingCard"><h6>${escHtml(p.code)} • ${escHtml(p.desc)} • ${escHtml(partDimLabel(p))}</h6>${partDetailSvg(p,it)}</div>`).join("")}
 function reusableOffcuts(){const out=[];projectCutOptimization().forEach(r=>r.bins.forEach((b,i)=>{const used=b.used||0,left=r.stockMm-used,min=Math.max(0,...state.items.filter(it=>cutPiecesForItem(it).some(c=>c.profile===r.profile)).map(it=>+it.minReusableOffcutMm||0));if(left>=min&&left>0)out.push({profile:r.profile,lengthMm:left,bar:i+1})}));const map=new Map();out.forEach(o=>{const bucket=Math.round(o.lengthMm/10)*10,key=o.profile+"|"+bucket;if(!map.has(key))map.set(key,{profile:o.profile,lengthMm:bucket,count:0});map.get(key).count++});return [...map.values()].sort((a,b)=>a.profile.localeCompare(b.profile)||b.lengthMm-a.lengthMm)}
 function renderOffcuts(){const tb=$("#offcutBody");if(!tb)return;tb.innerHTML="";const rows=reusableOffcuts();if(!rows.length){tb.innerHTML='<tr><td colspan="5">Brak odcinków spełniających próg zachowania.</td></tr>';return}rows.forEach(o=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${escHtml(o.profile)}</td><td>${Math.round(o.lengthMm)} mm</td><td>${o.count}</td><td>${(o.lengthMm*o.count/1000).toFixed(2)} m</td><td class="good">ZACHOWAĆ</td>`;tb.appendChild(tr)})}
-function labelsHtml(){const pm=packProjectMeta(),rev=pm.revisionCode||"-",families=projectPartFamilies();return `<!doctype html><html><head><meta charset="utf-8"><title>Etykiety ${escHtml(pm.projectRef||"")}</title><style>body{font-family:Arial;margin:8mm}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5mm}.l{border:1px solid #555;padding:5mm;min-height:38mm;break-inside:avoid}.code{font-size:18px;font-weight:bold}.sm{font-size:10px;line-height:1.4}@media print{body{margin:5mm}}</style></head><body><div class="grid">${families.map(f=>`<div class="l"><div class="code">${escHtml(f.family)}</div><div class="sm"><b>${escHtml(pm.projectRef||"Projekt")}</b> • REV ${escHtml(rev)}<br>${escHtml(f.category)} • ${escHtml(f.spec)}<br>${escHtml(partDimLabel(f))}<br>Ilość: ${f.qty}<br>Pozycje: ${escHtml(f.items.join(", "))}</div></div>`).join("")}</div></body></html>`}
+function labelsHtml(){const pm=packProjectMeta(),rev=pm.revisionCode||"-",families=projectPartFamilies();return `<!doctype html><html><head><meta charset="utf-8"><title>Etykiety ${escHtml(pm.projectRef||"")}</title><style>body{font-family:Arial;margin:8mm}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5mm}.l{border:1px solid #555;padding:5mm;min-height:38mm;break-inside:avoid}.code{font-size:18px;font-weight:bold}.sm{font-size:10px;line-height:1.4}@media print{body{margin:5mm}}</style></head><body><div class="grid">${families.map(f=>`<div class="l"><div class="code">${escHtml(f.family)}</div><div class="sm"><b>${escHtml(pm.projectRef||"Projekt")}</b> • REV ${escHtml(rev)}<br>${escHtml(f.category)} • ${escHtml(f.spec)}<br>${escHtml(partDimLabel(f))}<br>Ilość: ${f.qty}<br>Pozycje: ${escHtml(f.items.join(", "))}</div></div>`).join("")}</div>
+
+</body></html>`}
 function renderLabelPreview(){const box=$("#labelPreview");if(!box)return;const pm=packProjectMeta();box.innerHTML=projectPartFamilies().slice(0,9).map(f=>`<div class="labelCard"><b>${f.family}</b><span class="labelCode">${escHtml(f.spec)}</span><br>${escHtml(partDimLabel(f))}<br>REV ${escHtml(pm.revisionCode||"-")} • qty ${f.qty}</div>`).join("")}
 
 function renderProductionPack(){
@@ -2137,7 +2233,7 @@ function updateAll(){
 }
 
 $("#copyOrder").onclick=async()=>{const t=orderText();try{await navigator.clipboard.writeText(t);alert("Pełne zamówienie skopiowane.");}catch(e){alert(t)}};
-$("#exportBtn").onclick=()=>{saveForm();const project={};projectIds.forEach(id=>project[id]=$("#"+id).value);const d={version:"18.0",project,state};const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(project.projectRef||"steelvision_project")+".json";a.click();URL.revokeObjectURL(a.href)};
+$("#exportBtn").onclick=()=>{saveForm();const project={};projectIds.forEach(id=>project[id]=$("#"+id).value);const d={version:"19.0",project,state};const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(project.projectRef||"steelvision_project")+".json";a.click();URL.revokeObjectURL(a.href)};
 $("#importInput").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());state=d.state;migrateState();projectIds.forEach(id=>{$("#"+id).value=d.project?.[id]||""});loadForm();setStep(state.step||1);updateAll()}catch(err){alert("Nie udało się wczytać projektu.")}};
 $("#bomCsvBtn").onclick=()=>{const rows=[["Pozycja","Element","Specyfikacja","Długość_m","Ilość","Masa_kg","Powierzchnia_m2"]];state.items.forEach(it=>bomForItem(it).forEach(r=>rows.push([it.name,r.name,r.spec,r.length??"",r.count??"",r.mass!=null?r.mass.toFixed(2):"",r.area!=null?r.area.toFixed(3):""])));const csv=rows.map(r=>r.map(v=>`"${csvSafe(v).replaceAll('"','""')}"`).join(";")).join("\n");const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="SteelVision_BOM.csv";a.click();URL.revokeObjectURL(a.href)};
 $("#mountCsvBtn").addEventListener("click",()=>{const it=current(),mounts=it.mountMode==="custom"?it.customMounts:generateAutoMountSchedule(it),rows=[["Nr","Segment","Pozycja_od_poczatku_mm","Plaszczyzna","Kotwa","Srednica","Glebokosc_mm","Blacha_W_mm","Blacha_H_mm","Blacha_T_mm","Otwory","Srednica_otworu_mm","Typ_otworu","Offset_X_mm","Offset_Y_mm"]];mounts.forEach((m,i)=>{const s=effectiveMountSpec(it,m),seg=(it.segments||[])[+m.segment||0];rows.push([i+1,seg?.name||(+m.segment+1),mountPositionMm(it,m),mountSurfaceLabel(m.surface),s.anchorType,s.anchorDia,s.embedDepth,s.plateW,s.plateH,s.plateT,s.holeCount,s.holeDia,s.holeType,s.holeOffsetX,s.holeOffsetY])});const csv=rows.map(r=>r.map(v=>`"${csvSafe(v).replaceAll('"','""')}"`).join(";")).join("\n"),blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="SteelVision_mocowania.csv";a.click();URL.revokeObjectURL(a.href)});
@@ -2780,7 +2876,7 @@ function v16Manifest(lang='pl'){
  const pm=packProjectMeta(),a=v16IntegrityAudit(),v=projectValidationSummary(),lines=[
  'STEELVISION STUDIO v18 — PROJECT MANIFEST','',`Project: ${pm.projectName||'-'}`,`Reference: ${pm.projectRef||'-'}`,`Revision: ${pm.revisionCode||'-'}`,`Status: ${pm.documentStatus||'-'}`,`Generated: ${new Date().toISOString()}`,`Project hash: ${currentProjectHash()}`,`Released hash: ${state.releasedHash||'-'}`,`Released revision: ${state.releasedRevision||'-'}`,'',`Items: ${state.items.length}`,`Finished linear metres: ${projectFinishedMb().toFixed(3)} m`,`Material profile metres: ${projectMaterialMb().toFixed(3)} m`,`Fabrication parts: ${a.parts}`,`Connections: ${a.connections}`,`Technical blockers: ${v.blockers}`,`Technical warnings: ${v.warnings}`,`Integrity checks: ${a.passed}/${a.total}`,'','Files are generated from the same project snapshot. Any change to geometry, profiles, fixings or finish requires regeneration of the documentation package.'];return lines.join('\n')
 }
-function v16SummaryJson(){const a=v16IntegrityAudit(),v=projectValidationSummary(),pm=packProjectMeta();return JSON.stringify({generator:'SteelVision Studio v18',generated:new Date().toISOString(),project:{name:pm.projectName,reference:pm.projectRef,revision:pm.revisionCode,status:pm.documentStatus,hash:currentProjectHash(),releasedHash:state.releasedHash||null,releasedRevision:state.releasedRevision||null},totals:{items:state.items.length,finishedMb:+projectFinishedMb().toFixed(3),materialMb:+projectMaterialMb().toFixed(3),weightKg:+totalMass().toFixed(2),parts:a.parts,connections:a.connections},validation:{blockers:v.blockers,warnings:v.warnings,infos:v.infos},integrity:{passed:a.passed,total:a.total,issues:a.issues}},null,2)}
+function v16SummaryJson(){const a=v16IntegrityAudit(),v=projectValidationSummary(),pm=packProjectMeta();return JSON.stringify({generator:'SteelVision Studio v19',generated:new Date().toISOString(),project:{name:pm.projectName,reference:pm.projectRef,revision:pm.revisionCode,status:pm.documentStatus,hash:currentProjectHash(),releasedHash:state.releasedHash||null,releasedRevision:state.releasedRevision||null},totals:{items:state.items.length,finishedMb:+projectFinishedMb().toFixed(3),materialMb:+projectMaterialMb().toFixed(3),weightKg:+totalMass().toFixed(2),parts:a.parts,connections:a.connections},validation:{blockers:v.blockers,warnings:v.warnings,infos:v.infos},integrity:{passed:a.passed,total:a.total,issues:a.issues}},null,2)}
 function v16SetLabels(){const ids={v16AuditTitle:'title',v16AuditLead:'lead',v16AuditChecksLabel:'checks',v16AuditPartsLabel:'parts',v16AuditConnectionsLabel:'conn',v16AuditBackupsLabel:'backups',v16RunAudit:'run',v16AuditCsv:'audit',v16ConnectionsCsv:'weldcsv',v16ProjectHashLabel:'hash',v16ConnectionTitle:'ctitle',v16ThItem:'item',v16ThConn:'connection',v16ThType:'type',v16ThGap:'gap',v16ThWeld:'weld',v16ThVerify:'verify',v16BackupBtn:'backup',v16RestoreBtn:'restore'};Object.entries(ids).forEach(([id,k])=>{const e=document.getElementById(id);if(e)e.textContent=v16L(k)})}
 function v16DownloadText(name,text,type='text/plain;charset=utf-8'){downloadTextFile(name,text,type)}
 document.getElementById('v16RunAudit')?.addEventListener('click',v16RenderAudit);document.getElementById('v16AuditCsv')?.addEventListener('click',()=>v16DownloadText(v15SafeFileName()+'_Integrity_Audit.csv',v16AuditCsv(),'text/csv;charset=utf-8'));document.getElementById('v16ConnectionsCsv')?.addEventListener('click',()=>v16DownloadText(v15SafeFileName()+'_Connections.csv',v16ConnectionsCsv(),'text/csv;charset=utf-8'));document.getElementById('v16BackupBtn')?.addEventListener('click',()=>v16SaveBackup(false));document.getElementById('v16RestoreBtn')?.addEventListener('click',v16RestoreBackup);
@@ -3203,140 +3299,11 @@ svLanguage=function(lang){const r=v18LanguageBefore(lang);v18LocalizeFlow();retu
 const v18VisibilityBefore=updateVisibility;
 updateVisibility=function(){const r=v18VisibilityBefore();v18LocalizeFlow();return r};
 v18LocalizeFlow();
+const v19LanguageBefore=svLanguage;
+svLanguage=function(lang){const result=v19LanguageBefore(lang);svPlanRefreshLabels();svPlanFull();return result};
+svPlanInit();
+</script>
 
-</script>
-<!-- B-CORE | v18 clarity patch: dimensioned, independent top plan and quote handoff -->
-<style>
-  .bcore-clear-plan-v18{padding:14px;border:1px solid #c8d8e5;border-radius:12px;background:#fff;margin:15px 0 20px;box-shadow:0 5px 18px rgba(28,52,75,.055)}
-  .bcore-plan-head{display:flex;justify-content:space-between;gap:12px;align-items:start;flex-wrap:wrap;margin-bottom:9px}
-  .bcore-plan-head strong{font-size:14px;color:#173b5d}.bcore-plan-head span{font-size:11px;color:#66798a}
-  .bcore-clear-plan-v18 svg{display:block;width:100%;height:auto;min-height:200px;background:linear-gradient(0deg,#f4f8fb,#fff);border:1px solid #e2eaf1;border-radius:8px}
-  .bcore-plan-segments{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0 5px}
-  .bcore-plan-segments span{font-size:11px;color:#244862;padding:5px 9px;background:#edf5fa;border:1px solid #d1e2ee;border-radius:99px}
-  .bcore-plan-hint{font-size:11px;color:#657c8c;line-height:1.45;margin:8px 0 0}
-  body[data-theme=dark] .bcore-clear-plan-v18{background:#1b2b3a;border-color:#3f5d74}
-  body[data-theme=dark] .bcore-plan-head strong{color:#e5eef6}
-  body[data-theme=dark] .bcore-plan-segments span{background:#243d50;color:#e5eff6;border-color:#526e83}
-  @media(max-width:650px){.bcore-clear-plan-v18{padding:10px}.bcore-clear-plan-v18 svg{min-height:160px}.bcore-plan-segments span{font-size:10px}}
-</style>
-<script>
-(function(){
- 'use strict';
- const NS='http://www.w3.org/2000/svg';
- const isLinear=it=>it&&['railing','fence','screen','custom'].includes(it.type)&&Array.isArray(it.segments)&&it.segments.length>0;
- const $id=id=>document.getElementById(id);
- let raf=0;
- function svgEl(parent,tag,attr={},label){
-   const el=document.createElementNS(NS,tag);
-   Object.entries(attr).forEach(([k,v])=>el.setAttribute(k,String(v)));
-   if(label!==undefined)el.textContent=label;
-   parent.appendChild(el);return el;
- }
- function addView(id,target){
-   if(!target||$id(id))return;
-   const box=document.createElement('section');box.className='bcore-clear-plan-v18';box.id=id;
-   box.innerHTML='<div class="bcore-plan-head"><strong>Rzut z góry — rzeczywista geometria</strong><span id="'+id+'-badge">Odcinki i wymiary w mm</span></div><svg viewBox="0 0 900 350" role="img" aria-label="Rzut konstrukcji z góry z wymiarami każdego segmentu"></svg><div class="bcore-plan-segments"></div><p class="bcore-plan-hint">Dokładna proporcja boków. Skrzydełka o długości 38 cm są znacznie krótsze niż front 5 m — wszystkie są oznaczone osobno. Kliknij „Góra” w 3D, aby zobaczyć ten sam model przestrzenny.</p>';
-   target.insertAdjacentElement('afterend',box);
- }
- function mount(){
-   const linear=$id('linearGeometry');
-   if(linear){
-     const preview=linear.querySelector('#segments');
-     if(preview){
-       let target=$id('addSegment')||preview;
-       addView('bcore-plan-step2',target);
-     }
-   }
-   const view=$id('view3d')?.closest('.canvasWrap');
-   if(view)addView('bcore-plan-step6',view);
- }
- function drawInto(box,it){
-   const svg=box.querySelector('svg'),key=box.querySelector('.bcore-plan-segments');
-   svg.replaceChildren();key.replaceChildren();
-   const list=segmentGeometry(it).filter(seg=>seg.len>0);
-   if(!list.length){svgEl(svg,'text',{x:450,y:180,'text-anchor':'middle',fill:'#6f8090','font-size':16},'Brak odcinków do wyświetlenia');return}
-   const xarr=list.flatMap(s=>[s.a[0],s.b[0]]),yarr=list.flatMap(s=>[s.a[1],s.b[1]]);
-   const minX=Math.min(...xarr),maxX=Math.max(...xarr),minY=Math.min(...yarr),maxY=Math.max(...yarr);
-   const w=Math.max(.001,maxX-minX),h=Math.max(.001,maxY-minY);
-   // A single consistent scale preserves exact relative dimensions.
-   const scale=Math.min(660/Math.max(w,.35),200/Math.max(h,.35),200);
-   const px=x=>450+(x-(minX+maxX)/2)*scale;
-   // Positive world Y points down in this plan so the U opens upward.
-   const py=y=>175+(y-(minY+maxY)/2)*scale;
-   for(let gx=0;gx<=900;gx+=50)svgEl(svg,'line',{x1:gx,y1:0,x2:gx,y2:350,stroke:'#e9eff5','stroke-width':.7});
-   for(let gy=0;gy<=350;gy+=50)svgEl(svg,'line',{x1:0,y1:gy,x2:900,y2:gy,stroke:'#e9eff5','stroke-width':.7});
-   const shades=['#c67f3a','#255d86','#36866f','#8a6ca8','#a15f5f','#7d7132'];
-   list.forEach((seg,i)=>{
-     const a=[px(seg.a[0]),py(seg.a[1])],b=[px(seg.b[0]),py(seg.b[1])];
-     const color=shades[i%shades.length];
-     svgEl(svg,'line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:'#fff','stroke-width':13,'stroke-linecap':'round'});
-     svgEl(svg,'line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:color,'stroke-width':7,'stroke-linecap':'round'});
-     svgEl(svg,'circle',{cx:a[0],cy:a[1],r:5,fill:'#fff',stroke:color,'stroke-width':2});
-     svgEl(svg,'circle',{cx:b[0],cy:b[1],r:5,fill:'#fff',stroke:color,'stroke-width':2});
-     const length=Math.round(seg.len*1000);
-     const keyLine=document.createElement('span');
-     keyLine.textContent=(seg.name||'Odcinek '+(i+1))+' — '+length+' mm';
-     keyLine.style.borderLeft='4px solid '+color;
-     key.appendChild(keyLine);
-     const middle=[(a[0]+b[0])/2,(a[1]+b[1])/2];
-     const dx=b[0]-a[0],dy=b[1]-a[1],horiz=Math.abs(dx)>Math.abs(dy)*1.15;
-     if(horiz){
-       const tx=middle[0],ty=middle[1]-22;
-       svgEl(svg,'rect',{x:tx-49,y:ty-12,width:98,height:24,rx:5,fill:'#fff',stroke:'#dce6ee'});
-       svgEl(svg,'text',{x:tx,y:ty+5,'text-anchor':'middle',fill:'#183f5c','font-size':15,'font-weight':700},length+' mm');
-     }else{
-       // Short return legs have a callout with a leader, not a tiny label
-       // hidden underneath an anchor or another steel profile.
-       const left=middle[0]<450,tx=left?Math.max(83,middle[0]-74):Math.min(816,middle[0]+74),ty=middle[1]+5;
-       svgEl(svg,'line',{x1:middle[0],y1:middle[1],x2:tx,y2:ty-4,stroke:color,'stroke-width':1.5,'stroke-dasharray':'3 4'});
-       svgEl(svg,'rect',{x:tx-47,y:ty-15,width:94,height:23,rx:4,fill:'#fff',stroke:'#dce6ee'});
-       svgEl(svg,'text',{x:tx,y:ty+1,'text-anchor':'middle',fill:'#183f5c','font-size':14,'font-weight':700},length+' mm');
-     }
-   });
-   svgEl(svg,'text',{x:16,y:327,fill:'#5c7080','font-size':12},'Rzut poziomy • wszystkie odcinki zachowują rzeczywiste proporcje');
-   const badge=box.querySelector('[id$="-badge"]');
-   if(badge)badge.textContent=it.shape+' • '+list.length+' odc. • '+Math.round(list.reduce((sum,seg)=>sum+seg.len,0)*1000)+' mm';
- }
- function render(){
-   mount();const it=typeof current==='function'?current():null;
-   for(const id of ['bcore-plan-step2','bcore-plan-step6']){
-     const box=$id(id);if(!box)continue;
-     box.hidden=!isLinear(it);if(isLinear(it))drawInto(box,it);
-   }
- }
- function schedule(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;render()})}
- document.addEventListener('input',schedule);
- document.addEventListener('change',schedule);
- document.addEventListener('click',schedule);
- window.addEventListener('resize',schedule,{passive:true});
- // Provide a production-safe quote handoff. The 3D and materials remain local.
- function sendQuote(){
-   try{
-     saveForm();
-     const project={};projectIds.forEach(id=>project[id]=$id(id)?.value||'');
-     const design=JSON.parse(JSON.stringify({version:'B-CORE-SteelVision-18',project,state},(k,v)=>k.startsWith('_')?undefined:v));
-     const brief=orderText();
-     if(!design?.state?.items?.length)throw Error('Brak pozycji');
-     sessionStorage.setItem('bcore-steelvision-draft',JSON.stringify(design));
-     sessionStorage.setItem('bcore-config-enquiry',brief.length<=12500?brief:brief.slice(0,12000)+'\n[Pełna specyfikacja projektu zostanie zachowana w bazie B-CORE]');
-     window.location.assign('/#/kontakt');
-   }catch(err){
-     alert('Nie udało się przekazać projektu do formularza. Możesz zapisać pełny projekt przez „Eksport projektu” i spróbować ponownie.');
-   }
- }
- function insertQuote(){
-   if($id('bcoreSendQuoteV18'))return;
-   const link=document.createElement('button');link.id='bcoreSendQuoteV18';link.type='button';link.textContent='Wyślij cały projekt do wyceny w B-CORE';
-   link.style.cssText='background:#ba7f43;color:#fff;padding:12px 18px;min-height:45px;font-size:12px;max-width:100%;margin:8px 0';
-   link.addEventListener('click',sendQuote);
-   const form=$id('copyOrder');
-   if(form)form.insertAdjacentElement('afterend',link);
-   const top=$id('exportBtn');
-   if(top){const action=document.createElement('button');action.type='button';action.textContent='Zapytaj o wycenę';action.className='soft';action.addEventListener('click',sendQuote);top.insertAdjacentElement('afterend',action)}
- }
- function init(){mount();insertQuote();render()}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-})();
-</script>
+<script src="/bcore-steelvision-bridge.js?v=19" defer></script>
 </body>
 </html>

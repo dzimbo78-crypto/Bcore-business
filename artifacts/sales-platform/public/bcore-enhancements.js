@@ -74,14 +74,14 @@
     if (!target) return;
     const link = document.createElement("a");
     link.id = "bcore-steelvision-cta";
-    link.href = "/bcore-steelvision.html";
+    link.href = "/bcore-steelvision.html?v=19";
     link.className = "button bcore-steelvision-launch";
     const pl = document.getElementById("bcLang")?.value || "pl";
     link.textContent = ({
-      pl:"ZAAWANSOWANY KONFIGURATOR ZAMÓWIEŃ 3D",
-      en:"ADVANCED 3D STEEL ORDER CONFIGURATOR",
-      da:"AVANCERET 3D-KONFIGURATOR",
-      de:"ERWEITERTER 3D-STAHLKONFIGURATOR"
+      pl:"STEELVISION V19 — KONFIGURATOR 3D",
+      en:"STEELVISION V19 — 3D STEEL CONFIGURATOR",
+      da:"STEELVISION V19 — 3D-KONFIGURATOR",
+      de:"STEELVISION V19 — 3D-STAHLKONFIGURATOR"
     })[pl] || "ADVANCED 3D STEEL CONFIGURATOR";
     link.setAttribute("aria-label",link.textContent);
     target.appendChild(link);
