@@ -1018,7 +1018,7 @@ body[data-theme="dark"] .v14-guide button,body[data-theme="dark"] .v14-chip,body
   <h3>Kontrola projektu</h3>
   <div id="sideValidation" class="sideValidation">Analiza…</div>
   <div class="rule"></div>
-  <div class="sidebarFoot" id="sidebarFoot">Dane zapisują się automatycznie w tej przeglądarce.</div>
+  <div class="sidebarFoot" id="sidebarFoot">Nowa sesja przy każdym otwarciu. Zapisz projekt przez eksport JSON lub ręczną kopię.</div>
 </aside>
 </div>
 
@@ -2132,7 +2132,7 @@ function updateAll(){
  saveForm();renderItems();markProduct();updateVisibility();renderCustomMountEditor();renderSummary();drawMinis();
  if(state.step===6)draw3D($("#view3d"),current(),mainCam,false);
  const project={};projectIds.forEach(id=>project[id]=$("#"+id).value);
- try{localStorage.setItem("steelvision-v14",JSON.stringify({state,project}))}catch(err){document.querySelector('#v14ProgressText').textContent='Brak miejsca na zapis lokalny — pobierz projekt JSON.'}
+  // Start fresh on every visit; manual Export JSON and Backup remain available.
  if(window.v14Ready)v14RenderGuide()
 }
 
@@ -2195,7 +2195,8 @@ syncViewerControls();
 window.addEventListener("resize",()=>{drawMinis();if(state.step===6){draw3D($("#view3d"),current(),mainCam,true);syncViewerControls()}});
 initProductGrid();
 (function init(){
- const saved=localStorage.getItem("steelvision-v14")||localStorage.getItem("steelvision-v13")||localStorage.getItem("steelvision-v12");
+  try{["steelvision-v14","steelvision-v13","steelvision-v12"].forEach(k=>localStorage.removeItem(k))}catch(_e){}
+  const saved=null; // Never restore a previous visit automatically.
  if(saved){try{const s=JSON.parse(saved);if(s.state?.items?.length){state=s.state;migrateState();projectIds.forEach(id=>{$("#"+id).value=s.project?.[id]||$("#"+id).value||""});loadForm();setStep(state.step||1);updateAll();return}}catch(e){}}
  state.items=[defaultItem("railing","Balustrada 1",0)];state.items[0].shape="I";state.items[0].segments=[{name:"Front",length:0,angle:0,jointType:"Koniec",jointGap:0}];state.selected=0;loadForm();setStep(1);updateAll()
 })();
