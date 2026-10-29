@@ -97,6 +97,7 @@ test("database-only acknowledgement never claims email delivery",async()=>{
     const r=await call(good);
     assert.equal(r.code,202);assert.equal(r.payload.stored,true);
     assert.equal(r.payload.emailed,false);assert.deepEqual(r.payload.reports,[]);
+    assert.equal(r.payload.emailErrorCode,"email_auth_rejected");
   }finally{
     (pool as any).query=originalQuery;globalThis.fetch=originalFetch;
     if(originalKey===undefined)delete process.env.RESEND_API_KEY;
@@ -122,6 +123,26 @@ test("retries of the same quotation produce identical mail attachments and idemp
     (pool as any).query=originalQuery;globalThis.fetch=originalFetch;
     if(originalKey===undefined)delete process.env.RESEND_API_KEY;
     else process.env.RESEND_API_KEY=originalKey;
+  }
+});
+
+test("unconfigured Resend sender is visible as an actionable code even after DB-only save", async () => {
+  const originalQuery=pool.query, originalKey=process.env.RESEND_API_KEY, originalSender=process.env.RESEND_FROM_EMAIL;
+  (pool as any).query=async()=>({rows:[{id:"125"}]});
+  delete process.env.RESEND_FROM_EMAIL;
+  process.env.RESEND_API_KEY="qa-test-key";
+  try {
+    const r=await call(good);
+    assert.equal(r.code,202);
+    assert.equal(r.payload.stored,true);
+    assert.equal(r.payload.emailed,false);
+    assert.equal(r.payload.emailErrorCode,"email_not_configured");
+  } finally {
+    (pool as any).query=originalQuery;
+    if(originalKey===undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY=originalKey;
+    if(originalSender===undefined) delete process.env.RESEND_FROM_EMAIL;
+    else process.env.RESEND_FROM_EMAIL=originalSender;
   }
 });
 
