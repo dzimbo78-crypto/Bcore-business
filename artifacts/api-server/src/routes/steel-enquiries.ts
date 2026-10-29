@@ -93,7 +93,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
         headers: {
           Authorization: "Bearer " + apiKey,
           "Content-Type": "application/json",
-          ...(quoteId ? { "Idempotency-Key": "steelvision-" + quoteId } : {}),
+          ...(quoteId ? { "Idempotency-Key": "steelvision-" + quoteId + "-" + reference } : {}),
         },
         body: JSON.stringify({
           from, to: [recipient], reply_to: contactEmail,
