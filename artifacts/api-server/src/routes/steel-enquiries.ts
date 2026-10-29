@@ -168,6 +168,57 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
   });
 });
 
+
+/**
+ * Browser-originated FormSubmit multipart fallback:
+ * client requests canonical PDF/CSV/JSON bytes to attach to a native form.
+ * Never claims delivery and never exposes stored projects from the database.
+ */
+router.post("/steel-enquiries/prepare-attachments", rateLimit(4, 15 * 60 * 1000), (req, res) => {
+  const { contact, design, website } = req.body ?? {};
+  if (website || !contact || typeof contact !== "object" || Array.isArray(contact) ||
+      !design || typeof design !== "object" || Array.isArray(design) ||
+      !Array.isArray(design.state?.items) || !design.state.items.length ||
+      design.state.items.length > 60) {
+    res.status(400).json({ error: "Invalid project payload", code: "invalid_data" });
+    return;
+  }
+  let serialized = "";
+  try { serialized = JSON.stringify(design); }
+  catch { res.status(400).json({error:"Invalid project JSON",code:"invalid_data"});return; }
+  if (Buffer.byteLength(serialized,"utf8") > MAX_DESIGN_BYTES) {
+    res.status(413).json({error:"Project exceeds 8MB limit",code:"design_too_large"});return;
+  }
+  const c = {
+    name: typeof contact.name === "string" ? contact.name.trim().slice(0,120) : "",
+    email: typeof contact.email === "string" ? contact.email.trim().slice(0,254) : "",
+    phone: typeof contact.phone === "string" ? contact.phone.trim().slice(0,200) : "",
+    category: typeof contact.category === "string" ? contact.category.trim().slice(0,200) : "",
+    message: typeof contact.message === "string" ? contact.message.trim().slice(0,10000) : "",
+  };
+  if (c.name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email) ||
+      c.message.length < 10) {
+    res.status(400).json({error:"Invalid contact details",code:"invalid_data"});return;
+  }
+  try {
+    const quoteId = typeof design.quoteId === "string" && /^[A-Za-z0-9-]{8,90}$/.test(design.quoteId)
+      ? design.quoteId : randomUUID();
+    const reference = "BCF-" + quoteId.replace(/[^A-Za-z0-9]/g,"").slice(0,16).toUpperCase();
+    const attachments = steelAttachments(c,design,reference);
+    // FormSubmit native file uploads have a combined size limit of 10 MB.
+    const realBytes = attachments.reduce((sum,f)=>sum+Buffer.byteLength(f.content,"base64"),0);
+    if (realBytes > 9_000_000) {
+      res.status(413).json({error:"Attachments too large for browser fallback",
+        code:"attachments_too_large"});return;
+    }
+    res.setHeader("Cache-Control","no-store");
+    res.json({ok:true,reference,attachments});
+  } catch (error) {
+    console.error("SteelVision attachment export failed:",error instanceof Error?error.name:"UnknownError");
+    res.status(500).json({error:"Report generation unavailable",code:"export_failed"});
+  }
+});
+
 function escapeHtml(value: unknown) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
