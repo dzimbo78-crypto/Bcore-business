@@ -60,12 +60,50 @@ function wrap(text: string, width = 100): string[] {
   }
   return out;
 }
-function createPdf(lines: string[]): Buffer {
+type PlanSheet = { title: string; geometry: string; notes: string[] };
+function buildPlanSheets(design: ObjectMap): PlanSheet[] {
+  const items = arr(obj(design.state).items);
+  return items.flatMap((entry, index): PlanSheet[] => {
+    const item = obj(entry);
+    const rawSegments = arr(item.segments);
+    if (!rawSegments.length) return [];
+    const points: number[][] = [[0,0]];
+    const labels: string[] = [];
+    for (const raw of rawSegments) {
+      const segment = obj(raw), distance = Number(segment.length), angle = Number(segment.angle || 0);
+      if (!Number.isFinite(distance) || !Number.isFinite(angle) || distance <= 0 || distance > 200) continue;
+      const p = points[points.length - 1];
+      points.push([p[0] + distance * Math.cos(angle * Math.PI / 180),
+        p[1] + distance * Math.sin(angle * Math.PI / 180)]);
+      labels.push(take(segment.name || "Segment", 35) + " " + distance.toFixed(3) + " m @ " + angle + " deg");
+    }
+    if (points.length < 2) return [];
+    const xs=points.map(p=>p[0]), ys=points.map(p=>p[1]);
+    const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+    const width=Math.max(.15,maxX-minX),height=Math.max(.15,maxY-minY);
+    const scale=Math.min(495/width,420/height,150);
+    const tx=(595-width*scale)/2-minX*scale,ty=240+(420-height*scale)/2-minY*scale;
+    const p=(xy:number[])=>[(tx+xy[0]*scale).toFixed(2),(ty+xy[1]*scale).toFixed(2)];
+    const from=p(points[0]);
+    const geom = ["q","6 w","0.72 0.49 0.29 RG",from[0]+" "+from[1]+" m",
+      ...points.slice(1).map(xy=>{const v=p(xy);return v[0]+" "+v[1]+" l"}),
+      "S","Q"].join("\n")+"\n";
+    return [{ title:(index+1)+". "+take(item.name||item.type||"Linear element",55),
+      geometry:geom, notes:labels }];
+  });
+}
+
+function createPdf(lines: string[], plans: PlanSheet[] = []): Buffer {
   const wrapped = lines.flatMap((line) => wrap(line));
   const perPage = 49;
-  const pages: string[][] = [];
-  for (let i = 0; i < wrapped.length; i += perPage) pages.push(wrapped.slice(i, i + perPage));
-  if (!pages.length) pages.push(["STEELVISION - PROJECT REPORT"]);
+  const pages: Array<{lines: string[]; graphics?: string}> = [];
+  for (let i = 0; i < wrapped.length; i += perPage) pages.push({lines:wrapped.slice(i, i + perPage)});
+  if (!pages.length) pages.push({lines:["STEELVISION - PROJECT REPORT"]});
+  for(const plan of plans){
+    pages.push({lines:["STEELVISION - TOP VIEW / RZUT Z GORY",plan.title,
+      "SCHEMATIC ONLY - not a fabrication drawing.","",
+      ...plan.notes.slice(0,23)],graphics:plan.geometry});
+  }
   // Object 1: catalog; 2: page tree; 3: font; pages then content streams.
   const objects: string[] = [
     "<< /Type /Catalog /Pages 2 0 R >>",
@@ -77,8 +115,8 @@ function createPdf(lines: string[]): Buffer {
     const pageObject = 4 + index * 2, streamObject = pageObject + 1;
     kids.push(pageObject + " 0 R");
     const stream = "BT\n/F1 9 Tf\n12 TL\n42 789 Td\n" +
-      page.map((line) => "(" + pdfEscape(line) + ") Tj\nT*\n").join("") +
-      "ET\n";
+      page.lines.map((line) => "(" + pdfEscape(line) + ") Tj\nT*\n").join("") +
+      "ET\n" + (page.graphics || "");
     objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] " +
       "/Resources << /Font << /F1 3 0 R >> >> /Contents " + streamObject + " 0 R >>");
     objects.push("<< /Length " + Buffer.byteLength(stream, "ascii") + " >>\nstream\n" + stream + "endstream");
@@ -174,7 +212,7 @@ export function steelAttachments(contact: ObjectMap, design: ObjectMap, referenc
     ? new Date(report.createdAt).toISOString() : "1970-01-01T00:00:00.000Z";
   const json = JSON.stringify({ reference, contact, design, generatedAt: date }, null, 2);
   const csv = csvFromDesign({ reference, contact, ...design });
-  const pdf = createPdf(reportLines(contact, design, reference, date));
+  const pdf = createPdf(reportLines(contact, design, reference, date), buildPlanSheets(design));
   return [
     { filename: prefix + "_SteelVision_Report.pdf", content: pdf.toString("base64") },
     { filename: prefix + "_SteelVision_Full_Data.csv", content: Buffer.from(csv, "utf8").toString("base64") },
