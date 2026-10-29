@@ -26,6 +26,16 @@ test("Contact integration sends full project through backend rather than text-on
   assert.match(integration,/readSteelDraft/);
   assert.match(integration,/appendSteelDownload/);
 });
+test("SteelVision fallback immediately attempts native PDF/CSV/JSON after failed provider",()=>{
+  const src=read("bcore-production.js");
+  assert.match(src,/function addSteelMultipartFallback\(status, contact, autoStart=false\)/);
+  assert.match(src,/if\(autoStart\) queueMicrotask\(\(\)=>button\.click\(\)\)/);
+  assert.match(src,/form\.enctype="multipart\/form-data"/);
+  assert.match(src,/form\.action="https:\/\/formsubmit\.co\/"\+mail/);
+  assert.match(src,/attachment_pdf","attachment_csv","attachment_json"/);
+  assert.equal((src.match(/addSteelMultipartFallback\(status,body,true\)/g)||[]).length,4);
+});
+
 test("All entry routes reset their design, old autosave is never restored",()=>{
   const advanced=read("bcore-steelvision.html");
   const quick=read("bcore-configurator.js");
