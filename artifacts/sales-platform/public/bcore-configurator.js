@@ -339,7 +339,24 @@ function mount(){
   });
   section.querySelector(".bcore-sim-send").addEventListener("click",()=>{
     const message=spec();
-    try{sessionStorage.setItem("bcore-config-enquiry",message);}
+    const design={
+      version:"B-CORE-Quick-Configurator-2",
+      quoteId:window.crypto?.randomUUID?.()||("quick"+Date.now()),
+      project:{projectName:"Wstepna konfiguracja konstrukcji",configurationType:state.type,source:"B-CORE quick configurator"},
+      state:{items:[{name:locale().types[types.indexOf(state.type)]||state.type,...state}]},
+      report:{
+        corrections:[],
+        validation:{blockers:0,warnings:0,issues:[]},
+        integrity:{passed:0,total:0,issues:[]},
+        recommendations:["Orientacyjna geometria; wymagane rzeczywiste obciazenia, statyka, kotwienie, laczenia i weryfikacja inzynierska."],
+        scope:"Wstepne zapytanie ofertowe - bez obliczen nosnosci."
+      }
+    };
+    try{
+      sessionStorage.removeItem("bcore-steelvision-draft-idb");
+      sessionStorage.setItem("bcore-steelvision-draft",JSON.stringify(design));
+      sessionStorage.setItem("bcore-config-enquiry",message.slice(0,8500));
+    }
     catch(error){
       location.href="mailto:przemyslaw.bugajski78@gmail.com?subject=B-CORE%20Steel&body="+encodeURIComponent(message);return;
     }
