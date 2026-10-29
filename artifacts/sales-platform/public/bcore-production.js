@@ -48,6 +48,27 @@
     }catch(_e){/* A submitted project is never reloaded by the simulator. */}
   }
 
+  function appendSteelDownload(status) {
+    if(status.querySelector(".bcore-steel-json-backup"))return;
+    const button=document.createElement("button");
+    button.type="button";
+    button.className="bcore-form-native-retry bcore-steel-json-backup";
+    button.textContent="Pobierz pełny projekt JSON";
+    button.addEventListener("click",async()=>{
+      try{
+        const design=await readSteelDraft();
+        if(!design)throw Error("Draft unavailable");
+        const blob=new Blob([JSON.stringify(design,null,2)],{type:"application/json;charset=utf-8"});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement("a");
+        a.href=url;a.download="B-CORE_SteelVision_kopia_projektu.json";
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),1200);
+      }catch(_e){alert("Kopia nie jest dostępna. Jeśli projekt pozostaje otwarty w symulatorze, wybierz Eksport projektu.");}
+    });
+    status.append(document.createTextNode(" "),button);
+  }
+
   function installContactForm() {
     const container = document.getElementById("app");
     if (!container || document.getElementById("bcore-contact-form")) return;
@@ -156,6 +177,7 @@
             status.textContent = val.stored + " " + reply.reference +
               " · UWAGA: e-mail z PDF/CSV/JSON NIE został przyjęty do wysyłki. " +
               "Projekt jest w bazie; spróbuj ponownie wysłać zapytanie.";
+            appendSteelDownload(status);
           } else {
             throw new Error("Neither email nor storage accepted the design");
           }
@@ -182,7 +204,8 @@
         status.textContent = val.sent;
       } catch (error) {
         if (steelEnquiry) {
-          status.textContent = val.steelError + " Jeśli błąd się powtarza, pobierz kopię JSON z symulatora. Brak potwierdzenia wysłania e-maila.";
+          status.textContent = val.steelError + " Brak potwierdzenia wysłania e-maila.";
+          appendSteelDownload(status);
           return;
         }
         const activation = Boolean(error?.activation);
