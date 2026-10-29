@@ -90,7 +90,7 @@ try{
   const finalDom=await check("complete advanced quote browser handoff with simulated provider",
     "/bcore-steelvision.html?bcore_qa=1",['<div id="bcore-qa-end-to-end-complete"']);
   if(!testQuote){
-    console.log("DEBUG browser DOM tail:",finalDom.slice(-5000).replace(/<script[\\s\\S]*?<\\/script>/g,"[script]").slice(-5000));
+    console.log("DEBUG browser DOM tail:",finalDom.slice(-5000));
     throw Error("Browser did not send POST /api/steel-enquiries");
   }
   if(testQuote.design?.project?.projectName!=="B-CORE QA BROWSER TEST" ||
