@@ -112,6 +112,83 @@
     err.activation=/activat|confirm/i.test(String(result?.message||""));
     throw err;
   }
+  /**
+   * Native multipart FormSubmit supports PDF/CSV/JSON (<10MB combined).
+   * This is an explicit visitor-initiated alternative to unverified Resend.
+   * Native form response / acceptance is controlled by FormSubmit; never
+   * claim successful delivery before receiving provider confirmation.
+   */
+  function addSteelMultipartFallback(status, contact) {
+    if(status.querySelector(".bcore-steel-multipart"))return;
+    const button=document.createElement("button");
+    button.type="button";
+    button.className="bcore-form-native-retry bcore-steel-multipart";
+    button.textContent="Wyślij pełne zapytanie z PDF, CSV i JSON (FormSubmit)";
+    button.addEventListener("click",async()=>{
+      button.disabled=true;
+      button.textContent="Przygotowanie trzech załączników…";
+      try{
+        const design=await readSteelDraft();
+        if(!design)throw Error("Projekt nie jest dostępny w tej karcie");
+        const response=await fetch("/api/steel-enquiries/prepare-attachments",{
+          method:"POST",headers:{"Content-Type":"application/json"},
+          signal:AbortSignal.timeout(25000),
+          body:JSON.stringify({contact:{
+            name:String(contact.name||""),email:String(contact.email||""),
+            phone:String(contact.phone||""),category:String(contact.category||"Konstrukcje stalowe"),
+            message:String(contact.message||"")},design})
+        });
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok||!data.ok||!Array.isArray(data.attachments)||data.attachments.length!==3)
+          throw Error(data.code==="attachments_too_large"?"Pliki mają więcej niż 9 MB. Usuń niektóre zdjęcia i ponów próbę.":"Nie udało się przygotować załączników ("+(data.code||response.status)+")");
+        const uploads=data.attachments.map(file=>{
+          const decoded=atob(file.content);
+          const buffer=new Uint8Array(decoded.length);
+          for(let i=0;i<decoded.length;i++)buffer[i]=decoded.charCodeAt(i);
+          return new File([buffer],file.filename,{type:
+            file.filename.endsWith(".pdf")?"application/pdf":
+            file.filename.endsWith(".csv")?"text/csv":"application/json"});
+        });
+        const form=document.createElement("form");
+        form.method="POST";
+        form.enctype="multipart/form-data";
+        form.action="https://formsubmit.co/"+mail;
+        form.style.display="none";
+        // A native multipart submit is the provider-documented attachment path.
+        // The visitor sees FormSubmit's result or activation instructions.
+        form.target="_self";
+        const fields={
+          name:String(contact.name||""),email:String(contact.email||""),
+          phone:String(contact.phone||""),
+          message:"[B-CORE SteelVision] "+data.reference+
+            "\nPełny projekt i trzy pliki w załącznikach. "+
+            "Do sprawdzenia: pliki PDF, CSV, JSON.\n\n"+
+            String(contact.message||"").slice(0,7000),
+          _subject:"[B-CORE] SteelVision "+data.reference+" - pełny projekt",
+          _template:"table",_captcha:"false"
+        };
+        Object.entries(fields).forEach(([name,value])=>{
+          const input=document.createElement("input");
+          input.type="hidden";input.name=name;input.value=value;form.appendChild(input);
+        });
+        const dt=new DataTransfer();
+        uploads.forEach(file=>dt.items.add(file));
+        const files=document.createElement("input");
+        files.type="file";files.name="attachment";files.multiple=true;
+        files.files=dt.files;
+        if(files.files.length!==3)throw Error("Przeglądarka nie obsługuje przekazywania trzech plików");
+        form.appendChild(files);
+        document.body.appendChild(form);
+        status.append(document.createTextNode(" Przechodzę do potwierdzenia wysyłki FormSubmit. "));
+        form.submit();
+      }catch(e){
+        status.append(document.createTextNode(" "+String(e?.message||"Nie udało się przygotować plików")+". "));
+        button.disabled=false;
+        button.textContent="Ponów wysyłkę z załącznikami";
+      }
+    });
+    status.append(document.createTextNode(" "),button);
+  }
   function installContactForm() {
     const container = document.getElementById("app");
     if (!container || document.getElementById("bcore-contact-form")) return;
@@ -233,6 +310,7 @@
                 "nie potwierdził wysłania e-maila. "+steelMailAdvice(reply.emailErrorCode)+
                 (fallbackError?.activation?" Aktywuj formularz odbiorcy w FormSubmit.":"");
               appendSteelDownload(status);
+              addSteelMultipartFallback(status,body);
               const retry=document.createElement("button");
               retry.type="button";
               retry.className="bcore-form-native-retry";
@@ -297,6 +375,7 @@
         if (steelEnquiry) {
           status.textContent = val.steelError + " " + steelMailAdvice(error?.code);
           appendSteelDownload(status);
+          addSteelMultipartFallback(status,body);
           return;
         }
         const activation = Boolean(error?.activation);
