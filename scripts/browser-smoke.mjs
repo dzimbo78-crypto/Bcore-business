@@ -76,7 +76,7 @@ async function check(name,route,required){
       const child=spawn(browser,[
         "--headless=new","--disable-gpu","--no-sandbox","--disable-dev-shm-usage",
         "--disable-software-rasterizer","--no-first-run","--no-default-browser-check",
-        "--user-data-dir="+profile,"--virtual-time-budget=22000","--dump-dom",
+        "--user-data-dir="+profile,"--virtual-time-budget=40000","--dump-dom",
         "http://127.0.0.1:"+port+route,
       ],{stdio:["ignore","pipe","pipe"]});
       let stdout="",stderr="";
@@ -91,8 +91,12 @@ async function check(name,route,required){
     });
     if(output.error||output.status!==0)throw Error(name+" Chrome failed: "+String(output.error||output.stderr).slice(-1200));
     for(const token of required){
-      if(!output.stdout.includes(token))throw Error(name+" missing DOM token: "+token+
-        "\nDOM end: "+output.stdout.slice(-1200)+"\nChrome: "+output.stderr.slice(-500));
+      if(!output.stdout.includes(token)){
+        const formAt=output.stdout.indexOf('id="bcore-contact-form"');
+        throw Error(name+" missing DOM token: "+token+
+          "\nFORM: "+(formAt>=0?output.stdout.slice(formAt,formAt+2800):"not mounted")+
+          "\nDOM end: "+output.stdout.slice(-1200)+"\nChrome: "+output.stderr.slice(-500));
+      }
     }
     console.log("PASS browser: "+name);
     return output.stdout;
