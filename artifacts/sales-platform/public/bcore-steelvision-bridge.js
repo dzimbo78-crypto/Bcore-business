@@ -112,6 +112,10 @@
     try{
       if(typeof saveForm==="function")saveForm();
       if(!Array.isArray(projectIds)||!state?.items?.length)throw Error("No project items");
+      // A blank default item is not an order. Do not send zero-length projects.
+      if(typeof pieceLength==="function" &&
+        state.items.every(it=>!Number.isFinite(+pieceLength(it))||+pieceLength(it)<=0))
+        throw Error("No project geometry");
       const review=automaticGeometryReview();
       const project={};
       for(const id of projectIds)project[id]=$id(id)?.value||"";
