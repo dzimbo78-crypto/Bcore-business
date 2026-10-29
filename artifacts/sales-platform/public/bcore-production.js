@@ -165,7 +165,8 @@
             "Do sprawdzenia: pliki PDF, CSV, JSON.\n\n"+
             String(contact.message||"").slice(0,7000),
           _subject:"[B-CORE] SteelVision "+data.reference+" - pełny projekt",
-          _template:"table",_captcha:"false"
+          _template:"table",_captcha:"true",
+          _url:window.location.origin+"/#/kontakt"
         };
         Object.entries(fields).forEach(([name,value])=>{
           const input=document.createElement("input");
@@ -196,6 +197,16 @@
     // One-click checkout: after email providers reject a quotation,
     // let the visitor's browser send the full PDF, CSV and JSON natively.
     if(autoStart) queueMicrotask(()=>button.click());
+  }
+  function appendActivationHelp(status) {
+    if(status.querySelector(".bcore-activation-help"))return;
+    const link=document.createElement("a");
+    link.className="bcore-activation-help";
+    link.href="/bcore-activate-email.html";
+    link.target="_blank";
+    link.rel="noopener";
+    link.textContent=" Aktywacja odbiorcy FormSubmit (dla administratora B-CORE)";
+    status.append(document.createTextNode(" "),link);
   }
   function installContactForm() {
     const container = document.getElementById("app");
@@ -232,7 +243,8 @@
       fallback.target = sameTab ? "_self" : "_blank";
       fallback.style.display = "none";
       fallback.setAttribute("aria-hidden", "true");
-      Object.entries(body).forEach(([key, value]) => {
+      const nativeBody={...body,_captcha:"true",_url:window.location.origin+"/#/kontakt"};
+      Object.entries(nativeBody).forEach(([key, value]) => {
         const input = document.createElement("input");
         input.type = "hidden";
         input.name = key;
@@ -324,6 +336,7 @@
                 "nie potwierdził wysłania e-maila. "+steelMailAdvice(reply.emailErrorCode)+
                 (fallbackError?.activation?" Aktywuj formularz odbiorcy w FormSubmit.":"");
               appendSteelDownload(status);
+              appendActivationHelp(status);
               addSteelMultipartFallback(status,body,true);
               const retry=document.createElement("button");
               retry.type="button";
@@ -389,6 +402,7 @@
         if (steelEnquiry) {
           status.textContent = val.steelError + " " + steelMailAdvice(error?.code);
           appendSteelDownload(status);
+          appendActivationHelp(status);
           addSteelMultipartFallback(status,body,true);
           return;
         }
