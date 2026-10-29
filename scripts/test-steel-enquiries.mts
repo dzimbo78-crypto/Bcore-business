@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { pool } from "@workspace/db";
-import router from "../artifacts/api-server/src/routes/steel-enquiries.ts";
+// Unit tests stub the connection; no external PostgreSQL is required.
+process.env.DATABASE_URL ||= "postgresql://qa:qa@127.0.0.1:5432/qa";
+const { pool } = await import("../lib/db/src/index.ts");
+const { default: router } = await import("../artifacts/api-server/src/routes/steel-enquiries.ts");
 import { steelAttachments } from "../artifacts/api-server/src/lib/steel-exports.ts";
 
 const handler = (router as any).stack.find((r: any) => r.route?.path === "/steel-enquiries"
