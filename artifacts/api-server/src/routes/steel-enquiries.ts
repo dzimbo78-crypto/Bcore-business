@@ -46,14 +46,17 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     name: contactName, email: contactEmail, phone: contactPhone,
     category: requestCategory, message: requestMessage,
   };
+  const quoteId = typeof design.quoteId === "string" &&
+    /^[A-Za-z0-9-]{8,90}$/.test(design.quoteId) ? design.quoteId : null;
   let stored = false, emailed = false, emailId: string | null = null;
-  let reference = "BCM-" + randomUUID().slice(0, 12).toUpperCase();
+  let reference = "BCM-" + (quoteId ? quoteId.replace(/-/g, "").slice(0, 12).toUpperCase() : randomUUID().slice(0, 12).toUpperCase());
 
   try {
     const result = await pool.query<{ id: string | number }>(
-      "INSERT INTO steel_enquiries (contact_name, contact_email, contact_phone, category, summary, design) " +
-      "VALUES ($1,$2,$3,$4,$5,$6::jsonb) RETURNING id",
-      [contactName, contactEmail, contactPhone, requestCategory, requestMessage, payload],
+      "INSERT INTO steel_enquiries (contact_name, contact_email, contact_phone, category, summary, design, quote_id) " +
+      "VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7) " +
+      "ON CONFLICT (quote_id) WHERE quote_id IS NOT NULL DO UPDATE SET quote_id=EXCLUDED.quote_id RETURNING id",
+      [contactName, contactEmail, contactPhone, requestCategory, requestMessage, payload, quoteId],
     );
     const id = result.rows[0]?.id;
     // pg decodes BIGSERIAL as a string; Number-only checks reject valid IDs.
@@ -68,10 +71,12 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
   if (apiKey) {
     try {
       const attachments = steelAttachments(contact, design, reference);
+      // Provider enforces total post-encoding size. Fail explicitly rather than
+      // silently accepting a DB-only enquiry as successful mail delivery.
+      const encodedBytes = attachments.reduce((n, file) => n + Buffer.byteLength(file.content, "ascii"), 0);
+      if (encodedBytes > 32_000_000) throw new Error("Email attachments exceed conservative size limit");
       const from = process.env["RESEND_FROM_EMAIL"] || "B-CORE <onboarding@resend.dev>";
       const recipient = process.env["CONTACT_TO_EMAIL"] || DEFAULT_RECIPIENT;
-      const quoteId = typeof design.quoteId === "string" &&
-        /^[A-Za-z0-9-]{8,90}$/.test(design.quoteId) ? design.quoteId : null;
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
