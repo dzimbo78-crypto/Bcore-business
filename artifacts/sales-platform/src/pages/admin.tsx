@@ -395,17 +395,23 @@ export default function Admin() {
               <p>{contact?.recipient || "Sprawdzanie konfiguracji…"}</p>
               <small>
                 Zwykłe zapytania: {contact?.ordinaryProvider === "formsubmit" ? "FormSubmit" : "Resend"}.{" "}
-                Zaawansowane SteelVision (PDF/CSV/JSON): wyłącznie Resend.{" "}
-                {contact?.steelConfigured
-                  ? "Klucz i nadawca ustawione; wymagane jeszcze potwierdzenie weryfikacji domeny oraz doręczenia."
-                  : "BRAK konfiguracji zaawansowanej wysyłki! Ustaw RESEND_API_KEY i RESEND_FROM_EMAIL."}{" "}
+                SteelVision: projekt zapisuje się w B-CORE, a komplet PDF, CSV i JSON
+                jest wysyłany przez Resend lub zapasowy formularz przeglądarkowy FormSubmit.
+                Bez aktywacji FormSubmit ani zweryfikowanego nadawcy Resend
+                nie ma gwarancji dostarczenia e-maila.{" "}
                 Odbiorcę ustawiasz przez CONTACT_TO_EMAIL.
               </small>
             </div>
-            <Link href="/kontakt" className="text-link">
-              Otwórz formularz
-              <ArrowUpRight size={18} />
-            </Link>
+            <div style={{display:"flex", gap:14, flexWrap:"wrap", justifyContent:"flex-end"}}>
+              <a href="/bcore-activate-email.html" className="text-link" target="_blank" rel="noopener noreferrer">
+                Aktywuj odbieranie e-maili
+                <ArrowUpRight size={18} />
+              </a>
+              <Link href="/kontakt" className="text-link">
+                Otwórz formularz
+                <ArrowUpRight size={18} />
+              </Link>
+            </div>
           </section>
           <section className="admin-contact" style={{display:"block", marginTop:24, marginBottom:24}}>
             <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap"}}>
