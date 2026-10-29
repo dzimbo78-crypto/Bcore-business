@@ -41,8 +41,7 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
 
   const apiKey = process.env["RESEND_API_KEY"];
   const recipient = process.env["CONTACT_TO_EMAIL"] || DEFAULT_RECIPIENT;
-  const from =
-    process.env["RESEND_FROM_EMAIL"] || "B-CORE <onboarding@resend.dev>";
+  const from = process.env["RESEND_FROM_EMAIL"];
 
   // Domain-free delivery on Render Free. The FormSubmit service uses HTTPS,
   // so it does not require a custom domain or outbound SMTP ports.
@@ -124,9 +123,9 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
     return;
   }
 
-  if (!apiKey) {
-    console.error("RESEND_API_KEY is not configured");
-    res.status(503).json({ error: "Email service is not configured" });
+  if (!apiKey || !from) {
+    console.error("RESEND_API_KEY or verified RESEND_FROM_EMAIL not configured");
+    res.status(503).json({ error: "Email service is not configured", code: "email_not_configured" });
     return;
   }
 
