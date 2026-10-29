@@ -36,6 +36,13 @@ test("SteelVision fallback immediately attempts native PDF/CSV/JSON after failed
   assert.equal((src.match(/addSteelMultipartFallback\(status,body,true\)/g)||[]).length,4);
 });
 
+test("Regular contact has one-click native fallback when backend rejects mail",()=>{
+  const src=read("bcore-production.js");
+  assert.match(src,/function submitNativeInNewTab\(body, sameTab=false\)/);
+  assert.match(src,/fallback\.target = sameTab \? "_self" : "_blank"/);
+  assert.match(src,/queueMicrotask\(\(\)=>submitNativeInNewTab\(body,true\)\)/);
+});
+
 test("All entry routes reset their design, old autosave is never restored",()=>{
   const advanced=read("bcore-steelvision.html");
   const quick=read("bcore-configurator.js");

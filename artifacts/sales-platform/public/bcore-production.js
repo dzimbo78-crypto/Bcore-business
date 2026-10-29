@@ -225,11 +225,11 @@
     // Official FormSubmit AJAX: the request originates from the actual website
     // in the visitor's browser. A server-side Render proxy was rejected with 403.
     // This integrates directly with the existing React-free contact form.
-    function submitNativeInNewTab(body) {
+    function submitNativeInNewTab(body, sameTab=false) {
       const fallback = document.createElement("form");
       fallback.method = "POST";
       fallback.action = "https://formsubmit.co/" + mail;
-      fallback.target = "_blank";
+      fallback.target = sameTab ? "_self" : "_blank";
       fallback.style.display = "none";
       fallback.setAttribute("aria-hidden", "true");
       Object.entries(body).forEach(([key, value]) => {
@@ -403,6 +403,14 @@
         retry.className = "bcore-form-native-retry";
         retry.addEventListener("click", () => submitNativeInNewTab(body), {once:false});
         status.appendChild(retry);
+        // The backend may be running without a verified email domain.
+        // One-click contact: use FormSubmit's documented native POST as a
+        // browser-origin fallback; the external page confirms acceptance or
+        // asks the recipient to activate the form. Never claim delivered.
+        if(!activation){
+          status.append(document.createTextNode(" Przechodzę do potwierdzenia FormSubmit…"));
+          queueMicrotask(()=>submitNativeInNewTab(body,true));
+        }
       } finally {
         send.disabled = false;
         send.textContent = val.send;
