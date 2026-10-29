@@ -183,23 +183,42 @@
           }
           return;
         }
-        const response = await fetch("https://formsubmit.co/ajax/" + mail, {
-          method: "POST",
-          mode: "cors",
-          credentials: "omit",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify(body)
+        // Prefer our own same-origin API. FormSubmit is only a fallback when
+        // server explicitly reports that no mail service is configured.
+        let accepted=false;
+        const response=await fetch("/api/send-email",{
+          method:"POST",credentials:"same-origin",
+          headers:{"Content-Type":"application/json","Accept":"application/json"},
+          signal:AbortSignal.timeout(20000),
+          body:JSON.stringify({
+            name:body.name,email:body.email,phone:body.phone||"",
+            category:body.category||"",message:body.message,
+            subject:body.category||"Zapytanie B-CORE",
+            website:body._honey||""
+          })
         });
-        const result = await response.json().catch(() => null);
-        if (!response.ok || !result || (result.success !== "true" && result.success !== true)) {
-          const err = new Error("Provider did not accept the enquiry");
-          err.activation = /activat|confirm/i.test(String(result?.message || ""));
-          err.reason = String(result?.message || "").slice(0, 240);
-          throw err;
+        const result=await response.json().catch(()=>({}));
+        if(response.ok&&result.ok===true){
+          accepted=true;
+        }else if(response.status===503 &&
+          ["email_not_configured","Email service is not configured"].includes(String(result.code||result.error||""))){
+          // Browser-originated direct FormSubmit works only if the owner has
+          // activated the recipient; never treat 200 + success:false as sent.
+          const fallback=await fetch("https://formsubmit.co/ajax/"+mail,{
+            method:"POST",mode:"cors",credentials:"omit",
+            headers:{"Content-Type":"application/json","Accept":"application/json"},
+            signal:AbortSignal.timeout(20000),
+            body:JSON.stringify(body)
+          });
+          const resultFallback=await fallback.json().catch(()=>null);
+          accepted=fallback.ok&&(resultFallback?.success===true||resultFallback?.success==="true");
+          if(!accepted){
+            const err=new Error("Fallback email provider rejected enquiry");
+            err.activation=/activat|confirm/i.test(String(resultFallback?.message||""));
+            throw err;
+          }
         }
+        if(!accepted)throw Error("Our email provider has not accepted the enquiry");
         el.reset();
         status.textContent = val.sent;
       } catch (error) {
