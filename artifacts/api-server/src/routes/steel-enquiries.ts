@@ -157,4 +157,45 @@ router.get("/admin/steel-enquiries/:id", async (req, res) => {
   }
 });
 
+
+/**
+ * Recover reports from a stored enquiry even if the email provider was down.
+ * Admin-only, dynamically regenerated from the same canonical JSONB project.
+ */
+router.get("/admin/steel-enquiries/:id/exports/:format", async (req, res) => {
+  if (!isAdminSession(req)) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const id = Number(req.params.id);
+  const format = String(req.params.format || "").toLowerCase();
+  if (!Number.isSafeInteger(id) || id <= 0 || !["pdf", "csv", "json"].includes(format)) {
+    res.status(400).json({ error: "Invalid export request" }); return;
+  }
+  try {
+    const { rows } = await pool.query<{
+      contact_name: string; contact_email: string; contact_phone: string | null;
+      category: string | null; summary: string; design: Record<string, unknown>;
+    }>(
+      "SELECT contact_name, contact_email, contact_phone, category, summary, design " +
+      "FROM steel_enquiries WHERE id=$1 LIMIT 1", [id],
+    );
+    if (!rows.length) { res.status(404).json({ error: "Enquiry not found" }); return; }
+    const item = rows[0];
+    const reference = "BCS-" + String(id).padStart(6, "0");
+    const files = steelAttachments({
+      name: item.contact_name, email: item.contact_email,
+      phone: item.contact_phone || "", category: item.category || "",
+      message: item.summary,
+    }, item.design, reference);
+    const file = files.find((f) => f.filename.toLowerCase().endsWith("." + format));
+    if (!file) { res.status(500).json({ error: "Export unavailable" }); return; }
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Content-Type", format === "pdf" ? "application/pdf" :
+      format === "csv" ? "text/csv; charset=utf-8" : "application/json; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="' + file.filename + '"');
+    res.send(Buffer.from(file.content, "base64"));
+  } catch (err) {
+    console.error("Steel enquiry report export failed:", err instanceof Error ? err.name : "UnknownError");
+    res.status(503).json({ error: "Report export unavailable" });
+  }
+});
+
 export default router;
