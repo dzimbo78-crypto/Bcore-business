@@ -88,6 +88,11 @@ router.get("/admin/contact-status", (req, res) => {
     configured: Boolean(
       process.env["RESEND_API_KEY"] && process.env["RESEND_FROM_EMAIL"],
     ),
+    ordinaryProvider: process.env["EMAIL_PROVIDER"] === "formsubmit" ? "formsubmit" : "resend",
+    steelProvider: "resend",
+    steelConfigured: Boolean(process.env["RESEND_API_KEY"] && process.env["RESEND_FROM_EMAIL"]),
+    // This checks only environment variables, not domain ownership or successful delivery.
+    domainVerificationRequired: true,
   });
 });
 

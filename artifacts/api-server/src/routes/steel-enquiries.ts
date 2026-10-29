@@ -58,6 +58,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
   const quoteId = typeof design.quoteId === "string" &&
     /^[A-Za-z0-9-]{8,90}$/.test(design.quoteId) ? design.quoteId : null;
   let stored = false, emailed = false, emailId: string | null = null, storedId: string | null = null;
+  let emailErrorCode: string | null = null;
   let reference = "BCM-" + (quoteId ? quoteId.replace(/-/g, "").slice(0, 12).toUpperCase() : randomUUID().slice(0, 12).toUpperCase());
 
   try {
@@ -85,7 +86,10 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
       // Provider enforces total post-encoding size. Fail explicitly rather than
       // silently accepting a DB-only enquiry as successful mail delivery.
       const encodedBytes = attachments.reduce((n, file) => n + Buffer.byteLength(file.content, "ascii"), 0);
-      if (encodedBytes > 32_000_000) throw new Error("Email attachments exceed conservative size limit");
+      if (encodedBytes > 32_000_000) {
+        emailErrorCode = "attachments_too_large";
+        throw new Error("Attachment size limit");
+      }
       const from = configuredSender;
       const recipient = process.env["CONTACT_TO_EMAIL"] || DEFAULT_RECIPIENT;
       const response = await fetch("https://api.resend.com/emails", {
@@ -112,12 +116,30 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
       const result = await response.json().catch(() => null) as { id?: unknown } | null;
       emailed = response.ok && typeof result?.id === "string";
       emailId = emailed ? String(result?.id) : null;
-      if (!emailed) console.error("B-CORE SteelVision Resend rejected enquiry:", response.status);
+      if (!emailed) {
+        const providerCode = typeof result === "object" && result &&
+          "name" in result && typeof result.name === "string" ? String(result.name).slice(0, 64) : null;
+        emailErrorCode = response.status === 401 || response.status === 403
+          ? "email_auth_rejected"
+          : response.status === 400 || response.status === 422
+            ? "sender_or_request_rejected"
+            : response.status === 429 ? "provider_rate_limited"
+            : response.status >= 500 ? "provider_unavailable"
+            : "provider_rejected";
+        console.error("B-CORE SteelVision Resend rejected enquiry:", {
+          status: response.status, code: providerCode, reference,
+        });
+      }
     } catch (err) {
-      console.error("B-CORE SteelVision email failed:", err instanceof Error ? err.name : "UnknownError");
+      emailErrorCode ||= err instanceof Error && err.name === "TimeoutError"
+        ? "provider_timeout" : "provider_network_error";
+      console.error("B-CORE SteelVision email failed:", {
+        reason: emailErrorCode, reference, error: err instanceof Error ? err.name : "UnknownError"
+      });
     }
   } else {
-    console.error("B-CORE SteelVision email disabled: missing RESEND_API_KEY or verified RESEND_FROM_EMAIL");
+    emailErrorCode = "email_not_configured";
+    console.error("B-CORE SteelVision email disabled: missing RESEND_API_KEY or RESEND_FROM_EMAIL");
   }
 
   if (storedId && emailed && emailId) {
@@ -131,7 +153,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
   if (!stored && !emailed) {
     res.status(503).json({
       ok: false, stored: false, emailed: false, reference,
-      code: "delivery_unavailable",
+      code: emailErrorCode || "delivery_unavailable",
       error: "Neither database nor email delivery accepted the enquiry",
     });
     return;
@@ -141,6 +163,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     ok: true, reference, stored, emailed,
     // Accepted by Resend != confirmed to arrive in the inbox.
     delivery: emailed ? "accepted_by_email_provider" : "database_only",
+    emailErrorCode: emailed ? null : emailErrorCode,
     reports: emailed ? ["PDF", "CSV", "JSON"] : [],
   });
 });
@@ -182,6 +205,82 @@ router.get("/admin/steel-enquiries/:id", async (req, res) => {
   }
 });
 
+
+/**
+ * An administrator may resend the exact stored quotation after fixing
+ * provider configuration. The original project data is never modified.
+ */
+router.post("/admin/steel-enquiries/:id/resend", rateLimit(3, 15 * 60 * 1000), async (req, res) => {
+  if (!isAdminSession(req)) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid reference" }); return;
+  }
+  const apiKey = process.env["RESEND_API_KEY"];
+  const from = process.env["RESEND_FROM_EMAIL"];
+  if (!apiKey || !from) {
+    res.status(503).json({ error: "Verified sender not configured", code: "email_not_configured" }); return;
+  }
+  try {
+    const { rows } = await pool.query<{
+      contact_name: string; contact_email: string; contact_phone: string | null;
+      category: string | null; summary: string; design: Record<string, unknown>;
+      email_accepted_at: Date | null;
+    }>(
+      "SELECT contact_name, contact_email, contact_phone, category, summary, design, email_accepted_at " +
+      "FROM steel_enquiries WHERE id=$1 LIMIT 1", [id],
+    );
+    if (!rows.length) { res.status(404).json({ error: "Enquiry not found" }); return; }
+    const enquiry = rows[0];
+    if (enquiry.email_accepted_at) {
+      res.status(409).json({ error: "Email already accepted by provider", code: "already_accepted" }); return;
+    }
+    const reference = "BCS-" + String(id).padStart(6,"0");
+    const contact = {
+      name: enquiry.contact_name, email: enquiry.contact_email,
+      phone: enquiry.contact_phone || "", category: enquiry.category || "",
+      message: enquiry.summary,
+    };
+    const attachments = steelAttachments(contact, enquiry.design, reference);
+    const encodedSize = attachments.reduce((size, file) => size + Buffer.byteLength(file.content, "ascii"), 0);
+    if (encodedSize > 32_000_000) {
+      res.status(413).json({ error: "Attachments too large", code: "attachments_too_large" }); return;
+    }
+    const recipient = process.env["CONTACT_TO_EMAIL"] || DEFAULT_RECIPIENT;
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + apiKey, "Content-Type": "application/json",
+        "Idempotency-Key": "steelvision-admin-retry-" + reference,
+      },
+      body: JSON.stringify({
+        from, to: [recipient], reply_to: contact.email,
+        subject: "[B-CORE] " + reference + " | SteelVision | ponowna wysylka",
+        text: "Zapytanie " + reference + "\nKlient: " + contact.name + "\n" + contact.message +
+          "\nZalaczniki: PDF, CSV, JSON. Projekt koncepcyjny, wymagana weryfikacja techniczna.",
+        html: "<h2>SteelVision - ponowna wysylka zapytania " + reference + "</h2>" +
+          "<p>Klient: " + escapeHtml(contact.name) + "</p><p>" + escapeHtml(contact.message) + "</p>",
+        attachments,
+      }),
+      signal: AbortSignal.timeout(18_000),
+    });
+    const result = await response.json().catch(() => null) as { id?: unknown } | null;
+    if (!response.ok || typeof result?.id !== "string") {
+      console.error("B-CORE admin resend rejected", { reference, status: response.status });
+      res.status(502).json({ error: "Email provider rejected delivery request",
+        code: response.status === 403 || response.status === 401 ? "email_auth_rejected" : "provider_rejected" });
+      return;
+    }
+    await pool.query(
+      "UPDATE steel_enquiries SET email_accepted_at=NOW(), email_provider_id=$2 WHERE id=$1",
+      [id, result.id],
+    );
+    res.json({ ok: true, reference, accepted: true, provider: "resend" });
+  } catch (error) {
+    console.error("B-CORE admin resend failed", error instanceof Error ? error.name : "UnknownError");
+    res.status(503).json({ error: "Unable to complete report resend", code: "resend_unavailable" });
+  }
+});
 
 /**
  * Recover reports from a stored enquiry even if the email provider was down.

@@ -69,6 +69,21 @@
     status.append(document.createTextNode(" "),button);
   }
 
+  function steelMailAdvice(code) {
+    const hints = {
+      email_not_configured: "Serwer nie ma poprawnie ustawionych RESEND_API_KEY i RESEND_FROM_EMAIL. Administrator musi skonfigurować nadawcę.",
+      email_auth_rejected: "Dostawca odrzucił autoryzację. Administrator powinien sprawdzić klucz API oraz uprawnienia Resend.",
+      sender_or_request_rejected: "Resend odrzucił nadawcę lub żądanie. Sprawdź weryfikację domeny nadawczej i limity załączników.",
+      attachments_too_large: "Pliki przekraczają limit wysyłki. Pobierz JSON i zmniejsz liczbę obrazów referencyjnych.",
+      provider_rate_limited: "Dostawca nałożył limit wysyłek. Spróbuj ponownie później.",
+      provider_unavailable: "Serwer pocztowy zgłosił przejściową awarię.",
+      provider_timeout: "Serwer pocztowy nie odpowiedział na czas.",
+      provider_network_error: "Serwer nie mógł połączyć się z dostawcą poczty.",
+      invalid_data: "Projekt zawiera nieprawidłowe dane. Wróć do SteelVision i sprawdź geometrię oraz pola projektu.",
+      design_too_large: "Projekt jest zbyt duży. Pobierz JSON i ogranicz obrazy referencyjne."
+    };
+    return hints[code] || "E-mail nie został zaakceptowany. Administrator powinien sprawdzić stan usługi i logi wysyłki.";
+  }
   function installContactForm() {
     const container = document.getElementById("app");
     if (!container || document.getElementById("bcore-contact-form")) return;
@@ -176,7 +191,7 @@
             // Keep the draft so the customer can retry mail transmission.
             status.textContent = val.stored + " " + reply.reference +
               " · UWAGA: e-mail z PDF/CSV/JSON NIE został przyjęty do wysyłki. " +
-              "Projekt jest w bazie; spróbuj ponownie wysłać zapytanie.";
+              "Projekt jest w bazie. " + steelMailAdvice(reply.emailErrorCode);
             appendSteelDownload(status);
           } else {
             throw new Error("Neither email nor storage accepted the design");
@@ -218,17 +233,22 @@
             throw err;
           }
         }
-        if(!accepted)throw Error("Our email provider has not accepted the enquiry");
+        if(!accepted){
+          const err=new Error("Our email provider has not accepted the enquiry");
+          err.code=result.code || "provider_rejected";
+          throw err;
+        }
         el.reset();
         status.textContent = val.sent;
       } catch (error) {
         if (steelEnquiry) {
-          status.textContent = val.steelError + " Brak potwierdzenia wysłania e-maila.";
+          status.textContent = val.steelError + " " + steelMailAdvice(error?.code);
           appendSteelDownload(status);
           return;
         }
         const activation = Boolean(error?.activation);
-        status.textContent = (activation ? val.activation : val.error) + " ";
+        status.textContent = (activation ? val.activation : val.error) +
+          " " + (!activation ? steelMailAdvice(error?.code) : "") + " ";
         // No data is lost on failure. Offer a native HTML POST in a separate
         // tab when the provider rejects AJAX or the browser blocks CORS.
         const retry = document.createElement("button");

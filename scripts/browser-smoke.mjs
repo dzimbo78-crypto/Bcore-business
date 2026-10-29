@@ -77,6 +77,7 @@ async function check(name,route,required){
         "\nDOM end: "+output.stdout.slice(-1200)+"\nChrome: "+output.stderr.slice(-500));
     }
     console.log("PASS browser: "+name);
+    return output.stdout;
   } finally {rmSync(profile,{force:true,recursive:true})}
 }
 try{
@@ -86,9 +87,12 @@ try{
   await check("cinematic contact form mounts","/#/kontakt",[
     'id="bcore-contact-form"','name="message"'
   ]);
-  await check("complete advanced quote browser handoff with simulated provider",
-    "/bcore-steelvision.html?bcore_qa=1",['id="bcore-qa-end-to-end-complete"']);
-  if(!testQuote)throw Error("Browser did not send POST /api/steel-enquiries");
+  const finalDom=await check("complete advanced quote browser handoff with simulated provider",
+    "/bcore-steelvision.html?bcore_qa=1",['<div id="bcore-qa-end-to-end-complete"']);
+  if(!testQuote){
+    console.log("DEBUG browser DOM tail:",finalDom.slice(-5000));
+    throw Error("Browser did not send POST /api/steel-enquiries");
+  }
   if(testQuote.design?.project?.projectName!=="B-CORE QA BROWSER TEST" ||
      testQuote.design?.state?.items?.[0]?.segments?.[0]?.length!==3.76 ||
      !testQuote.design?.report?.validation ||
