@@ -48,7 +48,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
   };
   const quoteId = typeof design.quoteId === "string" &&
     /^[A-Za-z0-9-]{8,90}$/.test(design.quoteId) ? design.quoteId : null;
-  let stored = false, emailed = false, emailId: string | null = null;
+  let stored = false, emailed = false, emailId: string | null = null, storedId: string | null = null;
   let reference = "BCM-" + (quoteId ? quoteId.replace(/-/g, "").slice(0, 12).toUpperCase() : randomUUID().slice(0, 12).toUpperCase());
 
   try {
@@ -62,6 +62,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     // pg decodes BIGSERIAL as a string; Number-only checks reject valid IDs.
     if (id === undefined || !/^\d+$/.test(String(id))) throw new Error("Missing enquiry ID");
     reference = "BCS-" + String(id).padStart(6, "0");
+    storedId = String(id);
     stored = true;
   } catch (err) {
     console.error("B-CORE steel enquiry storage unavailable:", err instanceof Error ? err.name : "UnknownError");
@@ -108,6 +109,14 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     console.error("B-CORE SteelVision email disabled: RESEND_API_KEY missing");
   }
 
+  if (storedId && emailed && emailId) {
+    try {
+      await pool.query("UPDATE steel_enquiries SET email_accepted_at=NOW(), email_provider_id=$2 WHERE id=$1",
+        [storedId, emailId]);
+    } catch (err) {
+      console.error("B-CORE could not record email provider acceptance:", err instanceof Error ? err.name : "UnknownError");
+    }
+  }
   if (!stored && !emailed) {
     res.status(503).json({
       ok: false, stored: false, emailed: false, reference,
@@ -136,7 +145,7 @@ router.get("/admin/steel-enquiries", async (req, res) => {
   const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 40));
   try {
     const { rows } = await pool.query(
-      "SELECT id, contact_name, contact_email, contact_phone, category, summary, created_at FROM steel_enquiries ORDER BY created_at DESC LIMIT $1",
+      "SELECT id, contact_name, contact_email, contact_phone, category, summary, created_at, email_accepted_at FROM steel_enquiries ORDER BY created_at DESC LIMIT $1",
       [limit],
     );
     res.json({ ok: true, requests: rows.map((x) => ({
