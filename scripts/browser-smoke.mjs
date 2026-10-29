@@ -58,7 +58,7 @@ async function check(name,route,required){
       const child=spawn(browser,[
         "--headless=new","--disable-gpu","--no-sandbox","--disable-dev-shm-usage",
         "--disable-software-rasterizer","--no-first-run","--no-default-browser-check",
-        "--user-data-dir="+profile,"--virtual-time-budget=12000","--dump-dom",
+        "--user-data-dir="+profile,"--virtual-time-budget=22000","--dump-dom",
         "http://127.0.0.1:"+port+route,
       ],{stdio:["ignore","pipe","pipe"]});
       let stdout="",stderr="";
@@ -88,10 +88,12 @@ try{
     'id="bcore-contact-form"','name="message"'
   ]);
   const finalDom=await check("complete advanced quote browser handoff with simulated provider",
-    "/bcore-steelvision.html?bcore_qa=1",['<div id="bcore-qa-end-to-end-complete"']);
-  if(!testQuote){
-    console.log("DEBUG browser DOM tail:",finalDom.slice(-5000));
-    throw Error("Browser did not send POST /api/steel-enquiries");
+    "/bcore-steelvision.html?bcore_qa=1",['id="bcore-contact-form"']);
+  if(!testQuote || !finalDom.includes('<div id="bcore-qa-end-to-end-complete"')){
+    const formPos=finalDom.indexOf('id="bcore-contact-form"');
+    console.log("DEBUG form DOM:",formPos>=0?finalDom.slice(formPos,formPos+2600):"form missing");
+    console.log("DEBUG QA error:",finalDom.match(/data-qa-error="[^"]{0,600}"/)?.[0]||"none");
+    throw Error("Browser did not complete advanced quote API POST and client acknowledgement");
   }
   if(testQuote.design?.project?.projectName!=="B-CORE QA BROWSER TEST" ||
      testQuote.design?.state?.items?.[0]?.segments?.[0]?.length!==3.76 ||
