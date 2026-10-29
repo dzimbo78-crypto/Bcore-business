@@ -89,6 +89,12 @@ export default function Admin() {
   const [open, setOpen] = useState(false),
     [editing, setEditing] = useState<number | null>(null),
     [deleting, setDeleting] = useState<number | null>(null);
+  const [steelEnquiries, setSteelEnquiries] = useState<Array<{
+    id: string; reference: string; contact_name: string; contact_email: string;
+    category: string | null; created_at: string; summary: string; email_accepted_at: string | null;
+  }>>([]);
+  const [steelError, setSteelError] = useState("");
+  const [steelLoading, setSteelLoading] = useState(false);
   const [form, setForm] = useState<OfferForm>(empty);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -154,6 +160,22 @@ export default function Admin() {
   useEffect(() => {
     if (admin) void load();
   }, [admin, load]);
+  const loadSteel = useCallback(async () => {
+    setSteelLoading(true);
+    setSteelError("");
+    try {
+      const result = await request<{ok: boolean; requests: Array<{
+        id: string; reference: string; contact_name: string; contact_email: string;
+        category: string | null; created_at: string; summary: string; email_accepted_at: string | null;
+      }>}>("/admin/steel-enquiries?limit=50");
+      setSteelEnquiries(result.requests || []);
+    } catch (e) {
+      setSteelError(message(e));
+    } finally {
+      setSteelLoading(false);
+    }
+  }, [request]);
+  useEffect(() => { if (admin) void loadSteel(); }, [admin, loadSteel]);
   const login = async (event: FormEvent) => {
     event.preventDefault();
     if (isStandalonePreview) return;
@@ -179,6 +201,7 @@ export default function Admin() {
       setAdmin(false);
       setProducts([]);
       setContact(null);
+      setSteelEnquiries([]);
     } catch (e) {
       setError(message(e));
     } finally {
@@ -352,6 +375,46 @@ export default function Admin() {
               Otwórz formularz
               <ArrowUpRight size={18} />
             </Link>
+          </section>
+          <section className="admin-contact" style={{display:"block", marginTop:24, marginBottom:24}}>
+            <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap"}}>
+              <div>
+                <h2>Zapytania SteelVision / konstrukcje stalowe</h2>
+                <p>Przechowane projekty z pełnymi danymi, raportami i możliwością odzyskania załączników.</p>
+              </div>
+              <button type="button" className="text-link" onClick={() => void loadSteel()} disabled={steelLoading}>
+                {steelLoading ? "Pobieranie…" : "Odśwież zgłoszenia"}
+              </button>
+            </div>
+            {steelError && <p role="alert" className="admin-error">{steelError}</p>}
+            {!steelLoading && !steelError && steelEnquiries.length === 0 && (
+              <p>Brak zapisanych zapytań SteelVision.</p>
+            )}
+            <div style={{display:"grid", gap:12, marginTop:12}}>
+              {steelEnquiries.map((entry) => (
+                <article key={entry.id} style={{padding:"14px 16px", border:"1px solid currentColor", borderRadius:8}}>
+                  <div style={{display:"flex", flexWrap:"wrap", gap:12, alignItems:"baseline", justifyContent:"space-between"}}>
+                    <strong>{entry.reference} · {entry.contact_name}</strong>
+                    <small>{new Date(entry.created_at).toLocaleString("pl-PL")}</small>
+                  </div>
+                  <div><a href={`mailto:${entry.contact_email}`}>{entry.contact_email}</a> · {entry.category}</div>
+                  <p><strong>E-mail:</strong> {entry.email_accepted_at ? "Przyjęty przez dostawcę " + new Date(entry.email_accepted_at).toLocaleString("pl-PL") : "Niepotwierdzony — sprawdź konfigurację Resend / wyślij ręcznie"}</p>
+                  <p style={{whiteSpace:"pre-wrap", overflowWrap:"anywhere"}}>{entry.summary.slice(0, 400)}</p>
+                  <div style={{display:"flex", flexWrap:"wrap", gap:16, marginTop:12}}>
+                    {(["pdf","csv","json"] as const).map((format) => (
+                      <a
+                        key={format}
+                        className="text-link"
+                        href={`/api/admin/steel-enquiries/${encodeURIComponent(entry.id)}/exports/${format}`}
+                        download
+                      >
+                        Pobierz {format.toUpperCase()}
+                      </a>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
           </section>
           {error && (
             <div className="admin-error" role="alert">

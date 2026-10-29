@@ -34,10 +34,37 @@ async function ensureDatabase() {
     "contact_phone TEXT, category TEXT, summary TEXT NOT NULL, " +
     "design JSONB NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())",
   );
+  // Repeat submission of a quotation must not create duplicate database records.
+  await pool.query("ALTER TABLE steel_enquiries ADD COLUMN IF NOT EXISTS quote_id TEXT");
+  await pool.query("CREATE UNIQUE INDEX IF NOT EXISTS steel_enquiries_quote_id_uidx ON steel_enquiries (quote_id) WHERE quote_id IS NOT NULL");
+  await pool.query("ALTER TABLE steel_enquiries ADD COLUMN IF NOT EXISTS email_accepted_at TIMESTAMPTZ");
+  await pool.query("ALTER TABLE steel_enquiries ADD COLUMN IF NOT EXISTS email_provider_id TEXT");
 }
 
 async function start() {
-  await ensureDatabase();
+  // Keep the contact API online during a transient database outage.
+  // SMTP-like delivery via Resend is independent of PostgreSQL.
+  try {
+    await ensureDatabase();
+  } catch (error) {
+    console.error("B-CORE database boot unavailable; email contact remains online:",
+      error instanceof Error ? error.name : "UnknownError");
+    let recoveryBusy = false;
+    const retry = setInterval(async () => {
+      if (recoveryBusy) return;
+      recoveryBusy = true;
+      try {
+        await ensureDatabase();
+        console.log("B-CORE database initialized after reconnect");
+        clearInterval(retry);
+      } catch {
+        console.error("B-CORE database still unavailable");
+      } finally {
+        recoveryBusy = false;
+      }
+    }, 60_000);
+    retry.unref();
+  }
 
   // Serve the built React application from the same Node service.
   // This keeps /api and the website on one domain and avoids CORS/deployment issues.

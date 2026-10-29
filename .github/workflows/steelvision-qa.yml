@@ -1,0 +1,25 @@
+name: B-CORE SteelVision QA
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: TypeScript checks
+        run: pnpm run typecheck
+      - name: Automated regression tests
+        run: pnpm test
+      - name: Production build
+        run: pnpm run build:deploy
+      - name: Real Chrome smoke tests (simulator and contact page)
+        run: node scripts/browser-smoke.mjs

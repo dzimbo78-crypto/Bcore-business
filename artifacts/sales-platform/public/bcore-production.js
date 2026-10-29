@@ -9,6 +9,66 @@
     de: {name:"Vor- und Nachname",email:"E-Mail-Adresse",phone:"Telefon (optional)",topic:"Betreff",msg:"Beschreiben Sie Ihr Projekt",send:"Anfrage senden",sending:"Wird gesendet…",sent:"Das Formular hat Ihre Anfrage angenommen. Vielen Dank!",error:"Die AJAX-Übertragung ist fehlgeschlagen. Bitte Formular in einem neuen Tab senden:",privacy:"Mit dem Absenden stimmen Sie einer Kontaktaufnahme zu Ihrer Anfrage zu.",hint:"Mit * gekennzeichnete Felder sind Pflichtfelder.",activation:"FormSubmit erfordert die Aktivierung der Empfängeradresse. Bitte Posteingang und Spam prüfen.",alt:"E-Mail schreiben",browser:"Formular in neuem Tab senden",stored:"Ihre Stahlbauanfrage wurde bei B-CORE gespeichert. Referenz:",steelError:"B-CORE konnte das Projekt nicht speichern. Ihre Daten bleiben erhalten — bitte später erneut versuchen."}
   };
   const lang = () => words[document.getElementById("bcLang")?.value] ? document.getElementById("bcLang").value : "pl";
+
+  // Drafts are short-lived quotation handoffs, not previous simulator sessions.
+  async function openSteelDb() {
+    return new Promise((resolve,reject)=>{
+      if(!window.indexedDB){reject(Error("IndexedDB unavailable"));return}
+      const r=indexedDB.open("bcore-steelvision-handoff",1);
+      r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains("drafts"))r.result.createObjectStore("drafts")};
+      r.onsuccess=()=>resolve(r.result);
+      r.onerror=()=>reject(r.error||Error("Cannot open draft database"));
+    });
+  }
+  async function readSteelDraft(){
+    let raw=sessionStorage.getItem("bcore-steelvision-draft");
+    if(!raw&&sessionStorage.getItem("bcore-steelvision-draft-idb")==="1"){
+      const db=await openSteelDb();
+      try{raw=await new Promise((resolve,reject)=>{
+        const tx=db.transaction("drafts","readonly"),r=tx.objectStore("drafts").get("active");
+        r.onsuccess=()=>resolve(r.result||null);
+        r.onerror=()=>reject(r.error||Error("Draft unavailable"));
+      })}finally{db.close()}
+    }
+    return raw?JSON.parse(raw):null;
+  }
+  async function clearSteelDraft(){
+    const inDb=sessionStorage.getItem("bcore-steelvision-draft-idb")==="1";
+    sessionStorage.removeItem("bcore-steelvision-draft");
+    sessionStorage.removeItem("bcore-steelvision-draft-idb");
+    if(!inDb)return;
+    try{
+      const db=await openSteelDb();
+      try{await new Promise((resolve,reject)=>{
+        const tx=db.transaction("drafts","readwrite");
+        tx.objectStore("drafts").delete("active");
+        tx.oncomplete=resolve;
+        tx.onerror=()=>reject(tx.error||Error("Delete failed"));
+      })}finally{db.close()}
+    }catch(_e){/* A submitted project is never reloaded by the simulator. */}
+  }
+
+  function appendSteelDownload(status) {
+    if(status.querySelector(".bcore-steel-json-backup"))return;
+    const button=document.createElement("button");
+    button.type="button";
+    button.className="bcore-form-native-retry bcore-steel-json-backup";
+    button.textContent="Pobierz pełny projekt JSON";
+    button.addEventListener("click",async()=>{
+      try{
+        const design=await readSteelDraft();
+        if(!design)throw Error("Draft unavailable");
+        const blob=new Blob([JSON.stringify(design,null,2)],{type:"application/json;charset=utf-8"});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement("a");
+        a.href=url;a.download="B-CORE_SteelVision_kopia_projektu.json";
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),1200);
+      }catch(_e){alert("Kopia nie jest dostępna. Jeśli projekt pozostaje otwarty w symulatorze, wybierz Eksport projektu.");}
+    });
+    status.append(document.createTextNode(" "),button);
+  }
+
   function installContactForm() {
     const container = document.getElementById("app");
     if (!container || document.getElementById("bcore-contact-form")) return;
@@ -78,16 +138,18 @@
         // A full SteelVision project is stored in Neon with one small API
         // request. All 3D calculations remain client-side; no email provider
         // is required to preserve customer quote requests.
-        let steelDraft = null;
-        try {
-          const stored = sessionStorage.getItem("bcore-steelvision-draft");
-          steelDraft = stored ? JSON.parse(stored) : null;
-        } catch (_) { steelDraft = null; }
-        if (steelDraft && Array.isArray(steelDraft.state?.items)) {
+        const hasDesign = Boolean(sessionStorage.getItem("bcore-steelvision-draft") ||
+          sessionStorage.getItem("bcore-steelvision-draft-idb"));
+        if (hasDesign) {
           steelEnquiry = true;
+          const steelDraft = await readSteelDraft();
+          if (!steelDraft || !Array.isArray(steelDraft.state?.items) || !steelDraft.state.items.length) {
+            throw new Error("SteelVision draft missing or corrupted");
+          }
           const response = await fetch("/api/steel-enquiries", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
+            signal: AbortSignal.timeout(30000),
             body: JSON.stringify({
               name: body.name,
               email: body.email,
@@ -99,35 +161,70 @@
             })
           });
           const reply = await response.json().catch(() => ({}));
-          if (!response.ok || !reply?.stored || !reply.reference)
-            throw new Error("Steel design could not be stored");
-          sessionStorage.removeItem("bcore-steelvision-draft");
-          el.reset();
-          status.textContent = val.stored + " " + reply.reference;
+          if (!response.ok || !reply?.ok || !reply.reference) {
+            const error = new Error("Steel project submission failed");
+            error.code = reply?.code || String(response.status);
+            throw error;
+          }
+          if (reply.emailed) {
+            await clearSteelDraft();
+            el.reset();
+            status.textContent = "✓ " + (reply.stored ? val.stored : "Zapytanie zostało przyjęte do wysyłki e-mail. Numer:") + " " + reply.reference +
+              " · PDF, CSV i JSON zostały przyjęte do wysyłki e-mail przez dostawcę." +
+              (!reply.stored ? " (Baza danych jest niedostępna; kopie są w załącznikach e-mail.)" : "");
+          } else if (reply.stored) {
+            // Keep the draft so the customer can retry mail transmission.
+            status.textContent = val.stored + " " + reply.reference +
+              " · UWAGA: e-mail z PDF/CSV/JSON NIE został przyjęty do wysyłki. " +
+              "Projekt jest w bazie; spróbuj ponownie wysłać zapytanie.";
+            appendSteelDownload(status);
+          } else {
+            throw new Error("Neither email nor storage accepted the design");
+          }
           return;
         }
-        const response = await fetch("https://formsubmit.co/ajax/" + mail, {
-          method: "POST",
-          mode: "cors",
-          credentials: "omit",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify(body)
+        // Prefer our own same-origin API. FormSubmit is only a fallback when
+        // server explicitly reports that no mail service is configured.
+        let accepted=false;
+        const response=await fetch("/api/send-email",{
+          method:"POST",credentials:"same-origin",
+          headers:{"Content-Type":"application/json","Accept":"application/json"},
+          signal:AbortSignal.timeout(20000),
+          body:JSON.stringify({
+            name:body.name,email:body.email,phone:body.phone||"",
+            category:body.category||"",message:body.message,
+            subject:body.category||"Zapytanie B-CORE",
+            website:body._honey||""
+          })
         });
-        const result = await response.json().catch(() => null);
-        if (!response.ok || !result || (result.success !== "true" && result.success !== true)) {
-          const err = new Error("Provider did not accept the enquiry");
-          err.activation = /activat|confirm/i.test(String(result?.message || ""));
-          err.reason = String(result?.message || "").slice(0, 240);
-          throw err;
+        const result=await response.json().catch(()=>({}));
+        if(response.ok&&result.ok===true){
+          accepted=true;
+        }else if(response.status===503 &&
+          ["email_not_configured","Email service is not configured"].includes(String(result.code||result.error||""))){
+          // Browser-originated direct FormSubmit works only if the owner has
+          // activated the recipient; never treat 200 + success:false as sent.
+          const fallback=await fetch("https://formsubmit.co/ajax/"+mail,{
+            method:"POST",mode:"cors",credentials:"omit",
+            headers:{"Content-Type":"application/json","Accept":"application/json"},
+            signal:AbortSignal.timeout(20000),
+            body:JSON.stringify(body)
+          });
+          const resultFallback=await fallback.json().catch(()=>null);
+          accepted=fallback.ok&&(resultFallback?.success===true||resultFallback?.success==="true");
+          if(!accepted){
+            const err=new Error("Fallback email provider rejected enquiry");
+            err.activation=/activat|confirm/i.test(String(resultFallback?.message||""));
+            throw err;
+          }
         }
+        if(!accepted)throw Error("Our email provider has not accepted the enquiry");
         el.reset();
         status.textContent = val.sent;
       } catch (error) {
         if (steelEnquiry) {
-          status.textContent = val.steelError;
+          status.textContent = val.steelError + " Brak potwierdzenia wysłania e-maila.";
+          appendSteelDownload(status);
           return;
         }
         const activation = Boolean(error?.activation);
