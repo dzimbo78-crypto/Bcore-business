@@ -95,6 +95,8 @@ export default function Admin() {
   }>>([]);
   const [steelError, setSteelError] = useState("");
   const [steelLoading, setSteelLoading] = useState(false);
+  const [steelRetrying, setSteelRetrying] = useState<string | null>(null);
+  const [steelRetryNotice, setSteelRetryNotice] = useState("");
   const [form, setForm] = useState<OfferForm>(empty);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -176,6 +178,32 @@ export default function Admin() {
     }
   }, [request]);
   useEffect(() => { if (admin) void loadSteel(); }, [admin, loadSteel]);
+  const resendSteel = async (id: string, reference: string) => {
+    if (!window.confirm(`Ponownie wysłać raport PDF, CSV i JSON dla ${reference} na skonfigurowany adres?`)) return;
+    setSteelRetrying(id);
+    setSteelRetryNotice("");
+    try {
+      const response = await fetch(`/api/admin/steel-enquiries/${encodeURIComponent(id)}/resend`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {"Content-Type":"application/json"},
+        body: "{}",
+        signal: AbortSignal.timeout(25000),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok !== true) {
+        if (data.code === "email_not_configured") throw new Error("Brak skonfigurowanej i zweryfikowanej poczty Resend.");
+        if (data.code === "already_accepted") throw new Error("Resend wcześniej przyjął ten projekt. Sprawdź historię dostarczenia.");
+        throw new Error("Ponowne wysłanie odrzucone: " + (data.code || response.status));
+      }
+      setSteelRetryNotice("Resend przyjął ponowną wysyłkę dla " + reference + ". Sprawdź status doręczenia w Resend.");
+      await loadSteel();
+    } catch (e) {
+      setSteelRetryNotice(message(e));
+    } finally {
+      setSteelRetrying(null);
+    }
+  };
   const login = async (event: FormEvent) => {
     event.preventDefault();
     if (isStandalonePreview) return;
@@ -387,6 +415,7 @@ export default function Admin() {
               </button>
             </div>
             {steelError && <p role="alert" className="admin-error">{steelError}</p>}
+            {steelRetryNotice && <p role="status">{steelRetryNotice}</p>}
             {!steelLoading && !steelError && steelEnquiries.length === 0 && (
               <p>Brak zapisanych zapytań SteelVision.</p>
             )}
@@ -400,6 +429,13 @@ export default function Admin() {
                   <div><a href={`mailto:${entry.contact_email}`}>{entry.contact_email}</a> · {entry.category}</div>
                   <p><strong>E-mail:</strong> {entry.email_accepted_at ? "Przyjęty przez dostawcę " + new Date(entry.email_accepted_at).toLocaleString("pl-PL") : "Niepotwierdzony — sprawdź konfigurację Resend / wyślij ręcznie"}</p>
                   <p style={{whiteSpace:"pre-wrap", overflowWrap:"anywhere"}}>{entry.summary.slice(0, 400)}</p>
+                  {!entry.email_accepted_at && (
+                    <button type="button" className="text-link"
+                      disabled={steelRetrying !== null}
+                      onClick={() => void resendSteel(entry.id, entry.reference)}>
+                      {steelRetrying === entry.id ? "Wysyłanie…" : "Ponów wysyłkę PDF + CSV + JSON"}
+                    </button>
+                  )}
                   <div style={{display:"flex", flexWrap:"wrap", gap:16, marginTop:12}}>
                     {(["pdf","csv","json"] as const).map((format) => (
                       <a
