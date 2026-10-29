@@ -39,6 +39,7 @@ async function ensureDatabase() {
   await pool.query("CREATE UNIQUE INDEX IF NOT EXISTS steel_enquiries_quote_id_uidx ON steel_enquiries (quote_id) WHERE quote_id IS NOT NULL");
   await pool.query("ALTER TABLE steel_enquiries ADD COLUMN IF NOT EXISTS email_accepted_at TIMESTAMPTZ");
   await pool.query("ALTER TABLE steel_enquiries ADD COLUMN IF NOT EXISTS email_provider_id TEXT");
+  await pool.query("ALTER TABLE steel_enquiries ADD COLUMN IF NOT EXISTS fallback_accepted_at TIMESTAMPTZ");
 }
 
 /**
