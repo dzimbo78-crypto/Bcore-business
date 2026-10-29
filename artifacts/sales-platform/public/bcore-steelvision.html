@@ -3581,6 +3581,8 @@ v18LocalizeFlow();
   svTranslateInterface();
 })();
 
+// Browser back/forward cache is a new simulator entry; reset the configuration too.
+window.addEventListener('pageshow', event => { if(event.persisted && typeof v14EmptyProject==='function') v14EmptyProject(); });
 </script>
 </body>
 </html>
