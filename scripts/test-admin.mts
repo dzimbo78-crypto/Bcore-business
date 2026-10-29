@@ -74,8 +74,14 @@ test("contact settings are accessible only to an authenticated admin and omit AP
     assert.equal(status.code, 200);
     assert.deepEqual(Object.keys(status.data).sort(), [
       "configured",
+      "domainVerificationRequired",
+      "ordinaryProvider",
       "recipient",
+      "steelConfigured",
+      "steelProvider",
     ]);
+    assert.equal(status.data.steelProvider, "resend");
+    assert.ok(!Object.keys(status.data).some(k => /key|token|secret/i.test(k)));
   } finally {
     delete process.env.ADMIN_PASSWORD;
   }
