@@ -171,13 +171,18 @@
           const input=document.createElement("input");
           input.type="hidden";input.name=name;input.value=value;form.appendChild(input);
         });
-        const dt=new DataTransfer();
-        uploads.forEach(file=>dt.items.add(file));
-        const files=document.createElement("input");
-        files.type="file";files.name="attachment";files.multiple=true;
-        files.files=dt.files;
-        if(files.files.length!==3)throw Error("Przeglądarka nie obsługuje przekazywania trzech plików");
-        form.appendChild(files);
+        // FormSubmit explicitly supports several file inputs. Use one per
+        // attachment to avoid servers treating a multi-file field as one file.
+        uploads.forEach((upload,i)=>{
+          const dt=new DataTransfer();
+          dt.items.add(upload);
+          const files=document.createElement("input");
+          files.type="file";
+          files.name=["attachment_pdf","attachment_csv","attachment_json"][i];
+          files.files=dt.files;
+          if(files.files.length!==1)throw Error("Przeglądarka nie pozwala dołączyć pliku "+(i+1));
+          form.appendChild(files);
+        });
         document.body.appendChild(form);
         status.append(document.createTextNode(" Przechodzę do potwierdzenia wysyłki FormSubmit. "));
         form.submit();
