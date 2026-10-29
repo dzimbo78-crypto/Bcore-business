@@ -85,6 +85,9 @@ export default function Admin() {
     [contact, setContact] = useState<{
       recipient: string;
       configured: boolean;
+      ordinaryProvider: string;
+      steelProvider: string;
+      steelConfigured: boolean;
     } | null>(null);
   const [open, setOpen] = useState(false),
     [editing, setEditing] = useState<number | null>(null),
@@ -144,7 +147,7 @@ export default function Admin() {
     try {
       const [offers, status] = await Promise.all([
         request<Product[]>("/products/all"),
-        request<{ recipient: string; configured: boolean }>(
+        request<{ recipient: string; configured: boolean; ordinaryProvider: string; steelProvider: string; steelConfigured: boolean }>(
           "/admin/contact-status",
         ),
       ]);
@@ -391,12 +394,12 @@ export default function Admin() {
               <h2>Wiadomości z formularza</h2>
               <p>{contact?.recipient || "Sprawdzanie konfiguracji…"}</p>
               <small>
-                {contact
-                  ? contact.configured
-                    ? "Ustawienia poczty są dostępne. Dostarczanie wiadomości sprawdzisz po wysłaniu zapytania ze strony."
-                    : "Uzupełnij RESEND_API_KEY i RESEND_FROM_EMAIL w ustawieniach Rendera."
-                  : ""}{" "}
-                Adres odbiorczy zmienisz przez CONTACT_TO_EMAIL.
+                Zwykłe zapytania: {contact?.ordinaryProvider === "formsubmit" ? "FormSubmit" : "Resend"}.{" "}
+                Zaawansowane SteelVision (PDF/CSV/JSON): wyłącznie Resend.{" "}
+                {contact?.steelConfigured
+                  ? "Klucz i nadawca ustawione; wymagane jeszcze potwierdzenie weryfikacji domeny oraz doręczenia."
+                  : "BRAK konfiguracji zaawansowanej wysyłki! Ustaw RESEND_API_KEY i RESEND_FROM_EMAIL."}{" "}
+                Odbiorcę ustawiasz przez CONTACT_TO_EMAIL.
               </small>
             </div>
             <Link href="/kontakt" className="text-link">
