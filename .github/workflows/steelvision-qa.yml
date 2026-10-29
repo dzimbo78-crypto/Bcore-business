@@ -21,3 +21,5 @@ jobs:
         run: pnpm test
       - name: Production build
         run: pnpm run build:deploy
+      - name: Real Chrome smoke tests (simulator and contact page)
+        run: node scripts/browser-smoke.mjs
