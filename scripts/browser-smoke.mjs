@@ -3,7 +3,7 @@ import { readFile, stat } from "node:fs/promises";
 import { mkdtempSync, rmSync, existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
 const root=path.resolve("artifacts/sales-platform/dist/public");
 const mime={".html":"text/html; charset=utf-8",".js":"text/javascript; charset=utf-8",
@@ -32,12 +32,25 @@ if(!browser){server.close();throw Error("Chrome or Chromium is required for real
 async function check(name,route,required){
   const profile=mkdtempSync(path.join(os.tmpdir(),"bcore-qa-"));
   try {
-    const output=spawnSync(browser,[
-      "--headless=new","--disable-gpu","--no-sandbox","--disable-dev-shm-usage",
-      "--disable-software-rasterizer","--no-first-run","--no-default-browser-check",
-      "--user-data-dir="+profile,"--virtual-time-budget=12000","--dump-dom",
-      "http://127.0.0.1:"+port+route,
-    ],{encoding:"utf8",timeout:60000,maxBuffer:24*1024*1024});
+    // An async child is essential here: spawnSync would block the Node HTTP
+    // server event loop and prevent Chrome from ever loading the page.
+    const output=await new Promise((resolve,reject)=>{
+      const child=spawn(browser,[
+        "--headless=new","--disable-gpu","--no-sandbox","--disable-dev-shm-usage",
+        "--disable-software-rasterizer","--no-first-run","--no-default-browser-check",
+        "--user-data-dir="+profile,"--virtual-time-budget=12000","--dump-dom",
+        "http://127.0.0.1:"+port+route,
+      ],{stdio:["ignore","pipe","pipe"]});
+      let stdout="",stderr="";
+      const timer=setTimeout(()=>{child.kill();reject(Error(name+" timed out"))},60000);
+      child.stdout.on("data",chunk=>{
+        stdout+=chunk.toString();
+        if(stdout.length>24*1024*1024){child.kill();reject(Error("Chrome DOM too large"));}
+      });
+      child.stderr.on("data",chunk=>{stderr=(stderr+chunk.toString()).slice(-10000);});
+      child.on("error",err=>{clearTimeout(timer);reject(err)});
+      child.on("close",status=>{clearTimeout(timer);resolve({stdout,stderr,status})});
+    });
     if(output.error||output.status!==0)throw Error(name+" Chrome failed: "+String(output.error||output.stderr).slice(-1200));
     for(const token of required){
       if(!output.stdout.includes(token))throw Error(name+" missing DOM token: "+token+
