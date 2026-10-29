@@ -29,7 +29,16 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     requestMessage.length < 10 || requestMessage.length > 10_000 ||
     !design || typeof design !== "object" || Array.isArray(design) ||
     !Array.isArray(design.state?.items) ||
-    design.state.items.length < 1 || design.state.items.length > 60
+    design.state.items.length < 1 || design.state.items.length > 60 ||
+    !design.state.items.some((item: Record<string, unknown>) => {
+      if (!item || typeof item !== "object") return false;
+      const n = (value: unknown) => Number.isFinite(Number(value)) && Number(value) > 0;
+      const segs = item.segments;
+      return (Array.isArray(segs) && segs.some((segment) => segment && n(segment.length))) ||
+        n(item.length) || n(item.frameL) || n(item.platformL) ||
+        n(item.gateOpening) || (n(item.stairSteps) && n(item.stairRun)) ||
+        (Array.isArray(item.beams) && item.beams.length > 0);
+    })
   ) {
     res.status(400).json({ error: "Invalid steel enquiry", code: "invalid_data" });
     return;
@@ -69,14 +78,15 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
   }
 
   const apiKey = process.env["RESEND_API_KEY"];
-  if (apiKey) {
+  const configuredSender = process.env["RESEND_FROM_EMAIL"];
+  if (apiKey && configuredSender) {
     try {
       const attachments = steelAttachments(contact, design, reference);
       // Provider enforces total post-encoding size. Fail explicitly rather than
       // silently accepting a DB-only enquiry as successful mail delivery.
       const encodedBytes = attachments.reduce((n, file) => n + Buffer.byteLength(file.content, "ascii"), 0);
       if (encodedBytes > 32_000_000) throw new Error("Email attachments exceed conservative size limit");
-      const from = process.env["RESEND_FROM_EMAIL"] || "B-CORE <onboarding@resend.dev>";
+      const from = configuredSender;
       const recipient = process.env["CONTACT_TO_EMAIL"] || DEFAULT_RECIPIENT;
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -88,6 +98,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
         body: JSON.stringify({
           from, to: [recipient], reply_to: contactEmail,
           subject: "[B-CORE] " + reference + " | SteelVision | " + requestCategory.replace(/[\r\n]/g, " ").slice(0, 100),
+          text: "B-CORE SteelVision - zapytanie " + reference + "\nKlient: " + contactName + "\nEmail: " + contactEmail + "\nOpis: " + requestMessage + "\nZalaczniki: PDF, CSV, JSON. Weryfikacja techniczna wymagana.",
           html: "<h2>SteelVision - nowe zapytanie o wycene</h2>" +
             "<p>Numer zapytania: <strong>" + reference + "</strong></p>" +
             "<p>Klient: " + escapeHtml(contactName) + " (" + escapeHtml(contactEmail) + ")</p>" +
@@ -106,7 +117,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
       console.error("B-CORE SteelVision email failed:", err instanceof Error ? err.name : "UnknownError");
     }
   } else {
-    console.error("B-CORE SteelVision email disabled: RESEND_API_KEY missing");
+    console.error("B-CORE SteelVision email disabled: missing RESEND_API_KEY or verified RESEND_FROM_EMAIL");
   }
 
   if (storedId && emailed && emailId) {
