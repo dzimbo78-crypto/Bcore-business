@@ -5,6 +5,18 @@ import path from "node:path";
 
 const root=process.cwd();
 const read=(file:string)=>readFileSync(path.join(root,"artifacts/sales-platform/public",file),"utf8");
+test("Owner activation page uses actual native POST with CAPTCHA and correct email",()=>{
+  const activation=read("bcore-activate-email.html");
+  assert.match(activation,/<form[^>]+method="POST"[^>]+action="https:\/\/formsubmit\.co\/przemyslaw\.bugajski78@gmail\.com"/);
+  assert.match(activation,/name="_captcha" value="true"/);
+  assert.match(activation,/name="_url" value="https:\/\/bcore-business\.onrender\.com\/bcore-activate-email\.html"/);
+  assert.match(activation,/Activate Form/);
+  const integration=read("bcore-production.js");
+  assert.match(integration,/_template:"table",_captcha:"true"/);
+  assert.match(integration,/const nativeBody=\{\.\.\.body,_captcha:"true",_url:window\.location\.origin/);
+  assert.match(integration,/function appendActivationHelp/);
+});
+
 test("cinematic landing loads production contact integration",()=>{
   const html=read("bcore-cinematic.html");
   assert.match(html,/bcore-production\.js/, "Cinematic contact is not connected to production form");
