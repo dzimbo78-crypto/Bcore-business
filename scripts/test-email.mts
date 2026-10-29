@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import router from "../artifacts/api-server/src/routes/email.ts";
+process.env.RESEND_FROM_EMAIL = "QA <qa@example.com>";
 const handler = router.stack
   .find((r: any) => r.route?.path === "/send-email")!
   .route!.stack.at(-1)!.handle;
