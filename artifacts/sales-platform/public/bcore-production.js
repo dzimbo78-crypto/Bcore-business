@@ -313,44 +313,13 @@
               " · PDF, CSV i JSON zostały przyjęte do wysyłki e-mail przez dostawcę." +
               (!reply.stored ? " (Baza danych jest niedostępna; kopie są w załącznikach e-mail.)" : "");
           } else if (reply.stored) {
-            // Resend attachments failed. Recover with a browser-originated
-            // FormSubmit notification and authenticated server-side project.
-            // Never claim that FormSubmit transported the full files.
-            if(reply.fallbackNotified){
-              status.textContent="✓ Projekt "+reply.reference+
-                " zapisano w B-CORE. Serwer wysłał powiadomienie przez FormSubmit (dostawca przyjął żądanie). "+
-                "PDF, CSV i JSON znajdują się w panelu /admin. Możesz wysłać również pliki:";
-              addSteelMultipartFallback(status,body,true);
-              appendSteelDownload(status);
-            }else try{
-              const notified=await sendSteelFallbackNotice(body,reply.reference);
-              if(notified){
-                status.textContent="✓ Projekt "+reply.reference+
-                  " zapisano w B-CORE, a powiadomienie e-mail przyjęte przez FormSubmit. "+
-                  "Pełne PDF, CSV i JSON są w panelu /admin. "+
-                  "Aby otrzymać również trzy pliki w e-mailu, kliknij poniżej:";
-                addSteelMultipartFallback(status,body,true);
-              }
-            }catch(fallbackError){
-              status.textContent="Projekt "+reply.reference+" zapisano w bazie, ale żaden dostawca "+
-                "nie potwierdził wysłania e-maila. "+steelMailAdvice(reply.emailErrorCode)+
-                (fallbackError?.activation?" Aktywuj formularz odbiorcy w FormSubmit.":"");
-              appendSteelDownload(status);
-              appendActivationHelp(status);
-              addSteelMultipartFallback(status,body,true);
-              const retry=document.createElement("button");
-              retry.type="button";
-              retry.className="bcore-form-native-retry";
-              retry.textContent="Wyślij powiadomienie w nowej karcie";
-              retry.addEventListener("click",()=>{
-                const msg="Zapytanie SteelVision "+reply.reference+
-                  "\nPelny projekt PDF CSV JSON w panelu administracyjnym B-CORE.\n\n"+
-                  String(body.message||"").slice(0,5800);
-                submitNativeInNewTab({...body,message:msg,
-                  _subject:"[B-CORE] SteelVision "+reply.reference});
-              });
-              status.append(document.createTextNode(" "),retry);
-            }
+            // If email delivery is not configured, do not send customers
+            // to a third-party URL blocked by security filters.
+            // The full project remains safely in B-CORE for the owner.
+            status.textContent = "✓ Projekt " + reply.reference +
+              " został zapisany w B-CORE. E-mail nie został jeszcze potwierdzony przez dostawcę. " +
+              "Firma ma dostęp do pełnego projektu w panelu administratora.";
+            appendSteelDownload(status);
           } else {
             throw new Error("Neither email nor storage accepted the design");
           }
@@ -373,23 +342,6 @@
         const result=await response.json().catch(()=>({}));
         if(response.ok&&result.ok===true){
           accepted=true;
-        }else if(response.status===503 &&
-          ["email_not_configured","Email service is not configured"].includes(String(result.code||result.error||""))){
-          // Browser-originated direct FormSubmit works only if the owner has
-          // activated the recipient; never treat 200 + success:false as sent.
-          const fallback=await fetch("https://formsubmit.co/ajax/"+mail,{
-            method:"POST",mode:"cors",credentials:"omit",
-            headers:{"Content-Type":"application/json","Accept":"application/json"},
-            signal:AbortSignal.timeout(20000),
-            body:JSON.stringify(body)
-          });
-          const resultFallback=await fallback.json().catch(()=>null);
-          accepted=fallback.ok&&(resultFallback?.success===true||resultFallback?.success==="true");
-          if(!accepted){
-            const err=new Error("Fallback email provider rejected enquiry");
-            err.activation=/activat|confirm/i.test(String(resultFallback?.message||""));
-            throw err;
-          }
         }
         if(!accepted){
           const err=new Error("Our email provider has not accepted the enquiry");
@@ -400,31 +352,18 @@
         status.textContent = val.sent;
       } catch (error) {
         if (steelEnquiry) {
-          status.textContent = val.steelError + " " + steelMailAdvice(error?.code);
+          status.textContent = "Nie udało się wysłać ani zapisać zapytania. Dane projektu zostały zachowane. " +
+            steelMailAdvice(error?.code);
           appendSteelDownload(status);
-          appendActivationHelp(status);
-          addSteelMultipartFallback(status,body,true);
           return;
         }
-        const activation = Boolean(error?.activation);
-        status.textContent = (activation ? val.activation : val.error) +
-          " " + (!activation ? steelMailAdvice(error?.code) : "") + " ";
-        // No data is lost on failure. Offer a native HTML POST in a separate
-        // tab when the provider rejects AJAX or the browser blocks CORS.
-        const retry = document.createElement("button");
-        retry.type = "button";
-        retry.textContent = val.browser;
-        retry.className = "bcore-form-native-retry";
-        retry.addEventListener("click", () => submitNativeInNewTab(body), {once:false});
-        status.appendChild(retry);
-        // The backend may be running without a verified email domain.
-        // One-click contact: use FormSubmit's documented native POST as a
-        // browser-origin fallback; the external page confirms acceptance or
-        // asks the recipient to activate the form. Never claim delivered.
-        if(!activation){
-          status.append(document.createTextNode(" Przechodzę do potwierdzenia FormSubmit…"));
-          queueMicrotask(()=>submitNativeInNewTab(body,true));
-        }
+        status.textContent = "E-mail nie został przyjęty. Możesz wysłać zapytanie z własnej aplikacji pocztowej. ";
+        const link = document.createElement("a");
+        link.href = "mailto:" + mail + "?subject=" + encodeURIComponent("[B-CORE] " + String(body.category || "Zapytanie")) +
+          "&body=" + encodeURIComponent("Od: " + body.name + "\nE-mail: " + body.email +
+            "\nTelefon: " + String(body.phone || "") + "\n\n" + String(body.message || ""));
+        link.textContent = "Otwórz wiadomość e-mail";
+        status.append(link);
       } finally {
         send.disabled = false;
         send.textContent = val.send;
