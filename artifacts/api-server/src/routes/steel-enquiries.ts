@@ -4,6 +4,7 @@ import { pool } from "@workspace/db";
 import { rateLimit } from "../rate-limit";
 import { isAdminSession } from "./admin";
 import { steelAttachments } from "../lib/steel-exports";
+import { sendBcoreGoogleMail } from "../lib/google-mail";
 
 const router = Router();
 const MAX_DESIGN_BYTES = 8_000_000;
@@ -81,9 +82,24 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     console.error("B-CORE steel enquiry storage unavailable:", err instanceof Error ? err.name : "UnknownError");
   }
 
+  // Preferred domain-free transport: an owner-authorized Gmail MailApp web
+  // app. No visitors are redirected to a third-party domain.
+  const googleConfigured = Boolean(process.env["BCORE_GOOGLE_MAIL_URL"] &&
+    process.env["BCORE_GOOGLE_MAIL_SECRET"]);
+  if (googleConfigured) {
+    const delivery = await sendBcoreGoogleMail({
+      reference, name: contactName, email: contactEmail, phone: contactPhone,
+      category: requestCategory, message: requestMessage,
+      attachments: steelAttachments(contact, design, reference),
+    });
+    emailed = delivery.accepted;
+    emailId = emailed ? "google-mail-" + reference : null;
+    if (!emailed) emailErrorCode = delivery.code;
+  }
+
   const apiKey = process.env["RESEND_API_KEY"];
   const configuredSender = process.env["RESEND_FROM_EMAIL"];
-  if (apiKey && configuredSender) {
+  if (!googleConfigured && apiKey && configuredSender) {
     try {
       const attachments = steelAttachments(contact, design, reference);
       // Provider enforces total post-encoding size. Fail explicitly rather than
@@ -140,7 +156,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
         reason: emailErrorCode, reference, error: err instanceof Error ? err.name : "UnknownError"
       });
     }
-  } else {
+  } else if (!googleConfigured) {
     emailErrorCode = "email_not_configured";
     console.error("B-CORE SteelVision email disabled: missing RESEND_API_KEY or RESEND_FROM_EMAIL");
   }
@@ -149,7 +165,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
   // pointing to the complete project stored in the authenticated B-CORE admin.
   // It does NOT contain the three attachment files; those remain in the database.
   // Only enable this path when the business has opted into FormSubmit as provider.
-  if (stored && !emailed && process.env["EMAIL_PROVIDER"] === "formsubmit") {
+  if (stored && !emailed && !googleConfigured && process.env["EMAIL_PROVIDER"] === "formsubmit") {
     if (previouslyNotified) {
       fallbackNotified = true;
     } else {
@@ -222,7 +238,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
   res.status(emailed ? 201 : 202).json({
     ok: true, reference, stored, emailed,
     // Accepted by Resend != confirmed to arrive in the inbox.
-    delivery: emailed ? "accepted_by_email_provider" : "database_only",
+    delivery: emailed ? (googleConfigured ? "accepted_by_google_mail" : "accepted_by_email_provider") : "database_only",
     emailErrorCode: emailed ? null : emailErrorCode,
     fallbackNotified,
     reports: emailed ? ["PDF", "CSV", "JSON"] : [],
