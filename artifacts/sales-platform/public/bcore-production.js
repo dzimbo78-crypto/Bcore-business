@@ -148,7 +148,7 @@
           if (reply.emailed) {
             await clearSteelDraft();
             el.reset();
-            status.textContent = "✓ " + val.stored + " " + reply.reference +
+            status.textContent = "✓ " + (reply.stored ? val.stored : "Zapytanie zostało przyjęte do wysyłki e-mail. Numer:") + " " + reply.reference +
               " · PDF, CSV i JSON zostały przyjęte do wysyłki e-mail przez dostawcę." +
               (!reply.stored ? " (Baza danych jest niedostępna; kopie są w załącznikach e-mail.)" : "");
           } else if (reply.stored) {
