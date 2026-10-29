@@ -118,7 +118,7 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
         "FormSubmit request failed:",
         error instanceof Error ? error.name : "UnknownError",
       );
-      res.status(502).json({ error: "Failed to forward enquiry" });
+      res.status(502).json({ error: "Failed to forward enquiry", code: "provider_network_error" });
     }
     return;
   }
@@ -175,7 +175,11 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
 
     if (!response.ok || typeof payload?.id !== "string") {
       console.error("Resend email error status:", response.status);
-      res.status(502).json({ error: "Failed to send email" });
+      const code = response.status === 401 || response.status === 403 ? "email_auth_rejected"
+        : response.status === 400 || response.status === 422 ? "sender_or_request_rejected"
+        : response.status === 429 ? "provider_rate_limited"
+        : response.status >= 500 ? "provider_unavailable" : "provider_rejected";
+      res.status(502).json({ error: "Failed to send email", code });
       return;
     }
 
@@ -186,7 +190,7 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
       "Resend request failed:",
       err instanceof Error ? err.name : "UnknownError",
     );
-    res.status(502).json({ error: "Failed to send email" });
+    res.status(502).json({ error: "Failed to send email", code: "provider_network_error" });
   }
 });
 
