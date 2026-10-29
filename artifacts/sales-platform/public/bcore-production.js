@@ -118,7 +118,7 @@
    * Native form response / acceptance is controlled by FormSubmit; never
    * claim successful delivery before receiving provider confirmation.
    */
-  function addSteelMultipartFallback(status, contact) {
+  function addSteelMultipartFallback(status, contact, autoStart=false) {
     if(status.querySelector(".bcore-steel-multipart"))return;
     const button=document.createElement("button");
     button.type="button";
@@ -193,6 +193,9 @@
       }
     });
     status.append(document.createTextNode(" "),button);
+    // One-click checkout: after email providers reject a quotation,
+    // let the visitor's browser send the full PDF, CSV and JSON natively.
+    if(autoStart) queueMicrotask(()=>button.click());
   }
   function installContactForm() {
     const container = document.getElementById("app");
@@ -305,7 +308,7 @@
               status.textContent="✓ Projekt "+reply.reference+
                 " zapisano w B-CORE. Serwer wysłał powiadomienie przez FormSubmit (dostawca przyjął żądanie). "+
                 "PDF, CSV i JSON znajdują się w panelu /admin. Możesz wysłać również pliki:";
-              addSteelMultipartFallback(status,body);
+              addSteelMultipartFallback(status,body,true);
               appendSteelDownload(status);
             }else try{
               const notified=await sendSteelFallbackNotice(body,reply.reference);
@@ -314,14 +317,14 @@
                   " zapisano w B-CORE, a powiadomienie e-mail przyjęte przez FormSubmit. "+
                   "Pełne PDF, CSV i JSON są w panelu /admin. "+
                   "Aby otrzymać również trzy pliki w e-mailu, kliknij poniżej:";
-                addSteelMultipartFallback(status,body);
+                addSteelMultipartFallback(status,body,true);
               }
             }catch(fallbackError){
               status.textContent="Projekt "+reply.reference+" zapisano w bazie, ale żaden dostawca "+
                 "nie potwierdził wysłania e-maila. "+steelMailAdvice(reply.emailErrorCode)+
                 (fallbackError?.activation?" Aktywuj formularz odbiorcy w FormSubmit.":"");
               appendSteelDownload(status);
-              addSteelMultipartFallback(status,body);
+              addSteelMultipartFallback(status,body,true);
               const retry=document.createElement("button");
               retry.type="button";
               retry.className="bcore-form-native-retry";
@@ -386,7 +389,7 @@
         if (steelEnquiry) {
           status.textContent = val.steelError + " " + steelMailAdvice(error?.code);
           appendSteelDownload(status);
-          addSteelMultipartFallback(status,body);
+          addSteelMultipartFallback(status,body,true);
           return;
         }
         const activation = Boolean(error?.activation);
