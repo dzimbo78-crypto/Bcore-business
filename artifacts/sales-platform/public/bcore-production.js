@@ -301,7 +301,13 @@
             // Resend attachments failed. Recover with a browser-originated
             // FormSubmit notification and authenticated server-side project.
             // Never claim that FormSubmit transported the full files.
-            try{
+            if(reply.fallbackNotified){
+              status.textContent="✓ Projekt "+reply.reference+
+                " zapisano w B-CORE. Serwer wysłał powiadomienie przez FormSubmit (dostawca przyjął żądanie). "+
+                "PDF, CSV i JSON znajdują się w panelu /admin. Możesz wysłać również pliki:";
+              addSteelMultipartFallback(status,body);
+              appendSteelDownload(status);
+            }else try{
               const notified=await sendSteelFallbackNotice(body,reply.reference);
               if(notified){
                 status.textContent="✓ Projekt "+reply.reference+
