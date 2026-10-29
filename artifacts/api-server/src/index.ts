@@ -34,6 +34,9 @@ async function ensureDatabase() {
     "contact_phone TEXT, category TEXT, summary TEXT NOT NULL, " +
     "design JSONB NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())",
   );
+  // Repeat submission of a quotation must not create duplicate database records.
+  await pool.query("ALTER TABLE steel_enquiries ADD COLUMN IF NOT EXISTS quote_id TEXT");
+  await pool.query("CREATE UNIQUE INDEX IF NOT EXISTS steel_enquiries_quote_id_uidx ON steel_enquiries (quote_id) WHERE quote_id IS NOT NULL");
 }
 
 async function start() {
