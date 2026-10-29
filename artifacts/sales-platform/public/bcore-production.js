@@ -304,11 +304,11 @@
             try{
               const notified=await sendSteelFallbackNotice(body,reply.reference);
               if(notified){
-                await clearSteelDraft();
-                el.reset();
                 status.textContent="✓ Projekt "+reply.reference+
-                  " zapisano w B-CORE. Powiadomienie e-mail zostało przyjęte przez FormSubmit. "+
-                  "PDF, CSV i JSON czekają w panelu administratora /admin (nie są załącznikami tego powiadomienia).";
+                  " zapisano w B-CORE, a powiadomienie e-mail przyjęte przez FormSubmit. "+
+                  "Pełne PDF, CSV i JSON są w panelu /admin. "+
+                  "Aby otrzymać również trzy pliki w e-mailu, kliknij poniżej:";
+                addSteelMultipartFallback(status,body);
               }
             }catch(fallbackError){
               status.textContent="Projekt "+reply.reference+" zapisano w bazie, ale żaden dostawca "+
