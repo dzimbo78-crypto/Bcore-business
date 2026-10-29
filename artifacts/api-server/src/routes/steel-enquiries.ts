@@ -59,13 +59,15 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     /^[A-Za-z0-9-]{8,90}$/.test(design.quoteId) ? design.quoteId : null;
   let stored = false, emailed = false, emailId: string | null = null, storedId: string | null = null;
   let emailErrorCode: string | null = null;
+  let fallbackNotified = false;
+  let previouslyNotified = false;
   let reference = "BCM-" + (quoteId ? quoteId.replace(/-/g, "").slice(0, 12).toUpperCase() : randomUUID().slice(0, 12).toUpperCase());
 
   try {
-    const result = await pool.query<{ id: string | number }>(
+    const result = await pool.query<{ id: string | number; fallback_accepted_at?: string | null }>(
       "INSERT INTO steel_enquiries (contact_name, contact_email, contact_phone, category, summary, design, quote_id) " +
       "VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7) " +
-      "ON CONFLICT (quote_id) WHERE quote_id IS NOT NULL DO UPDATE SET quote_id=EXCLUDED.quote_id RETURNING id",
+      "ON CONFLICT (quote_id) WHERE quote_id IS NOT NULL DO UPDATE SET quote_id=EXCLUDED.quote_id RETURNING id, fallback_accepted_at",
       [contactName, contactEmail, contactPhone, requestCategory, requestMessage, payload, quoteId],
     );
     const id = result.rows[0]?.id;
@@ -73,6 +75,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     if (id === undefined || !/^\d+$/.test(String(id))) throw new Error("Missing enquiry ID");
     reference = "BCS-" + String(id).padStart(6, "0");
     storedId = String(id);
+    previouslyNotified = Boolean(result.rows[0]?.fallback_accepted_at);
     stored = true;
   } catch (err) {
     console.error("B-CORE steel enquiry storage unavailable:", err instanceof Error ? err.name : "UnknownError");
@@ -142,6 +145,63 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     console.error("B-CORE SteelVision email disabled: missing RESEND_API_KEY or RESEND_FROM_EMAIL");
   }
 
+  // FormSubmit needs no verified custom sending domain. It sends a notification
+  // pointing to the complete project stored in the authenticated B-CORE admin.
+  // It does NOT contain the three attachment files; those remain in the database.
+  // Only enable this path when the business has opted into FormSubmit as provider.
+  if (stored && !emailed && process.env["EMAIL_PROVIDER"] === "formsubmit") {
+    if (previouslyNotified) {
+      fallbackNotified = true;
+    } else {
+      const recipient = process.env["CONTACT_TO_EMAIL"] || DEFAULT_RECIPIENT;
+      try {
+        const response = await fetch(
+          "https://formsubmit.co/ajax/" + encodeURIComponent(recipient),
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json", "Accept": "application/json",
+              "User-Agent": "B-CORE-Website/2.0",
+              Referer: "https://bcore-business.onrender.com/",
+              Origin: "https://bcore-business.onrender.com",
+            },
+            body: JSON.stringify({
+              name: contactName, email: contactEmail, phone: contactPhone,
+              category: requestCategory,
+              message: "Zapytanie SteelVision " + reference +
+                "\nPROJEKT ZAPISANY. Pełne PDF/CSV/JSON: panel administratora B-CORE." +
+                "\nTo powiadomienie nie zawiera plików.\n\n" +
+                requestMessage.slice(0, 8000),
+              _subject: "[B-CORE] SteelVision " + reference + " - nowe zapytanie",
+              _template: "table", _captcha: "false", _honey: "",
+              _url: "https://bcore-business.onrender.com/#/kontakt",
+            }),
+            signal: AbortSignal.timeout(12_000),
+          },
+        );
+        const payload = await response.json().catch(() => null) as {
+          success?: string | boolean; message?: string;
+        } | null;
+        fallbackNotified = response.ok &&
+          (payload?.success === true || payload?.success === "true");
+        console.log("B-CORE SteelVision backup FormSubmit:", {
+          reference, accepted: fallbackNotified, status: response.status,
+          activationRequired: /activat|confirm/i.test(payload?.message || ""),
+        });
+        if (fallbackNotified && storedId) {
+          await pool.query(
+            "UPDATE steel_enquiries SET fallback_accepted_at=NOW() WHERE id=$1",
+            [storedId],
+          );
+        }
+      } catch (err) {
+        console.error("B-CORE SteelVision backup FormSubmit error:", {
+          reference, name: err instanceof Error ? err.name : "UnknownError",
+        });
+      }
+    }
+  }
+
   if (storedId && emailed && emailId) {
     try {
       await pool.query("UPDATE steel_enquiries SET email_accepted_at=NOW(), email_provider_id=$2 WHERE id=$1",
@@ -164,6 +224,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     // Accepted by Resend != confirmed to arrive in the inbox.
     delivery: emailed ? "accepted_by_email_provider" : "database_only",
     emailErrorCode: emailed ? null : emailErrorCode,
+    fallbackNotified,
     reports: emailed ? ["PDF", "CSV", "JSON"] : [],
   });
 });

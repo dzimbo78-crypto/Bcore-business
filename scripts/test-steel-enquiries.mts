@@ -147,6 +147,49 @@ test("retries of the same quotation produce identical mail attachments and idemp
   }
 });
 
+test("production fallback sends one FormSubmit notice for a stored project after Resend 403",async()=>{
+  const originalQuery=pool.query, originalFetch=globalThis.fetch;
+  const originalKey=process.env.RESEND_API_KEY, originalProvider=process.env.EMAIL_PROVIDER;
+  let sentToForm=0, sentToResend=0;
+  (pool as any).query=async(sql:string)=>{
+    if(sql.includes("INSERT INTO"))return {rows:[{id:"901",fallback_accepted_at:null}]};
+    return {rows:[]};
+  };
+  process.env.RESEND_API_KEY="qa-test-key";
+  process.env.EMAIL_PROVIDER="formsubmit";
+  globalThis.fetch=async (url,options)=>{
+    if(String(url).includes("api.resend.com")){
+      sentToResend++;
+      return new Response(JSON.stringify({name:"validation_error"}),{status:403});
+    }
+    if(String(url).includes("formsubmit.co/ajax/")){
+      sentToForm++;
+      const payload=JSON.parse(String(options?.body));
+      assert.match(payload.message,/PDF\/CSV\/JSON/);
+      assert.match(payload.message,/BCS-000901/);
+      return new Response(JSON.stringify({success:"true"}),{status:200});
+    }
+    throw Error("Unexpected test network destination");
+  };
+  try{
+    const r=await call(good);
+    assert.equal(r.code,202);
+    assert.equal(r.payload.reference,"BCS-000901");
+    assert.equal(r.payload.stored,true);
+    assert.equal(r.payload.emailed,false);
+    assert.equal(r.payload.fallbackNotified,true);
+    assert.equal(sentToResend,1);
+    assert.equal(sentToForm,1);
+  }finally{
+    (pool as any).query=originalQuery;
+    globalThis.fetch=originalFetch;
+    if(originalKey===undefined)delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY=originalKey;
+    if(originalProvider===undefined)delete process.env.EMAIL_PROVIDER;
+    else process.env.EMAIL_PROVIDER=originalProvider;
+  }
+});
+
 test("unconfigured Resend sender is visible as an actionable code even after DB-only save", async () => {
   const originalQuery=pool.query, originalKey=process.env.RESEND_API_KEY, originalSender=process.env.RESEND_FROM_EMAIL;
   (pool as any).query=async()=>({rows:[{id:"125"}]});
