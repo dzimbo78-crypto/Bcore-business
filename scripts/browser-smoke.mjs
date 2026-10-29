@@ -123,11 +123,14 @@ try{
      testQuote.email!=="qa@example.com")
     throw Error("Browser quotation payload is incomplete: "+JSON.stringify(testQuote).slice(0,1200));
   console.log("PASS browser: complete JSON project posted from advanced simulator through contact form");
-  // This replaces provider responses with a controlled rejection and checks
-  // that the native form contains 3 actual non-empty File objects.
-  const fallbackDom=await check("one-click native multipart recovery after email provider 403",
-    "/bcore-steelvision.html?bcore_qa=fallback",['id="bcore-qa-native-multipart-ok"']);
-  if(!fallbackDom.includes('ALL 3 ATTACHMENTS PREPARED'))
-    throw Error("Fallback form did not stage all three attachments in the browser");
+  // Simulate an unavailable mail provider. The browser must preserve the
+  // project without redirecting the visitor to an unsafe third-party site.
+  const fallbackDom=await check("stored project after provider error",
+    "/bcore-steelvision.html?bcore_qa=fallback",['id="bcore-contact-form"']);
+  if(!fallbackDom.includes("BCS-QA0002") ||
+     !fallbackDom.includes("został zapisany w B-CORE"))
+    throw Error("Customer must receive a clear saved-project receipt");
+  if(fallbackDom.includes('id="bcore-qa-native-multipart-ok"'))
+    throw Error("Unsafe external upload attempted");
 
 }finally{await new Promise(resolve=>server.close(resolve))}
