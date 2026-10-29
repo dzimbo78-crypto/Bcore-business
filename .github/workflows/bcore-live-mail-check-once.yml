@@ -1,0 +1,82 @@
+name: B-CORE one-off live RFQ delivery diagnostic
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/bcore-live-mail-check-once.yml
+permissions:
+  contents: read
+jobs:
+  live-delivery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: ONE TIME - inspect live sites and submit labelled SteelVision QA project
+        env:
+          PRIMARY: https://bcore-business.onrender.com
+          SECONDARY: https://bcore-cinematic-live.onrender.com
+        run: |
+          node --input-type=module <<'JS'
+          import assert from "node:assert/strict";
+          const urls=[process.env.PRIMARY,process.env.SECONDARY];
+          for(const url of urls){
+            const health=await fetch(url+"/api/healthz",{signal:AbortSignal.timeout(90000)});
+            const body=await health.text();
+            assert.equal(health.status,200,"Health check "+url+": "+health.status+" "+body.slice(0,150));
+            assert.match(body,/"status"\s*:\s*"ok"/);
+            console.log("LIVE health OK",url);
+            const page=await fetch(url+"/bcore-steelvision.html",{signal:AbortSignal.timeout(30000)});
+            assert.equal(page.status,200);
+            assert.match(await page.text(),/bcore-steelvision-bridge\.js/);
+            console.log("LIVE SteelVision page OK",url);
+          }
+          const qaId="BCORE-QA-LIVE-20261029-ONCE";
+          const contact={
+            name:"B-CORE QA TEST - ignore",email:"qa@example.com",phone:"",
+            category:"Konstrukcje stalowe",
+            message:"TECHNICZNY TEST B-CORE 29.10.2026. TO NIE JEST ZAPYTANIE KLIENTA. Sprawdzamy przekazanie pelnego projektu oraz dostarczenie powiadomienia e-mail."
+          };
+          const design={
+            version:"B-CORE-SteelVision-19",quoteId:qaId,
+            project:{projectName:"QA LIVE ONLY - U balcony",projectRef:qaId,location:"Test"},
+            state:{selected:0,items:[{name:"QA U",type:"railing",shape:"U",qty:1,
+              segments:[{name:"Front",length:3.76,angle:0,jointType:"Spawane",jointGap:0},
+                {name:"Right",length:1.10,angle:90,jointType:"Spawane",jointGap:0},
+                {name:"Left",length:1.10,angle:270,jointType:"Koniec",jointGap:0}],
+              material:"S235"}]},
+            report:{createdAt:"2026-10-29T08:30:00.000Z",
+              corrections:[],validation:{blockers:0,warnings:0,issues:[]},
+              integrity:{passed:1,total:1,issues:[]},recommendations:["QA only"]}
+          };
+          const prep=await fetch(process.env.PRIMARY+"/api/steel-enquiries/prepare-attachments",{
+            method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({contact,design}),signal:AbortSignal.timeout(40000)
+          });
+          const prepared=await prep.json().catch(()=>({}));
+          assert.equal(prep.status,200,"PDF/CSV/JSON generation: "+prep.status+", "+(prepared.code||""));
+          assert.equal(prepared.attachments?.length,3);
+          const [pdf,csv,json]=prepared.attachments;
+          assert.match(pdf.filename,/\.pdf$/);
+          assert.match(csv.filename,/\.csv$/);
+          assert.match(json.filename,/\.json$/);
+          assert.ok(Buffer.from(pdf.content,"base64").toString("latin1",0,8).startsWith("%PDF-"));
+          assert.equal(JSON.parse(Buffer.from(json.content,"base64").toString()).design.quoteId,qaId);
+          console.log("LIVE prepare PDF, CSV and JSON PASS");
+          const post=await fetch(process.env.PRIMARY+"/api/steel-enquiries",{
+            method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({...contact,design}),signal:AbortSignal.timeout(80000)
+          });
+          const reply=await post.json().catch(()=>({}));
+          console.log("LIVE SteelVision RFQ response",JSON.stringify({
+            status:post.status,reference:reply.reference,stored:reply.stored,
+            resendAccepted:reply.emailed,backupNoticeAccepted:reply.fallbackNotified,
+            errorCode:reply.emailErrorCode
+          }));
+          assert.equal(reply.stored,true,"Project did not persist to production DB");
+          assert.ok(reply.emailed || reply.fallbackNotified,
+            "No email service accepted the real QA enquiry; check FormSubmit activation and sender restrictions");
+          console.log("LIVE end-to-end accepted by provider; inbox delivery must still be verified separately");
+          JS
