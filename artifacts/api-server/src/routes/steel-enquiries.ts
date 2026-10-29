@@ -6,7 +6,7 @@ import { isAdminSession } from "./admin";
 import { steelAttachments } from "../lib/steel-exports";
 
 const router = Router();
-const MAX_DESIGN_BYTES = 3_000_000;
+const MAX_DESIGN_BYTES = 8_000_000;
 const DEFAULT_RECIPIENT = "przemyslaw.bugajski78@gmail.com";
 
 // The DB and mail provider are independent destinations. Losing Neon must not
