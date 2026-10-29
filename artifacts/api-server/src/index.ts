@@ -41,59 +41,54 @@ async function ensureDatabase() {
   await pool.query("ALTER TABLE steel_enquiries ADD COLUMN IF NOT EXISTS email_provider_id TEXT");
 }
 
-async function start() {
-  // Keep the contact API online during a transient database outage.
-  // SMTP-like delivery via Resend is independent of PostgreSQL.
-  try {
-    await ensureDatabase();
-  } catch (error) {
-    console.error("B-CORE database boot unavailable; email contact remains online:",
-      error instanceof Error ? error.name : "UnknownError");
-    let recoveryBusy = false;
-    const retry = setInterval(async () => {
-      if (recoveryBusy) return;
-      recoveryBusy = true;
-      try {
-        await ensureDatabase();
-        console.log("B-CORE database initialized after reconnect");
-        clearInterval(retry);
-      } catch {
-        console.error("B-CORE database still unavailable");
-      } finally {
-        recoveryBusy = false;
-      }
-    }, 60_000);
-    retry.unref();
-  }
-
-  // Serve the built React application from the same Node service.
-  // This keeps /api and the website on one domain and avoids CORS/deployment issues.
+/**
+ * Render must see an open HTTP port *before* database migrations begin.
+ * A missing/slow/offline PostgreSQL must not block the public website,
+ * /api/healthz or the independent email service.
+ */
+function start() {
   const webRoot = path.resolve(process.cwd(), "artifacts/sales-platform/dist/public");
-  // The approved final PL/EN/DA/DE cinematic interface is the public B-CORE website.
-  // Admin and legal routes remain served by the existing React app; API stays unchanged.
-  app.get("/", (_req, res) => {
-    res.sendFile(path.join(webRoot, "bcore-cinematic.html"));
-  });
+  app.get("/", (_req, res) => res.sendFile(path.join(webRoot, "bcore-cinematic.html")));
   app.get(
     /^\/(?:doradztwo-biznesowe|nieruchomosci|rozwiazania-dla-biznesu|konstrukcje-stalowe|o-nas|kontakt)\/?$/,
-    (req, res) => {
-      res.redirect(302, "/#" + req.path.replace(/\/$/, ""));
-    },
+    (req, res) => res.redirect(302, "/#" + req.path.replace(/\/$/, "")),
   );
-
   app.use(express.static(webRoot));
-
-  // SPA fallback for routes such as /produkty, /kontakt and /admin.
   app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => {
     res.sendFile(path.join(webRoot, "index.html"));
   });
 
-  app.listen(port, "0.0.0.0", () => {
-    console.log(`B-CORE listening on port ${port}`);
+  const server = app.listen(port, "0.0.0.0", () => {
+    console.log("B-CORE listening on 0.0.0.0:" + port);
+  });
+  server.on("error", err => {
+    console.error("B-CORE HTTP bind failed:", err);
+    process.exitCode = 1;
+  });
+
+  let migrating = false;
+  const migrate = async (): Promise<boolean> => {
+    if (migrating) return false;
+    migrating = true;
+    try {
+      await ensureDatabase();
+      console.log("B-CORE database tables ready");
+      return true;
+    } catch (err) {
+      console.error("B-CORE database not ready, will retry:", err instanceof Error ? err.name : "UnknownError");
+      return false;
+    } finally {
+      migrating = false;
+    }
+  };
+  // Never block HTTP startup on database connectivity.
+  void migrate().then(ready => {
+    if (ready) return;
+    const timer = setInterval(() => {
+      void migrate().then(ok => { if (ok) clearInterval(timer); });
+    }, 60_000);
+    timer.unref();
   });
 }
 
-start().catch((error) => {
-  console.error("Startup failed:", error);
-  process.exit(1);
-});
+start();
