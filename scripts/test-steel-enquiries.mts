@@ -47,6 +47,27 @@ test("PDF, CSV and JSON contain the full design and geometry audit", () => {
   const json = JSON.parse(Buffer.from(files[2].content,"base64").toString("utf8"));
   assert.deepEqual(json.design, good.design);
 });
+test("browser FormSubmit backup prepares all 3 files without Resend or PostgreSQL",()=>{
+  const layer=(router as any).stack.find((r: any) =>
+    r.route?.path==="/steel-enquiries/prepare-attachments" && r.route?.methods?.post);
+  assert.ok(layer,"fallback export API route must exist");
+  const prepare=layer.route.stack.at(-1).handle;
+  let code=200, response:any;
+  const res={
+    status(value:number){code=value;return this},
+    setHeader(){return this},
+    json(value:any){response=value;return this},
+  };
+  prepare({body:{contact:{name:good.name,email:good.email,message:good.message},
+    design:good.design}},res,()=>{});
+  assert.equal(code,200);
+  assert.equal(response.ok,true);
+  assert.equal(response.attachments.length,3);
+  assert.deepEqual(response.attachments.map((x:any)=>x.filename.split(".").pop()),["pdf","csv","json"]);
+  assert.ok(Buffer.from(response.attachments[0].content,"base64").toString("ascii").startsWith("%PDF"));
+  assert.deepEqual(JSON.parse(Buffer.from(response.attachments[2].content,"base64").toString()).design,good.design);
+});
+
 test("steel enquiry validates input and honeypot", async () => {
   for (const body of [{}, {...good,website:"spam"},{...good,email:"bad"},
     {...good,design:{state:{items:[]}}}]) assert.equal((await call(body)).code,400);
