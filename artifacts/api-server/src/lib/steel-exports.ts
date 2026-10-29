@@ -102,11 +102,11 @@ function createPdf(lines: string[]): Buffer {
 function take(x: unknown, max = 300): string {
   return asText(x).replace(/[\r\n]+/g, " ").slice(0, max);
 }
-function reportLines(contact: ObjectMap, design: ObjectMap, reference: string): string[] {
+function reportLines(contact: ObjectMap, design: ObjectMap, reference: string, generatedAt: string): string[] {
   const project = obj(design.project), state = obj(design.state), report = obj(design.report);
   const lines = [
     "B-CORE | STEELVISION STUDIO - QUOTATION REPORT",
-    "Reference: " + reference + " | Generated: " + new Date().toISOString(),
+    "Reference: " + reference + " | Generated: " + generatedAt,
     "STATUS: Concept / initial RFQ. NOT approved for construction or fabrication.",
     "",
     "CONTACT", "Name: " + take(contact.name), "Email: " + take(contact.email),
@@ -167,9 +167,14 @@ function reportLines(contact: ObjectMap, design: ObjectMap, reference: string): 
 
 export function steelAttachments(contact: ObjectMap, design: ObjectMap, reference: string) {
   const prefix = reference.replace(/[^A-Za-z0-9_-]/g, "_");
-  const json = JSON.stringify({ reference, contact, design, generatedAt: new Date().toISOString() }, null, 2);
+  // Stable bytes matter for provider idempotency: a retry with identical
+  // quoteId must not produce different timestamps and a 409 conflict.
+  const report = obj(design.report);
+  const date = typeof report.createdAt === "string" && !Number.isNaN(Date.parse(report.createdAt))
+    ? new Date(report.createdAt).toISOString() : "1970-01-01T00:00:00.000Z";
+  const json = JSON.stringify({ reference, contact, design, generatedAt: date }, null, 2);
   const csv = csvFromDesign({ reference, contact, ...design });
-  const pdf = createPdf(reportLines(contact, design, reference));
+  const pdf = createPdf(reportLines(contact, design, reference, date));
   return [
     { filename: prefix + "_SteelVision_Report.pdf", content: pdf.toString("base64") },
     { filename: prefix + "_SteelVision_Full_Data.csv", content: Buffer.from(csv, "utf8").toString("base64") },
