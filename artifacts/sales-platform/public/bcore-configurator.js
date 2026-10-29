@@ -298,6 +298,7 @@ function redraw(){
 function mount(){
   if(!location.hash.startsWith("#/konstrukcje-stalowe"))return;
   const app=document.getElementById("app");if(!app||app.querySelector("#bcore-configurator"))return;
+  Object.assign(state,defaultState); // Reset every time the SPA remounts the simulator.
   const section=document.createElement("section");section.id="bcore-configurator";section.className="bcore-sim-section";
   section.innerHTML=configMarkup(locale());
   const cta=app.querySelector(".cta-section");
