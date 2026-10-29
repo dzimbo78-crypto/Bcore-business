@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>B-CORE — aktywacja powiadomień e-mail</title>
+  <style>
+    * { box-sizing:border-box }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; padding:28px 16px; background:#101213; color:#ecebe5; font:16px/1.6 system-ui,-apple-system,Segoe UI,sans-serif }
+    main { width:min(100%,670px); background:#1b1e1e; border:1px solid #545044; border-radius:18px; padding:clamp(22px,5vw,46px); box-shadow:0 20px 50px #0007 }
+    .brand { color:#dfc894; font-weight:700; text-transform:uppercase; letter-spacing:.2em; font-size:.85rem }
+    h1 {font-size:clamp(1.6rem,5vw,2.35rem); line-height:1.16; margin:18px 0 16px; letter-spacing:-.025em}
+    p { color:#cdcfc9 }
+    strong { color:#f5e3b9; overflow-wrap:anywhere }
+    ol { padding-left:23px; color:#c8cec9 }
+    li { margin:11px 0 }
+    button { background:#e4c788; color:#151615; border:0; border-radius:10px; padding:16px 22px; font:700 1rem system-ui; cursor:pointer; width:100%; margin-top:20px }
+    button:hover,button:focus-visible {background:#fff0c4}
+    .note { background:#2b2822; padding:14px 17px; border-left:3px solid #e4c788; border-radius:5px; margin-top:24px; font-size:.9rem }
+    a {color:#e4c788}
+    footer {font-size:.84rem; margin-top:20px;color:#969b96}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">B-CORE · konfigurator SteelVision</div>
+    <h1>Aktywuj otrzymywanie zapytań na Gmaila</h1>
+    <p>Zapytania z konfiguratora mają trafiać na <strong>przemyslaw.bugajski78@gmail.com</strong>.
+      Ponieważ strona działa na bezpłatnym adresie onrender.com, formularz zapasowy używa FormSubmit
+      i potrzebuje jednorazowego potwierdzenia adresu odbiorcy.</p>
+    <ol>
+      <li>Kliknij <strong>Wyślij prośbę o aktywację</strong> poniżej.</li>
+      <li>Na stronie FormSubmit wykonaj ewentualne sprawdzenie CAPTCHA.</li>
+      <li>Sprawdź <strong>Odebrane, Spam, Oferty i Wszystkie</strong> w Gmailu. Wyszukaj <strong>FormSubmit</strong> lub <strong>Activate Form</strong>.</li>
+      <li>W e-mailu FormSubmit kliknij <strong>Activate Form</strong>. To jednorazowa czynność właściciela skrzynki.</li>
+      <li>Po aktywacji wyślij przykładowe zapytanie ze SteelVision — powinno zawierać PDF, CSV i JSON.</li>
+    </ol>
+    <form method="POST" action="https://formsubmit.co/przemyslaw.bugajski78@gmail.com">
+      <input type="hidden" name="name" value="B-CORE — test aktywacji odbiorcy">
+      <input type="hidden" name="email" value="przemyslaw.bugajski78@gmail.com">
+      <input type="hidden" name="message" value="To jednorazowy test aktywacji formularza B-CORE. Nie jest to zapytanie klienta ani oferta do wyceny.">
+      <input type="hidden" name="_subject" value="[B-CORE] Test aktywacji FormSubmit">
+      <input type="hidden" name="_url" value="https://bcore-business.onrender.com/bcore-activate-email.html">
+      <input type="hidden" name="_template" value="table">
+      <input type="hidden" name="_captcha" value="true">
+      <button type="submit">Wyślij prośbę o aktywację</button>
+    </form>
+    <div class="note">Uwaga: maile zatytułowane <strong>GitHub Actions — All jobs have failed</strong> to powiadomienia o testach programistycznych, <strong>nie</strong> potwierdzenia poczty. FormSubmit musi wysłać osobną wiadomość aktywacyjną. Jeśli jej nie ma po próbie z tej strony, skontaktuj się z <a href="https://formsubmit.co/support" rel="noopener">pomocą FormSubmit</a>.</div>
+    <footer>Aktywacja nie wymaga podawania hasła Gmail, kodu SMS ani dostępu do konta Google.<br><a href="/">Wróć do B-CORE</a></footer>
+  </main>
+</body>
+</html>
