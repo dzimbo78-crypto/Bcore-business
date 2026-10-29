@@ -35,6 +35,10 @@ test("PDF, CSV and JSON contain the full design and geometry audit", () => {
     good.design, "BCS-000042");
   assert.deepEqual(files.map((x) => x.filename.split(".").pop()), ["pdf","csv","json"]);
   assert.ok(Buffer.from(files[0].content,"base64").toString("ascii").startsWith("%PDF-1.4"));
+  const printable=Buffer.from(files[0].content,"base64").toString("ascii");
+  assert.ok(printable.includes("TOP VIEW"),"PDF must contain a construction plan sheet");
+  assert.ok(printable.includes(" l\n"),"PDF must draw segment geometry");
+  assert.ok(printable.includes("%%EOF"),"PDF must contain a trailer");
   const csv = Buffer.from(files[1].content,"base64").toString("utf8");
   assert.match(csv,/Balustrada U/);
   assert.match(csv,/jointGap/);
@@ -98,6 +102,28 @@ test("database-only acknowledgement never claims email delivery",async()=>{
     else process.env.RESEND_API_KEY=originalKey;
   }
 });
+test("retries of the same quotation produce identical mail attachments and idempotency key",async()=>{
+  const originalQuery=pool.query,originalFetch=globalThis.fetch,originalKey=process.env.RESEND_API_KEY;
+  (pool as any).query=async()=>({rows:[{id:"43"}]});
+  process.env.RESEND_API_KEY="qa-test-key";
+  const sent:Array<{body:any, key:string}>= [];
+  globalThis.fetch=async (_url,options)=>{
+    sent.push({body:JSON.parse(String(options?.body)),
+      key:String((options?.headers as Record<string,string>)?.["Idempotency-Key"])});
+    return new Response(JSON.stringify({id:"email-same-id"}),{status:200});
+  };
+  try{
+    const twice={...good,design:{...good.design,report:{...good.design.report,createdAt:"2026-10-29T14:30:00.000Z"}}};
+    assert.equal((await call(twice)).code,201);
+    assert.equal((await call(twice)).code,201);
+    assert.deepEqual(sent[0],sent[1],"Resend would reject changed payload with unchanged key");
+  }finally{
+    (pool as any).query=originalQuery;globalThis.fetch=originalFetch;
+    if(originalKey===undefined)delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY=originalKey;
+  }
+});
+
 test("dual outage returns error, never success",async()=>{
   const originalQuery=pool.query,originalKey=process.env.RESEND_API_KEY;
   (pool as any).query=async()=>{throw Error("DB offline")};
