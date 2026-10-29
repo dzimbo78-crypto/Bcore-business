@@ -91,7 +91,7 @@ export default function Admin() {
     [deleting, setDeleting] = useState<number | null>(null);
   const [steelEnquiries, setSteelEnquiries] = useState<Array<{
     id: string; reference: string; contact_name: string; contact_email: string;
-    category: string | null; created_at: string; summary: string;
+    category: string | null; created_at: string; summary: string; email_accepted_at: string | null;
   }>>([]);
   const [steelError, setSteelError] = useState("");
   const [steelLoading, setSteelLoading] = useState(false);
@@ -166,7 +166,7 @@ export default function Admin() {
     try {
       const result = await request<{ok: boolean; requests: Array<{
         id: string; reference: string; contact_name: string; contact_email: string;
-        category: string | null; created_at: string; summary: string;
+        category: string | null; created_at: string; summary: string; email_accepted_at: string | null;
       }>}>("/admin/steel-enquiries?limit=50");
       setSteelEnquiries(result.requests || []);
     } catch (e) {
@@ -398,6 +398,7 @@ export default function Admin() {
                     <small>{new Date(entry.created_at).toLocaleString("pl-PL")}</small>
                   </div>
                   <div><a href={`mailto:${entry.contact_email}`}>{entry.contact_email}</a> · {entry.category}</div>
+                  <p><strong>E-mail:</strong> {entry.email_accepted_at ? "Przyjęty przez dostawcę " + new Date(entry.email_accepted_at).toLocaleString("pl-PL") : "Niepotwierdzony — sprawdź konfigurację Resend / wyślij ręcznie"}</p>
                   <p style={{whiteSpace:"pre-wrap", overflowWrap:"anywhere"}}>{entry.summary.slice(0, 400)}</p>
                   <div style={{display:"flex", flexWrap:"wrap", gap:16, marginTop:12}}>
                     {(["pdf","csv","json"] as const).map((format) => (
