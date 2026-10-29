@@ -233,7 +233,11 @@
             throw err;
           }
         }
-        if(!accepted)throw Error("Our email provider has not accepted the enquiry");
+        if(!accepted){
+          const err=new Error("Our email provider has not accepted the enquiry");
+          err.code=result.code || "provider_rejected";
+          throw err;
+        }
         el.reset();
         status.textContent = val.sent;
       } catch (error) {
@@ -243,7 +247,8 @@
           return;
         }
         const activation = Boolean(error?.activation);
-        status.textContent = (activation ? val.activation : val.error) + " ";
+        status.textContent = (activation ? val.activation : val.error) +
+          " " + (!activation ? steelMailAdvice(error?.code) : "") + " ";
         // No data is lost on failure. Offer a native HTML POST in a separate
         // tab when the provider rejects AJAX or the browser blocks CORS.
         const retry = document.createElement("button");
