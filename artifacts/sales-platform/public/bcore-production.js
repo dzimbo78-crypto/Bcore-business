@@ -84,6 +84,34 @@
     };
     return hints[code] || "E-mail nie został zaakceptowany. Administrator powinien sprawdzić stan usługi i logi wysyłki.";
   }
+  // Resend is the only route for real attachments. If it is not configured,
+  // use the visitor browser (not the Render server) to notify FormSubmit
+  // with the RFQ reference; full PDFs/CSV/JSON remain in authenticated admin.
+  async function sendSteelFallbackNotice(body, reference) {
+    const excerpt=String(body.message||"").slice(0,5800);
+    const payload={
+      name: String(body.name||""),
+      email: String(body.email||""),
+      phone: String(body.phone||""),
+      category: "Konstrukcje stalowe / SteelVision",
+      message: "B-CORE SteelVision - zapytanie "+reference+"\n"+
+        "Pelny projekt, raport PDF, CSV i JSON zapisano w B-CORE (panel /admin).\n"+
+        "To powiadomienie nie zawiera plikow. Pobierz je w panelu admina.\n\n"+excerpt,
+      _subject: "[B-CORE] SteelVision "+reference+" - zapytanie do wyceny",
+      _template: "table", _captcha:"false", _honey:"",
+      _url: window.location.origin+"/#/kontakt"
+    };
+    const response=await fetch("https://formsubmit.co/ajax/"+mail,{
+      method:"POST",mode:"cors",credentials:"omit",
+      headers:{"Content-Type":"application/json","Accept":"application/json"},
+      signal:AbortSignal.timeout(18000),body:JSON.stringify(payload)
+    });
+    const result=await response.json().catch(()=>null);
+    if(response.ok && (result?.success===true||result?.success==="true"))return true;
+    const err=new Error("FormSubmit did not accept browser notification");
+    err.activation=/activat|confirm/i.test(String(result?.message||""));
+    throw err;
+  }
   function installContactForm() {
     const container = document.getElementById("app");
     if (!container || document.getElementById("bcore-contact-form")) return;
@@ -188,11 +216,36 @@
               " · PDF, CSV i JSON zostały przyjęte do wysyłki e-mail przez dostawcę." +
               (!reply.stored ? " (Baza danych jest niedostępna; kopie są w załącznikach e-mail.)" : "");
           } else if (reply.stored) {
-            // Keep the draft so the customer can retry mail transmission.
-            status.textContent = val.stored + " " + reply.reference +
-              " · UWAGA: e-mail z PDF/CSV/JSON NIE został przyjęty do wysyłki. " +
-              "Projekt jest w bazie. " + steelMailAdvice(reply.emailErrorCode);
-            appendSteelDownload(status);
+            // Resend attachments failed. Recover with a browser-originated
+            // FormSubmit notification and authenticated server-side project.
+            // Never claim that FormSubmit transported the full files.
+            try{
+              const notified=await sendSteelFallbackNotice(body,reply.reference);
+              if(notified){
+                await clearSteelDraft();
+                el.reset();
+                status.textContent="✓ Projekt "+reply.reference+
+                  " zapisano w B-CORE. Powiadomienie e-mail zostało przyjęte przez FormSubmit. "+
+                  "PDF, CSV i JSON czekają w panelu administratora /admin (nie są załącznikami tego powiadomienia).";
+              }
+            }catch(fallbackError){
+              status.textContent="Projekt "+reply.reference+" zapisano w bazie, ale żaden dostawca "+
+                "nie potwierdził wysłania e-maila. "+steelMailAdvice(reply.emailErrorCode)+
+                (fallbackError?.activation?" Aktywuj formularz odbiorcy w FormSubmit.":"");
+              appendSteelDownload(status);
+              const retry=document.createElement("button");
+              retry.type="button";
+              retry.className="bcore-form-native-retry";
+              retry.textContent="Wyślij powiadomienie w nowej karcie";
+              retry.addEventListener("click",()=>{
+                const msg="Zapytanie SteelVision "+reply.reference+
+                  "\nPelny projekt PDF CSV JSON w panelu administracyjnym B-CORE.\n\n"+
+                  String(body.message||"").slice(0,5800);
+                submitNativeInNewTab({...body,message:msg,
+                  _subject:"[B-CORE] SteelVision "+reply.reference});
+              });
+              status.append(document.createTextNode(" "),retry);
+            }
           } else {
             throw new Error("Neither email nor storage accepted the design");
           }
