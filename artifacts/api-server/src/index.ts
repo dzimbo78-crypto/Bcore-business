@@ -40,7 +40,29 @@ async function ensureDatabase() {
 }
 
 async function start() {
-  await ensureDatabase();
+  // Keep the contact API online during a transient database outage.
+  // SMTP-like delivery via Resend is independent of PostgreSQL.
+  try {
+    await ensureDatabase();
+  } catch (error) {
+    console.error("B-CORE database boot unavailable; email contact remains online:",
+      error instanceof Error ? error.name : "UnknownError");
+    let recoveryBusy = false;
+    const retry = setInterval(async () => {
+      if (recoveryBusy) return;
+      recoveryBusy = true;
+      try {
+        await ensureDatabase();
+        console.log("B-CORE database initialized after reconnect");
+        clearInterval(retry);
+      } catch {
+        console.error("B-CORE database still unavailable");
+      } finally {
+        recoveryBusy = false;
+      }
+    }, 60_000);
+    retry.unref();
+  }
 
   // Serve the built React application from the same Node service.
   // This keeps /api and the website on one domain and avoids CORS/deployment issues.
