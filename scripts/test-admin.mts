@@ -75,6 +75,7 @@ test("contact settings are accessible only to an authenticated admin and omit AP
     assert.deepEqual(Object.keys(status.data).sort(), [
       "configured",
       "domainVerificationRequired",
+      "googleConfigured",
       "ordinaryProvider",
       "recipient",
       "steelConfigured",
