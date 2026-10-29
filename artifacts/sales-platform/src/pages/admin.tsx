@@ -88,6 +88,7 @@ export default function Admin() {
       ordinaryProvider: string;
       steelProvider: string;
       steelConfigured: boolean;
+    googleConfigured: boolean;
     } | null>(null);
   const [open, setOpen] = useState(false),
     [editing, setEditing] = useState<number | null>(null),
@@ -147,7 +148,7 @@ export default function Admin() {
     try {
       const [offers, status] = await Promise.all([
         request<Product[]>("/products/all"),
-        request<{ recipient: string; configured: boolean; ordinaryProvider: string; steelProvider: string; steelConfigured: boolean }>(
+        request<{ recipient: string; configured: boolean; ordinaryProvider: string; steelProvider: string; steelConfigured: boolean; googleConfigured: boolean }>(
           "/admin/contact-status",
         ),
       ]);
@@ -394,17 +395,16 @@ export default function Admin() {
               <h2>Wiadomości z formularza</h2>
               <p>{contact?.recipient || "Sprawdzanie konfiguracji…"}</p>
               <small>
-                Zwykłe zapytania: {contact?.ordinaryProvider === "formsubmit" ? "FormSubmit" : "Resend"}.{" "}
-                SteelVision: projekt zapisuje się w B-CORE, a komplet PDF, CSV i JSON
-                jest wysyłany przez Resend lub zapasowy formularz przeglądarkowy FormSubmit.
-                Bez aktywacji FormSubmit ani zweryfikowanego nadawcy Resend
-                nie ma gwarancji dostarczenia e-maila.{" "}
-                Odbiorcę ustawiasz przez CONTACT_TO_EMAIL.
+                {contact?.googleConfigured
+                  ? "Google MailApp jest skonfigurowany. Wysyłka PDF/CSV/JSON wymaga sprawdzenia odbioru testowej wiadomości."
+                  : "Google MailApp nie jest jeszcze podłączony: projekty zapisują się w B-CORE, ale wysyłka e-mail nie jest gwarantowana."}{" "}
+                Adres odbiorcy ustawiony w CONTACT_TO_EMAIL.
               </small>
             </div>
             <div style={{display:"flex", gap:14, flexWrap:"wrap", justifyContent:"flex-end"}}>
-              <a href="/bcore-activate-email.html" className="text-link" target="_blank" rel="noopener noreferrer">
-                Aktywuj odbieranie e-maili
+              <a href="https://github.com/dzimbo78-crypto/Bcore-business/blob/main/integrations/google-apps-script/README-PL.md"
+                className="text-link" target="_blank" rel="noopener noreferrer">
+                Konfiguracja poczty Google
                 <ArrowUpRight size={18} />
               </a>
               <Link href="/kontakt" className="text-link">

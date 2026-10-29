@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { randomUUID } from "node:crypto";
+import { sendBcoreGoogleMail } from "../lib/google-mail";
 import { rateLimit } from "../rate-limit";
 
 const router = Router();
@@ -42,6 +44,26 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
   const apiKey = process.env["RESEND_API_KEY"];
   const recipient = process.env["CONTACT_TO_EMAIL"] || DEFAULT_RECIPIENT;
   const from = process.env["RESEND_FROM_EMAIL"];
+
+  const googleConfigured = Boolean(process.env["BCORE_GOOGLE_MAIL_URL"] &&
+    process.env["BCORE_GOOGLE_MAIL_SECRET"]);
+  if (googleConfigured) {
+    const reference = "BCM-" + randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
+    const delivery = await sendBcoreGoogleMail({
+      reference, name: String(name).trim(), email: String(email).trim(),
+      phone: phone ? String(phone).trim() : "",
+      category: String(category || subject || "Kontakt"),
+      message: String(message).trim(),
+    });
+    if (delivery.accepted) {
+      res.json({ ok: true, reference, provider: "google_mail", accepted: true });
+    } else {
+      res.status(502).json({ error: "Google mail gateway has not accepted the enquiry", code: delivery.code });
+    }
+    return;
+  }
+
+
 
   // Domain-free delivery on Render Free. The FormSubmit service uses HTTPS,
   // so it does not require a custom domain or outbound SMTP ports.

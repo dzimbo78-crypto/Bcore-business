@@ -5,18 +5,13 @@ import path from "node:path";
 
 const root=process.cwd();
 const read=(file:string)=>readFileSync(path.join(root,"artifacts/sales-platform/public",file),"utf8");
-test("Owner activation page uses actual native POST with CAPTCHA and correct email",()=>{
-  const activation=read("bcore-activate-email.html");
-  assert.match(activation,/<form[^>]+method="POST"[^>]+action="https:\/\/formsubmit\.co\/przemyslaw\.bugajski78@gmail\.com"/);
-  assert.match(activation,/name="_captcha" value="true"/);
-  assert.match(activation,/name="_url" value="https:\/\/bcore-business\.onrender\.com\/bcore-activate-email\.html"/);
-  assert.match(activation,/Activate Form/);
-  const integration=read("bcore-production.js");
-  assert.match(integration,/_template:"table",_captcha:"true"/);
-  assert.match(integration,/const nativeBody=\{\.\.\.body,_captcha:"true",_url:window\.location\.origin/);
-  assert.match(integration,/function appendActivationHelp/);
+test("Contact form avoids security-filtered third-party FormSubmit redirects",()=>{
+  const src=read("bcore-production.js");
+  assert.doesNotMatch(src,/formsubmit\.co/);
+  assert.doesNotMatch(src,/submitNativeInNewTab/);
+  assert.match(src,/Projekt.*został zapisany w B-CORE/);
+  assert.match(src,/mailto:/);
 });
-
 test("cinematic landing loads production contact integration",()=>{
   const html=read("bcore-cinematic.html");
   assert.match(html,/bcore-production\.js/, "Cinematic contact is not connected to production form");
@@ -38,23 +33,6 @@ test("Contact integration sends full project through backend rather than text-on
   assert.match(integration,/readSteelDraft/);
   assert.match(integration,/appendSteelDownload/);
 });
-test("SteelVision fallback immediately attempts native PDF/CSV/JSON after failed provider",()=>{
-  const src=read("bcore-production.js");
-  assert.match(src,/function addSteelMultipartFallback\(status, contact, autoStart=false\)/);
-  assert.match(src,/if\(autoStart\) queueMicrotask\(\(\)=>button\.click\(\)\)/);
-  assert.match(src,/form\.enctype="multipart\/form-data"/);
-  assert.match(src,/form\.action="https:\/\/formsubmit\.co\/"\+mail/);
-  assert.match(src,/attachment_pdf","attachment_csv","attachment_json"/);
-  assert.equal((src.match(/addSteelMultipartFallback\(status,body,true\)/g)||[]).length,4);
-});
-
-test("Regular contact has one-click native fallback when backend rejects mail",()=>{
-  const src=read("bcore-production.js");
-  assert.match(src,/function submitNativeInNewTab\(body, sameTab=false\)/);
-  assert.match(src,/fallback\.target = sameTab \? "_self" : "_blank"/);
-  assert.match(src,/queueMicrotask\(\(\)=>submitNativeInNewTab\(body,true\)\)/);
-});
-
 test("All entry routes reset their design, old autosave is never restored",()=>{
   const advanced=read("bcore-steelvision.html");
   const quick=read("bcore-configurator.js");
