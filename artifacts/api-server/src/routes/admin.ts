@@ -1,3 +1,4 @@
+import { mailConfig, usesBrevo } from "../lib/transactional-mail";
 import { Router } from "express";
 import crypto from "crypto";
 import { rateLimit } from "../rate-limit";
@@ -86,16 +87,16 @@ router.get("/admin/contact-status", (req, res) => {
     recipient:
       process.env["CONTACT_TO_EMAIL"] || "przemyslaw.bugajski78@gmail.com",
     configured: Boolean(
-      process.env["RESEND_API_KEY"] && process.env["RESEND_FROM_EMAIL"],
+      mailConfig().apiKey && mailConfig().from,
     ),
-    ordinaryProvider: process.env["EMAIL_PROVIDER"] === "formsubmit" ? "formsubmit" : "resend",
-    googleConfigured: Boolean(process.env["BCORE_GOOGLE_MAIL_URL"] &&
+    ordinaryProvider: usesBrevo() ? "brevo" : process.env["EMAIL_PROVIDER"] === "formsubmit" ? "formsubmit" : "resend",
+    googleConfigured: !usesBrevo() && Boolean(process.env["BCORE_GOOGLE_MAIL_URL"] &&
       process.env["BCORE_GOOGLE_MAIL_SECRET"] &&
       process.env["BCORE_GOOGLE_MAIL_SECRET"]!.length >= 32),
-    steelProvider: process.env["BCORE_GOOGLE_MAIL_URL"] ? "google_mail" : "resend",
-    steelConfigured: Boolean(process.env["RESEND_API_KEY"] && process.env["RESEND_FROM_EMAIL"]),
+    steelProvider: usesBrevo() ? "brevo" : process.env["BCORE_GOOGLE_MAIL_URL"] ? "google_mail" : "resend",
+    steelConfigured: Boolean(mailConfig().apiKey && mailConfig().from),
     // This checks only environment variables, not domain ownership or successful delivery.
-    domainVerificationRequired: true,
+    domainVerificationRequired: !usesBrevo(),
   });
 });
 
