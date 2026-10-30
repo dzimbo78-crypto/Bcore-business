@@ -1,3 +1,4 @@
+import { mailConfig, mailRequest, usesBrevo } from "../lib/transactional-mail";
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { sendBcoreGoogleMail } from "../lib/google-mail";
@@ -41,11 +42,11 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
     return;
   }
 
-  const apiKey = process.env["RESEND_API_KEY"];
+  const { apiKey } = mailConfig();
   const recipient = process.env["CONTACT_TO_EMAIL"] || DEFAULT_RECIPIENT;
-  const from = process.env["RESEND_FROM_EMAIL"];
+  const { from } = mailConfig();
 
-  const googleConfigured = Boolean(process.env["BCORE_GOOGLE_MAIL_URL"] &&
+  const googleConfigured = !usesBrevo() && Boolean(process.env["BCORE_GOOGLE_MAIL_URL"] &&
     process.env["BCORE_GOOGLE_MAIL_SECRET"]);
   if (googleConfigured) {
     const reference = "BCM-" + randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase();
@@ -68,7 +69,7 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
   // Domain-free delivery on Render Free. The FormSubmit service uses HTTPS,
   // so it does not require a custom domain or outbound SMTP ports.
   // The recipient receives a one-time email to activate the forwarding address.
-  if (process.env["EMAIL_PROVIDER"] === "formsubmit") {
+  if (!usesBrevo() && process.env["EMAIL_PROVIDER"] === "formsubmit") {
     const title = String(subject || category || "Nowe zapytanie z B-CORE")
       .replace(/[\r\n]/g, " ").slice(0, 180);
     try {
@@ -174,7 +175,7 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
   `;
 
   try {
-    const response = await fetch(RESEND_ENDPOINT, {
+    const response = await mailRequest(RESEND_ENDPOINT, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -196,7 +197,7 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
     };
 
     if (!response.ok || typeof payload?.id !== "string") {
-      console.error("Resend email error status:", response.status);
+      console.error("Email provider error status:", response.status);
       const code = response.status === 401 || response.status === 403 ? "email_auth_rejected"
         : response.status === 400 || response.status === 422 ? "sender_or_request_rejected"
         : response.status === 429 ? "provider_rate_limited"
@@ -205,7 +206,7 @@ router.post("/send-email", rateLimit(5, 10 * 60 * 1000), async (req, res) => {
       return;
     }
 
-    console.log("B-CORE email sent via Resend:", payload?.id ?? "ok");
+    console.log("B-CORE email provider accepted:", payload?.id ?? "ok");
     res.json({ ok: true });
   } catch (err) {
     console.error(
