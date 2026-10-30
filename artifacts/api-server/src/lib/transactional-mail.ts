@@ -5,7 +5,7 @@ export function usesBrevo() {
 }
 export function mailConfig() {
   return usesBrevo()
-    ? { apiKey: process.env["BREVO_API_KEY"], from: process.env["BREVO_FROM_EMAIL"] || process.env["CONTACT_TO_EMAIL"], provider: "brevo" }
+    ? { apiKey: process.env["BREVO_API_KEY"]?.trim(), from: process.env["BREVO_FROM_EMAIL"] || process.env["CONTACT_TO_EMAIL"], provider: "brevo" }
     : { apiKey: process.env["RESEND_API_KEY"], from: process.env["RESEND_FROM_EMAIL"], provider: "resend" };
 }
 
