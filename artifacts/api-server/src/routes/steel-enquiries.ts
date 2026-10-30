@@ -1,3 +1,4 @@
+import { mailConfig, mailRequest, usesBrevo } from "../lib/transactional-mail";
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { pool } from "@workspace/db";
@@ -84,7 +85,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
 
   // Preferred domain-free transport: an owner-authorized Gmail MailApp web
   // app. No visitors are redirected to a third-party domain.
-  const googleConfigured = Boolean(process.env["BCORE_GOOGLE_MAIL_URL"] &&
+  const googleConfigured = !usesBrevo() && Boolean(process.env["BCORE_GOOGLE_MAIL_URL"] &&
     process.env["BCORE_GOOGLE_MAIL_SECRET"]);
   if (googleConfigured) {
     const delivery = await sendBcoreGoogleMail({
@@ -97,8 +98,8 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     if (!emailed) emailErrorCode = delivery.code;
   }
 
-  const apiKey = process.env["RESEND_API_KEY"];
-  const configuredSender = process.env["RESEND_FROM_EMAIL"];
+  const { apiKey } = mailConfig();
+  const { from: configuredSender } = mailConfig();
   if (!googleConfigured && apiKey && configuredSender) {
     try {
       const attachments = steelAttachments(contact, design, reference);
@@ -111,7 +112,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
       }
       const from = configuredSender;
       const recipient = process.env["CONTACT_TO_EMAIL"] || DEFAULT_RECIPIENT;
-      const response = await fetch("https://api.resend.com/emails", {
+      const response = await mailRequest("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           Authorization: "Bearer " + apiKey,
@@ -145,7 +146,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
             : response.status === 429 ? "provider_rate_limited"
             : response.status >= 500 ? "provider_unavailable"
             : "provider_rejected";
-        console.error("B-CORE SteelVision Resend rejected enquiry:", {
+        console.error("B-CORE SteelVision provider rejected enquiry:", {
           status: response.status, code: providerCode, reference,
         });
       }
@@ -165,7 +166,7 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
   // pointing to the complete project stored in the authenticated B-CORE admin.
   // It does NOT contain the three attachment files; those remain in the database.
   // Only enable this path when the business has opted into FormSubmit as provider.
-  if (stored && !emailed && !googleConfigured && process.env["EMAIL_PROVIDER"] === "formsubmit") {
+  if (stored && !emailed && !googleConfigured && !usesBrevo() && process.env["EMAIL_PROVIDER"] === "formsubmit") {
     if (previouslyNotified) {
       fallbackNotified = true;
     } else {
@@ -344,8 +345,8 @@ router.post("/admin/steel-enquiries/:id/resend", rateLimit(3, 15 * 60 * 1000), a
   if (!Number.isSafeInteger(id) || id <= 0) {
     res.status(400).json({ error: "Invalid reference" }); return;
   }
-  const apiKey = process.env["RESEND_API_KEY"];
-  const from = process.env["RESEND_FROM_EMAIL"];
+  const { apiKey } = mailConfig();
+  const { from } = mailConfig();
   if (!apiKey || !from) {
     res.status(503).json({ error: "Verified sender not configured", code: "email_not_configured" }); return;
   }
@@ -375,7 +376,7 @@ router.post("/admin/steel-enquiries/:id/resend", rateLimit(3, 15 * 60 * 1000), a
       res.status(413).json({ error: "Attachments too large", code: "attachments_too_large" }); return;
     }
     const recipient = process.env["CONTACT_TO_EMAIL"] || DEFAULT_RECIPIENT;
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await mailRequest("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: "Bearer " + apiKey, "Content-Type": "application/json",
@@ -403,7 +404,7 @@ router.post("/admin/steel-enquiries/:id/resend", rateLimit(3, 15 * 60 * 1000), a
       "UPDATE steel_enquiries SET email_accepted_at=NOW(), email_provider_id=$2 WHERE id=$1",
       [id, result.id],
     );
-    res.json({ ok: true, reference, accepted: true, provider: "resend" });
+    res.json({ ok: true, reference, accepted: true, provider: mailConfig().provider });
   } catch (error) {
     console.error("B-CORE admin resend failed", error instanceof Error ? error.name : "UnknownError");
     res.status(503).json({ error: "Unable to complete report resend", code: "resend_unavailable" });
