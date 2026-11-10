@@ -366,3 +366,26 @@ test('v7: quotation PDF and CSV/JSON retain individually positioned custom holes
  const csv=Buffer.from(a[1].content,'base64').toString('utf8');
  assert.ok(csv.includes('customHoles[1].x')&&csv.includes('referenceId'));
 });
+
+
+test('v7: duplicate parent and attached plate maintains links to the duplicated parent',()=>{
+ let d=C.productPreset('frame');
+ const post=d.objects.find((o:any)=>o.kind==='post');
+ d.objects.push({id:'PL-LINK',kind:'plate',referenceId:post.id,offsetXmm:100,offsetZmm:75,
+ plateWidthMm:140,plateHeightMm:90,plateThicknessMm:8,holeCount:2,holeDiaMm:10});
+ const result=C.duplicateObjects(d,[post.id,'PL-LINK'],250,0);
+ assert.equal(result.ids.length,2);
+ const member=result.drawing.objects.find((o:any)=>o.id===result.ids[0]);
+ const plate=result.drawing.objects.find((o:any)=>o.id===result.ids[1]);
+ assert.equal(plate.referenceId,member.id);
+ assert.equal(plate.xMm,member.xMm+100);
+ assert.equal(plate.offsetXmm,100);
+});
+test('v7: saved detailed mounting plates replace old auto mounts in B-CORE estimator',()=>{
+ const html=read('bcore-steelvision.html');
+ assert.ok(html.includes('If CAD detailing was saved, its mounting schedule is authoritative.'));
+ assert.ok(html.includes('CAD · blacha mocowania'));
+ assert.ok(html.includes('const savedCAD=Array.isArray(state.detailSheets)'));
+ assert.ok(html.includes('plateThicknessMm'));
+ assert.ok(!html.includes('const index=state.items.indexOf(it),savedCAD'));
+});
