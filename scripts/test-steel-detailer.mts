@@ -180,3 +180,11 @@ test('v4 mail PDF includes category-specific sheets for stairs and gates',()=>{
  const json=JSON.parse(Buffer.from(attachments[2].content,'base64').toString('utf8'));
  assert.equal(json.design.state.detailSheets.length,2);
 });
+
+
+test('v4 stale-category quote guard is present on client and server',()=>{
+ const bridge=read('bcore-steelvision-bridge.js');
+ assert.ok(bridge.includes('saved drawing belongs to'));
+ const server=readFileSync(new URL('../artifacts/api-server/src/routes/steel-enquiries.ts',import.meta.url),'utf8');
+ assert.ok(server.includes('stale_detail_sheet'));
+});
