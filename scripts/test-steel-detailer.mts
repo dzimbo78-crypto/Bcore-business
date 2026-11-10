@@ -92,7 +92,7 @@ test('repeat multiple objects at fixed increments without altering originals',()
  const result=C.repeatObjects(base,['m1'],3,500);
  assert.equal(result.ids.length,3);
  const coords=result.ids.map((id:string)=>result.drawing.objects.find((o:any)=>o.id===id).xMm);
- assert.deepEqual(coords,[original.xMm+500,original.xMm+1000,original.xMm+1500]);
+ assert.deepEqual(JSON.parse(JSON.stringify(coords)),[original.xMm+500,original.xMm+1000,original.xMm+1500]);
  assert.equal(base.objects.find((o:any)=>o.id==='m1').xMm,original.xMm);
 });
 test('bulk move and distribute respect coordinates and snap bounds',()=>{
