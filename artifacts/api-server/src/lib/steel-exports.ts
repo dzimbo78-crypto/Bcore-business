@@ -238,6 +238,17 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
   };
   const label = (x: number, y: number, size: number, value: unknown) =>
     `BT /F1 ${size} Tf ${P(x)} ${P(y)} Td (${pdfEscape(take(value, 120))}) Tj ET`;
+  const holeCoordinates = (entry: ObjectMap,w:number,h:number,n:number,dia:number) => {
+    const edge=Math.max(0,Math.min(N(entry.holeEdgeMm,0,300,10),w/2-dia/2,h/2-dia/2));
+    const pattern=take(entry.holePattern||"auto",12),grid=pattern==="grid"||(pattern==="auto"&&n>=4),cols=grid?Math.ceil(n/2):Math.max(1,n),rows=grid?2:1;
+    const usedX=Math.max(0,w-2*Math.max(edge,dia/2+2)),usedY=Math.max(0,h-2*Math.max(edge,dia/2+2));
+    return Array.from({length:n},(_,i)=>{
+      const col=grid?i%cols:i,row=grid?Math.floor(i/cols):0;
+      const x=cols===1?w/2:pattern==="auto"&&!grid?w*(col+1)/(cols+1):(w-usedX)/2+usedX*col/(cols-1);
+      const y=rows===1?h/2:(h-usedY)/2+usedY*row/(rows-1);
+      return {x,y};
+    });
+  };
   return raw.flatMap((sheet, idx): PlanSheet[] => {
     const s = obj(sheet), d = obj(s.drawing);
     if (d.app !== "steelvision-detailer" || d.schema !== 3) return [];
@@ -268,8 +279,14 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
         fixings++;
         const w=N(entry.plateWidthMm,10,1000,120),ht=N(entry.plateHeightMm,10,1000,25),n=Math.floor(N(entry.holeCount,0,16,2)),diam=N(entry.holeDiaMm,0,120,10);
         const cx=X(x),cy=Y(z),pw=Math.max(2,w*scale),ph=Math.max(2,ht*scale);
-        commands.push(rect(cx-pw/2,cy-ph/2,pw,ph));
-        for(let j=0;j<n;j++) commands.push(circle(cx-pw/2+(j+1)*pw/(n+1),cy,Math.max(.8,diam*scale/2)));
+        const angle=N(entry.rotationDeg,-360,360,0)*Math.PI/180,c=Math.cos(angle),si=Math.sin(angle);
+        const center=(localX:number,localY:number) => [cx+localX*c*scale-localY*si*scale,cy+localX*si*scale+localY*c*scale];
+        const corners=[[-w/2,-ht/2],[w/2,-ht/2],[w/2,ht/2],[-w/2,ht/2]].map(([x,y])=>center(x,y));
+        for(let j=0;j<4;j++)commands.push(line(corners[j][0],corners[j][1],corners[(j+1)%4][0],corners[(j+1)%4][1]));
+        for(const hole of holeCoordinates(entry,w,ht,n,diam)){
+          const xy=center(hole.x-w/2,hole.y-ht/2);
+          commands.push(circle(xy[0],xy[1],Math.max(.8,diam*scale/2)));
+        }
         if(kind==="under")commands.push(line(cx,Y(0),cx,Y(-N(entry.dropMm,0,1500,170))));
       }
       if(kind==="support")commands.push(line(X(x),Y(0),X(x),Y(-N(entry.dropMm,0,1500,170))));
@@ -317,7 +334,8 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
         " / "+Math.round(N(o.plateWidthMm,10,1000,120))+"x"+Math.round(N(o.plateHeightMm,10,1000,25))+
         " / "+Math.floor(N(o.holeCount,0,16,2))+"x dia"+Math.round(N(o.holeDiaMm,0,120,10))+
         " / projection "+Math.round(N(o.projectionMm,0,2000,0))+
-        " / drop "+Math.round(N(o.dropMm,0,1500,0)));
+        " / drop "+Math.round(N(o.dropMm,0,1500,0))+
+        " / ROT "+Math.round(N(o.rotationDeg,-360,360,0))+"deg / YAW "+Math.round(N(o.yawDeg,-360,360,0))+"deg");
       if(page===countPages-1&&detailedMounts.length>perSchedule*maxPages)
         rows.push("Further "+(detailedMounts.length-perSchedule*maxPages)+" fixings: see attached JSON/CSV.");
       schedules.push({
@@ -339,6 +357,34 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
             " mm / GAP "+Math.round(N(p.gapMm,-500,2000,80))+" mm / SIDE "+Math.round(N(p.sideMm,-1000,1000,0))+" mm"),
           "Verify connections, spacing, supports and load transfer before fabrication."]
       });
+    }
+    // Automatically dimensioned, unique mounting plate sheets. X/Y hole axes
+    // are measured in plate-local coordinates, independent of assembly rotation.
+    const unique=new Map<string,ObjectMap>();
+    for(const e of detailedMounts.filter(x=>["plate","wall","under","hinge"].includes(String(x.kind)))){
+      const key=[e.kind,e.plateWidthMm,e.plateHeightMm,e.holeDiaMm,e.holeCount,e.holePattern,e.holeEdgeMm].join("|");
+      if(!unique.has(key))unique.set(key,e);
+    }
+    let detailNo=0;
+    for(const e of Array.from(unique.values()).slice(0,35)){
+      const w=N(e.plateWidthMm,10,1000,120),h=N(e.plateHeightMm,10,1000,25),
+        count=Math.floor(N(e.holeCount,0,16,2)),dia=N(e.holeDiaMm,0,120,10),
+        points=holeCoordinates(e,w,h,count,dia),scale=Math.min(270/w,115/h,4),
+        x=190-w*scale/2,y=260-h*scale/2;
+      const geom=[ "q","0.11 0.37 0.53 RG","1.8 w",rect(x,y,w*scale,h*scale),
+        ...points.map(p=>circle(x+p.x*scale,y+p.y*scale,Math.max(1,dia*scale/2))),
+        "0.65 0.31 0.13 RG",line(x,y-25,x+w*scale,y-25),
+        line(x,y-30,x,y-18),line(x+w*scale,y-30,x+w*scale,y-18),
+        label(x+w*scale/2-28,y-44,10,Math.round(w)+" mm"),
+        line(x+w*scale+25,y,x+w*scale+25,y+h*scale),
+        label(x+w*scale+35,y+h*scale/2,10,Math.round(h)+" mm"),"Q"].join("\n")+"\n";
+      schedules.push({title:"STEELVISION - DIMENSIONED MOUNT PLATE "+(++detailNo),geometry:geom,notes:[
+        "Mount type: "+take(e.kind,20)+" | plate "+w+" x "+h+" mm | "+count+" x diameter "+dia+" mm",
+        "Orientation in assembly: "+Math.round(N(e.rotationDeg,-360,360,0))+" deg; yaw "+Math.round(N(e.yawDeg,-360,360,0))+" deg",
+        "Hole coordinates from left / BOTTOM plate edges, mm (local axes):",
+        ...points.map((p,i)=>"  Hole "+(i+1)+": X "+p.x.toFixed(1)+" / Y "+(h-p.y).toFixed(1)+" / dia "+dia),
+        "Not a structural approval: verify spacing, anchors, edge distances and welds."
+      ]});
     }
     return [{title:`SteelVision Detailer v4 ${product} - ${idx+1}. ${take(d.name||s.itemName||"Drawing",45)}`,
       geometry:commands.join("\n")+"\n",
