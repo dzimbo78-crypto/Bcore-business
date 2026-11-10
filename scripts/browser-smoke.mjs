@@ -28,6 +28,15 @@ window.addEventListener("load",()=>{
     host.querySelector("[data-add=wall]").click();
     const face=host.querySelector("[data-edit=face]");
     face.value="right";face.dispatchEvent(new Event("change",{bubbles:true}));
+    // Edit the exact workshop plate in its own workspace, not just the
+    // parent geometry calculator. This manual hole centre must survive RFQ.
+    host.querySelector('[data-action="edit-detail"]').click();
+    if(!host.querySelector('.sv-detail-plate-svg'))throw Error("Precise mount detail workspace not opened");
+    host.querySelector('[data-action="manual-holes"]').click();
+    const holeX=host.querySelector('[data-detail-hole="0"][data-axis="x"]');
+    holeX.value="17.5";holeX.dispatchEvent(new Event("change",{bubbles:true}));
+    if(!host.querySelector('.sv-detail-modal'))throw Error("Detail workspace closed while changing a hole");
+    host.querySelector('[data-action="close-detail"]').click();
     const initialStep=state.step;
     const rotation=host.querySelector('[data-edit="rotationDeg"]');
     rotation.value="37";rotation.dispatchEvent(new Event("change",{bubbles:true}));
@@ -213,7 +222,8 @@ try{
   const sheets=testQuote?.design?.state?.detailSheets;
   if(!sheets?.length || !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.face==="right") ||
      sheets[0].drawing?.extraProfiles?.[0]?.gapMm!==120 ||
-     !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25) ||
+     !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25&&
+       o.holePoints?.[0]?.x===17.5) ||
      testQuote?.design?.state?.items?.[0]?.segments?.[0]?.length!==3.76)
     throw Error("Drawing/fixings were not carried through the original e-mail RFQ flow: "+JSON.stringify(sheets||[]).slice(0,1000));
   console.log("PASS browser: edited wall fixing and detailSheets reach the existing RFQ endpoint");
