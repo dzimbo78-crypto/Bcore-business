@@ -1189,7 +1189,7 @@ function bomForItem(it){
  }
  // If CAD detailing was saved, its mounting schedule is authoritative.
  // Do not add automatic plates/anchors again on top of the edited drawing.
- const index=state.items.indexOf(it),savedCAD=Array.isArray(state.detailSheets)
+ const savedCAD=Array.isArray(state.detailSheets)
    ?state.detailSheets.find(x=>x?.itemIndex===index&&x?.drawing?.productType===it.type)?.drawing:null;
  if(savedCAD&&Array.isArray(savedCAD.objects)){
    const grouped=new Map(),qty=Math.max(1,Number(it.qty)||1);
