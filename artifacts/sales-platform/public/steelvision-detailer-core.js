@@ -30,7 +30,7 @@ function toDXF(raw){const d=normalize(raw),s=summary(d),lines=['0','SECTION','2'
 function duplicateObjects(raw,ids,dx=100,dz=0){
  const d=normalize(raw),wanted=new Set(Array.isArray(ids)?ids:[ids]),existing=new Set(d.objects.map(x=>x.id));
  const copied=[];let seq=1,L=length(d);
- for(const original of d.objects.filter(o=>wanted.has(o.id))){
+ for(const original of [...wanted].map(id=>d.objects.find(o=>o.id===id)).filter(Boolean)){
   if(d.objects.length+copied.length>=400)break;
   let id;do{id=original.id+'-copy'+seq++;}while(existing.has(id));existing.add(id);
   copied.push({...original,id,label:safe((original.label||original.kind)+' (kopia)',100),
