@@ -1175,6 +1175,18 @@ function bomForItem(it){
      const area=per*Math.max(0,usable-.1)*q;rows.push({name:"Panele / wypełnienie",spec:it.infill,length:null,count:it.segments.length*q,mass:null,area})
    }
  }
+ // Extra profiles are first-class material lines, including weight and coating area.
+ const index=state.items.indexOf(it),detail=Array.isArray(state.detailSheets)
+   ?state.detailSheets.find(x=>x?.itemIndex===index&&x?.drawing?.productType===it.type)?.drawing:null;
+ if(detail&&Array.isArray(detail.extraProfiles)){
+  detail.extraProfiles.forEach(p=>{
+   const len=Math.max(0,Math.min(30000,Number(p.toMm))-Math.max(0,Number(p.fromMm)))/1000;
+   if(!len||!p.profile)return;
+   const pr=profileProps(p.profile);
+   rows.push({name:"Dodatkowy pochwyt / profil — "+String(p.label||"").slice(0,50),spec:p.profile,
+     length:len*q,count:q,mass:pr.kgm==null?null:len*q*pr.kgm,area:pr.m2m==null?null:len*q*pr.m2m});
+  });
+ }
  if(["fence","gate"].includes(it.type))return rows;
  if(it.mountMode==="custom"){
    const groups={};it.customMounts.forEach(m=>{const s=effectiveMountSpec(it,m),key=[s.plateW,s.plateH,s.plateT,s.anchorType,s.anchorDia,s.holeCount,s.holeDia].join("|");if(!groups[key])groups[key]={s,count:0};groups[key].count++});
@@ -1461,7 +1473,7 @@ function renderItems(){
 }
 function setStep(n){
  state.step=n;updateVisibility();$$(".stepBtn").forEach(b=>b.classList.toggle("active",+b.dataset.step===n));$$(".step").forEach(p=>p.classList.toggle("active",+p.dataset.stepPane===n));
- drawMinis();if(n===6){renderSummary();setTimeout(()=>{draw3D($("#view3d"),current(),mainCam,true);syncViewerControls()},30)}
+ drawMinis();if(n===6){renderSummary();setTimeout(()=>{window.svRefreshSharedPreview?.();draw3D($("#view3d"),current(),mainCam,true);syncViewerControls()},30)}
  if(window.v14Ready)v14RenderGuide()
 }
 $$(".stepBtn").forEach(b=>b.onclick=()=>setStep(+b.dataset.step));
@@ -1504,6 +1516,11 @@ function addMountGeometry(it,plates,anchors,m){
 function anchorEnd(a){const v=a.vec||[0,0,-(+a.depth||0)];return [a.p[0]+v[0],a.p[1]+v[1],a.p[2]+v[2]]}
 
 function buildGeom(it){
+ // A saved detail sheet is the canonical geometry for both 2D and 3D.
+ // The original advanced generator remains the fallback for unsaved items.
+ const index=state.items.indexOf(it),sheet=Array.isArray(state.detailSheets)&&index>=0
+   ?state.detailSheets.find(x=>x?.itemIndex===index && x?.drawing?.productType===it.type):null;
+ if(sheet?.drawing && window.SVDetailCore?.sceneFrom)return window.SVDetailCore.sceneFrom(sheet.drawing);
  const lines=[],plates=[],panels=[],anchors=[];const add=(a,b,kind="steel")=>lines.push({a,b,kind});
  if(it.type==="frame"){
    const L=+it.frameL||4,W=+it.frameW||3,H=+it.frameH||2.5,bL=Math.max(1,+it.baysL||1),bW=Math.max(1,+it.baysW||1),lev=Math.max(1,+it.levels||1);
@@ -1862,6 +1879,20 @@ function cutPiecesForItem(it){const q=Math.max(1,+it.qty||1),out=[],push=(profil
  if(it.type==="frame"){const L=+it.frameL||0,W=+it.frameW||0,H=+it.frameH||0,bL=Math.max(1,+it.baysL||1),bW=Math.max(1,+it.baysW||1),lev=Math.max(1,+it.levels||1);push(it.postProfile,H,(bL+1)*(bW+1),"słup");push(it.topProfile,L,(bW+1)*lev,"belka L");push(it.topProfile,W,(bL+1)*lev,"belka W");if(it.bottomFrame==="Tak"){push(it.bottomProfile,L,bW+1,"dolna L");push(it.bottomProfile,W,bL+1,"dolna W")}}
  else if(it.type==="stairs"){const run=it.stairSteps*it.stairRun/100,rise=it.stairSteps*it.stairRise/100,slope=Math.hypot(run,rise);push(it.topProfile,slope,+it.stairStringers||0,"policzek");push(it.topProfile,slope+(+it.landingLen||0),+it.stairSides||0,"poręcz");push(it.postProfile,(+it.height||105)/100,postsPerPiece(it),"słupek")}
  else {it.segments.forEach(s=>{push(it.topProfile,+s.length||0,1,`góra ${s.name}`);if(it.bottomProfile!=="Brak")push(it.bottomProfile,+s.length||0,1,`dół ${s.name}`)});const usable=Math.max(0,(+it.height||105)/100-(+it.bottomGap||0)/1000);push(it.postProfile,usable,postsPerPiece(it),"słupek");if(it.infill==="bars"){const prof=parseInfillProfile(it.infillProfile)||it.infillProfile;let cnt=0;it.segments.forEach(s=>{const L=(+s.length||0),sp=Math.max(.03,(+it.infillSpacing||100)/1000);cnt+=Math.max(0,Math.ceil(L/sp)-1)});push(prof,Math.max(0,usable-.1),cnt,"wypełnienie pionowe")}if(it.infill==="hbars"){const prof=parseInfillProfile(it.infillProfile)||it.infillProfile;it.segments.forEach(s=>push(prof,+s.length||0,+it.hbarCount||0,`wypełnienie ${s.name}`))}}
+ // Add every exact extra rail cut, splitting around section corners.
+ const idx=state.items.indexOf(it),d=Array.isArray(state.detailSheets)
+   ?state.detailSheets.find(x=>x?.itemIndex===idx&&x?.drawing?.productType===it.type)?.drawing:null;
+ if(d&&Array.isArray(d.extraProfiles)){
+  for(const rail of d.extraProfiles){
+   let station=0;
+   for(const segment of d.segments||[]){
+    const next=station+Math.max(0,+segment.lengthMm||0);
+    const from=Math.max(station,+rail.fromMm||0),to=Math.min(next,+rail.toMm||0);
+    if(to>from)push(rail.profile,(to-from)/1000,1,"profil dodatkowy "+(rail.label||""));
+    station=next;
+   }
+  }
+ }
  return out}
 function bestFitCut(cuts,stockMm,kerfMm){const sorted=cuts.slice().sort((a,b)=>b.length-a.length),bins=[],oversize=[];for(const c of sorted){const len=c.length*1000;if(len>stockMm+1e-6){oversize.push(c);continue}let best=-1,bestRemain=Infinity;for(let i=0;i<bins.length;i++){const add=(bins[i].cuts.length?kerfMm:0)+len,remain=stockMm-(bins[i].used+add);if(remain>=-1e-6&&remain<bestRemain){best=i;bestRemain=remain}}if(best<0){bins.push({used:len,cuts:[c]})}else{bins[best].used+=(bins[best].cuts.length?kerfMm:0)+len;bins[best].cuts.push(c)}}return {bins,oversize}}
 function cutOptimization(it){const stockMm=Math.max(1000,(+it.stockLengthM||6)*1000),kerf=Math.max(0,+it.kerfMm||0),by={};cutPiecesForItem(it).forEach(c=>(by[c.profile]??=[]).push(c));const rows=[];Object.entries(by).forEach(([profile,cuts])=>{const o=bestFitCut(cuts,stockMm,kerf),sum=cuts.reduce((s,c)=>s+c.length*1000,0),bars=o.bins.length,stockTotal=bars*stockMm,util=stockTotal?sum/stockTotal:0,waste=Math.max(0,stockTotal-sum-Math.max(0,cuts.length-bars)*kerf);rows.push({profile,cuts,bars,util,wasteMm:waste,oversize:o.oversize,bins:o.bins})});return rows}
@@ -2131,7 +2162,7 @@ Uwagi finalizacji: ${it.finishNotes||"-"}
 function updateAll(){
  if(state.explode==null)state.explode=0;if(!state.viewerScope)state.viewerScope="current";if(!state.viewerGroup)state.viewerGroup="all";
  saveForm();renderItems();markProduct();updateVisibility();renderCustomMountEditor();renderSummary();drawMinis();
- if(state.step===6)draw3D($("#view3d"),current(),mainCam,false);
+ if(state.step===6){window.svRefreshSharedPreview?.();draw3D($("#view3d"),current(),mainCam,false);}
  const project={};projectIds.forEach(id=>project[id]=$("#"+id).value);
   // Start fresh on every visit; manual Export JSON and Backup remain available.
  if(window.v14Ready)v14RenderGuide()
@@ -3585,10 +3616,10 @@ v18LocalizeFlow();
 // Browser back/forward cache is a new simulator entry; reset the configuration too.
 window.addEventListener('pageshow', event => { if(event.persisted && typeof v14EmptyProject==='function') v14EmptyProject(); });
 </script>
-<link rel="stylesheet" href="/steelvision-detailer.css?v=4">
-<script src="/steelvision-detailer-core.js?v=4" defer></script>
-<script src="/steelvision-detailer-ui.js?v=4" defer></script>
-<script src="/bcore-detailer-integration.js?v=4" defer></script>
+<link rel="stylesheet" href="/steelvision-detailer.css?v=5">
+<script src="/steelvision-detailer-core.js?v=5" defer></script>
+<script src="/steelvision-detailer-ui.js?v=5" defer></script>
+<script src="/bcore-detailer-integration.js?v=5" defer></script>
 <script src="/bcore-steelvision-bridge.js?v=20" defer></script>
 </body>
 </html>
