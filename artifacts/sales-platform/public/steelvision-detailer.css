@@ -112,3 +112,7 @@
 #sv-detailer .sv-top-right{display:flex;flex-wrap:wrap;gap:6px;justify-content:end}
 @media(max-width:1050px){#sv-detailer .sv-grid{grid-template-columns:minmax(0,1fr)}#sv-detailer .sv-sidebar{max-height:none;overflow:visible;scrollbar-gutter:auto}}
 @media(max-width:520px){#sv-detailer .sv-panelcard .sv-fields{grid-template-columns:minmax(0,1fr)}#sv-detailer .sv-cadbar{align-items:stretch}#sv-detailer .sv-cadbar label{flex-wrap:wrap}#sv-detailer .sv-cadbar select{width:100%;max-width:100%}}
+
+#sv-detailer .sv-rotate-handle{cursor:grab;touch-action:none;pointer-events:all}
+#sv-detailer .sv-rotate-handle circle{pointer-events:all}
+#sv-detailer .sv-rotate-handle:hover circle{fill:#ffd279;stroke-width:2.2}
