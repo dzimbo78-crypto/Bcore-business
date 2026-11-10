@@ -298,3 +298,79 @@ test('v6 interactive 3D preview renders true rotated mounting plate polygons',()
  assert.ok(ui.includes('pl.vAxis'));
  assert.ok(ui.includes('corners.slice(1).forEach'));
 });
+
+
+test('v7 universal mounting detail templates are available in all 8 product categories',()=>{
+ for(const category of Object.keys(C.PRODUCT_TYPES)){
+  const project=C.productPreset(category);
+  const result=C.insertMountPreset(project,'',Math.round(C.length(project)/2),500);
+  assert.equal(result.ids.length,1,category);
+  const o=result.drawing.objects.find((x:any)=>x.id===result.ids[0]);
+  assert.equal(o.mountTo,C.MOUNT_PRESETS[category].mountTo);
+  assert.equal(o.kind,C.MOUNT_PRESETS[category].kind);
+  assert.ok(C.sceneFrom(result.drawing).plates.length>0);
+ }
+});
+test('v7 paired mounting plates preserve right/left sides, local offset and group identity',()=>{
+ const source=C.productPreset('frame'),result=C.makeBilateralPlates(source,source.objects[0].id,74);
+ assert.equal(result.ids.length,2);
+ const [left,right]=result.ids.map((id:string)=>result.drawing.objects.find((o:any)=>o.id===id));
+ assert.equal(left.face,'left');assert.equal(right.face,'right');
+ assert.equal(left.assemblySide,'left');assert.equal(right.assemblySide,'right');
+ assert.equal(left.assemblyId,right.assemblyId);
+ assert.equal(left.sideOffsetMm,-37);assert.equal(right.sideOffsetMm,37);
+ const scene=C.sceneFrom(result.drawing);
+ assert.ok(scene.plates.some((x:any)=>x.mountId===left.id&&x.assemblyId===left.assemblyId));
+ assert.ok(scene.plates.some((x:any)=>x.mountId===right.id&&x.assemblyId===right.assemblyId));
+ assert.notEqual(scene.plates.find((x:any)=>x.mountId===left.id).p[1],scene.plates.find((x:any)=>x.mountId===right.id).p[1]);
+});
+test('v7 custom hole centre positions survive normalization, DXF and workshop plan',()=>{
+ const original=C.productPreset('gate'),r=C.insertMountPreset(original,'gate-hinge',700,950);
+ const id=r.ids[0],o=r.drawing.objects.find((x:any)=>x.id===id);
+ o.holeCount=3;o.plateWidthMm=150;o.plateHeightMm=90;o.plateThicknessMm=9;
+ o.holePoints=[{x:17.5,y:12},{x:80.5,y:39},{x:137.5,y:78}];
+ const d=C.normalize(JSON.parse(JSON.stringify(r.drawing))),p=d.objects.find((x:any)=>x.id===id);
+ const dims=C.detailDims(p);
+ assert.equal(dims.holes.length,3);
+ assert.equal(dims.holes[0].x,17.5);
+ assert.equal(dims.holes[1].y,39);
+ assert.equal(C.fabricationPlan(d).mounts.find((x:any)=>x.id===id).plateThicknessMm,9);
+ assert.ok(C.toDXF(d).includes('HOLES'));
+ assert.equal(C.sceneFrom(d).anchors.filter((x:any)=>x.mountId===id).length,3);
+});
+test('v7 exact plate variants are not merged in BOM with different hole coordinates',()=>{
+ const d=C.productPreset('screen');
+ const a=C.insertMountPreset(d,'screen-wall',250,600);
+ const b=C.insertMountPreset(a.drawing,'screen-wall',700,600);
+ const x=a.ids[0],y=b.ids[0];
+ b.drawing.objects.find((o:any)=>o.id===x).holePoints=[{x:18,y:18},{x:62,y:18}];
+ b.drawing.objects.find((o:any)=>o.id===y).holePoints=[{x:22,y:18},{x:62,y:18}];
+ const entries=C.bom(b.drawing).filter((r:any)=>String(r.name).startsWith('Mocowanie do ściany'));
+ assert.ok(entries.length>=2,'Different hole-axis patterns need different production BOM items');
+});
+test('v7 HTML/CSS exposes exact editable detail dialog and category defaults',()=>{
+ const ui=read('steelvision-detailer-ui.js'),css=read('steelvision-detailer.css'),html=read('bcore-steelvision.html');
+ for(const marker of ['sv-detail-modal','sv-detail-plate-svg','data-detail-hole','data-detail-prop','make-plate-pair','add-category-mount','mountDetailHTML','detailDrag']){
+  assert.ok(ui.includes(marker),marker);
+ }
+ assert.ok(css.includes('.sv-detail-layout')&&css.includes('sv-detail-hole-table'));
+ assert.ok(html.includes('steelvision-detailer-ui.js?v=7'));
+ assert.equal((html.match(/bcore-steelvision-bridge\.js/g)||[]).length,1);
+});
+test('v7 mail package carries manual hole layouts, mounting side and exact X/Y coordinates in PDF and CSV',()=>{
+ const d=C.productPreset('stairs'),r=C.insertMountPreset(d,'stair-side',1100,700);
+ const mount=r.drawing.objects.find((x:any)=>x.id===r.ids[0]);
+ mount.holeCount=3;mount.holePoints=[{x:17.5,y:12.5},{x:66.5,y:55.5},{x:169,y:79.5}];mount.plateThicknessMm=11;
+ const design2={quoteId:'SV-V7-TEST',project:{projectName:'Stairs technical sample'},state:{items:[{name:'Stairs',type:'stairs',qty:1,segments:[{length:3.2,angle:0}]}],detailSheets:[{itemIndex:0,itemName:'Stairs',drawing:r.drawing}]},report:{createdAt:'2026-11-10T14:00:00.000Z',issues:[]}};
+ const attachments=steelAttachments(contact,design2,'BCS-V7-TEST');
+ assert.equal(attachments.length,3);
+ const pdf=Buffer.from(attachments[0].content,'base64').toString('latin1');
+ assert.ok(pdf.includes('DIMENSIONED MOUNT PLATE'));
+ assert.ok(pdf.includes('17.5'));
+ assert.ok(pdf.includes('66.5'));
+ assert.ok(pdf.includes('target profile'));
+ const csv=Buffer.from(attachments[1].content,'base64').toString('utf8');
+ assert.ok(csv.includes('holePoints[0].x'));
+ const json=JSON.parse(Buffer.from(attachments[2].content,'base64').toString('utf8'));
+ assert.equal(json.design.state.detailSheets[0].drawing.objects.find((x:any)=>x.id===mount.id).holePoints[1].y,55.5);
+});
