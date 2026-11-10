@@ -1,10 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
-import { steelAttachments } from '../artifacts/api-server/src/lib/steel-exports';
-const req = createRequire(import.meta.url);
+import { steelAttachments } from '../artifacts/api-server/src/lib/steel-exports.ts';
 const root = new URL('../artifacts/sales-platform/public/', import.meta.url);
 function read(n: string): string { return readFileSync(new URL(n,root),'utf8'); }
 const mod = { exports: {} as Record<string, (...a:any[])=>any> };
