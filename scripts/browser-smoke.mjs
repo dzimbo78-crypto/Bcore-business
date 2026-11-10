@@ -194,7 +194,7 @@ async function check(name,route,required){
       if(!output.stdout.includes(token)){
         const formAt=output.stdout.indexOf('id="bcore-contact-form"');
         throw Error(name+" missing DOM token: "+token+
-          "\nFORM: "+(formAt>=0?output.stdout.slice(formAt,formAt+2800):"not mounted")+
+          "\nQA ERROR: "+(output.stdout.match(/data-qa-error="([^"]{1,1800})"/)?.[1]||"not set")+"\nFORM: "+(formAt>=0?output.stdout.slice(formAt,formAt+2800):"not mounted")+
           "\nDOM end: "+output.stdout.slice(-1200)+"\nChrome: "+output.stderr.slice(-500));
       }
     }
