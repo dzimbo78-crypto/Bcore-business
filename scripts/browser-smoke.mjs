@@ -51,9 +51,16 @@ window.addEventListener("load",()=>{
     host.querySelector('[data-action="add-extra-profile"]').click();
     const gap=host.querySelector('[data-rail-prop="gapMm"]');
     gap.value="120";gap.dispatchEvent(new Event("change",{bubbles:true}));
+    // v8: an actual no-infill option, then a photograph-style 3-piece slab bracket.
+    const infill=host.querySelector('[data-infill-choice]');
+    infill.value="Brak";infill.dispatchEvent(new Event("change",{bubbles:true}));
+    if(!host.querySelector('[data-action="remove-infill"]'))throw Error("No-infill quick action missing");
+    host.querySelector('[data-action="add-underside-bracket"]').click();
     document.getElementById("bcSaveDetails").click();
     const saved=state.detailSheets?.[0]?.drawing;
     if(!saved?.extraProfiles?.length||saved.extraProfiles[0].gapMm!==120 ||
+       saved.panelType!=="Brak" || saved.objects.some(o=>o.kind==="panel") || state.items[0].infill!=="none" ||
+       !saved.objects.some(o=>o.kind==="support"&&o.assemblyId&&saved.objects.filter(x=>x.assemblyId===o.assemblyId).length===3) ||
        !saved.objects.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25))
       throw Error("Cannot save extra top rail geometry");
     const sketchGeometry=SVDetailCore.sceneFrom(saved);
@@ -222,6 +229,8 @@ try{
   const sheets=testQuote?.design?.state?.detailSheets;
   if(!sheets?.length || !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.face==="right") ||
      sheets[0].drawing?.extraProfiles?.[0]?.gapMm!==120 ||
+     sheets[0].drawing?.panelType!=="Brak" ||
+     !sheets[0].drawing?.objects?.some(o=>o.kind==="support"&&o.assemblyId) ||
      !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25&&
        o.holePoints?.[0]?.x===17.5) ||
      testQuote?.design?.state?.items?.[0]?.segments?.[0]?.length!==3.76)
