@@ -45,6 +45,23 @@ router.post("/steel-enquiries", rateLimit(6, 15 * 60 * 1000), async (req, res) =
     res.status(400).json({ error: "Invalid steel enquiry", code: "invalid_data" });
     return;
   }
+  // Reject stale category-specific drawings before storing or sending an RFQ.
+  // Older v3 sheets without productType remain compatible.
+  const drawings = design.state?.detailSheets;
+  if (drawings !== undefined && (!Array.isArray(drawings) || drawings.length > 60 ||
+      drawings.some((entry: unknown) => {
+        if (!entry || typeof entry !== "object") return true;
+        const sheet = entry as Record<string, unknown>;
+        const i = Number(sheet.itemIndex);
+        const drawing = sheet.drawing as Record<string, unknown> | undefined;
+        const item = Number.isInteger(i) && i >= 0 ? design.state.items[i] : null;
+        return !item || !drawing || typeof drawing !== "object" ||
+          (typeof drawing.productType === "string" && typeof item.type === "string" &&
+          drawing.productType !== item.type);
+      }))) {
+    res.status(400).json({ error: "Drawing does not match the project category", code: "stale_detail_sheet" });
+    return;
+  }
   let payload: string;
   try { payload = JSON.stringify(design); }
   catch { res.status(400).json({ error: "Invalid design JSON" }); return; }
