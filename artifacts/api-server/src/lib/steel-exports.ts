@@ -246,8 +246,11 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
     const total = segments.reduce((sum, x) => sum + N(x.lengthMm, 50, 30000), 0);
     if (!Number.isFinite(total) || total <= 0) return [];
     const h = N(d.heightMm, 350, 3500, 1120), objects = arr(d.objects).slice(0, 400).map(obj);
+    const extraProfiles=arr(d.extraProfiles).slice(0,40).map(obj);
+    const profileHeight=(v:unknown)=>{const m=String(v||"").match(/^\\d+(?:\\.\\d+)?[xX×](\\d+(?:\\.\\d+)?)/);return m?Number(m[1]):40;};
+    const extraTop=Math.max(h,...extraProfiles.map(p=>h+N(p.gapMm,-500,2000,80)+profileHeight(p.profile)));
     const product = take(d.productType||s.productType||"railing",20), railFamily = ["railing","fence","screen","custom"].includes(product);
-    const scale = Math.min(475 / total, 184 / h), X = (x: number) => 54 + x * scale;
+    const scale = Math.min(475 / total, 184 / Math.max(h,extraTop)), X = (x: number) => 54 + x * scale;
     const Y = (z: number) => 363 + z * scale;
     const commands = ["q", "0.10 0.34 0.53 RG", "0.8 w", label(50, 655, 12, "STEELVISION - DETAIL DRAWING / "+product.toUpperCase()),
       label(50, 642, 8, "Front unfolded elevation - dimensions in mm (concept only)"),
@@ -273,6 +276,13 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
       if(["beam","brace","step"].includes(kind))commands.push(line(X(x),Y(z),X(Math.min(total,x+N(entry.spanMm,0,30000,750))),Y(z+N(entry.riseMm,-3000,3000,0))));
       if(kind==="panel")commands.push(rect(X(x),Y(z),Math.max(2,N(entry.spanMm,0,30000,600)*scale),Math.max(2,Math.abs(N(entry.riseMm,-3000,3000,300))*scale)));
       if(kind==="hinge")commands.push(circle(X(x),Y(z),Math.max(2,N(entry.holeDiaMm,0,120,10)*scale/2)));
+    }
+    // Extra rail profiles from the same source as the interactive sketch and 3D.
+    for(const p of extraProfiles){
+      const from=N(p.fromMm,0,total,0),to=N(p.toMm,0,total,total);
+      if(to<=from)continue;
+      const z=h+N(p.gapMm,-500,2000,80)+profileHeight(p.profile)/2;
+      commands.push("0.68 0.39 0.17 RG","2.0 w",line(X(from),Y(z),X(to),Y(z)));
     }
     commands.push("0.72 0.32 0.17 RG","0.6 w",line(X(0),334,X(total),334),line(X(0),330,X(0),338),line(X(total),330,X(total),338),
       label(215,324,10,`${Math.round(total)} mm`),label(50,613,9,`Posts: ${posts} | Mountings: ${fixings} | Height: ${Math.round(h)} mm`));
@@ -315,6 +325,19 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
         geometry:"",
         notes:["Product "+product+": "+take(d.name||s.itemName||"Drawing",48), "All coordinates in mm (unfolded station); concept only.",
           ...rows,"No automatic approval of wall/slab anchors or welds."]
+      });
+    }
+    if(extraProfiles.length) {
+      const railPages=Math.ceil(extraProfiles.length/16);
+      for(let page=0;page<railPages;page++)schedules.push({
+        title:"STEELVISION - EXTRA TOP PROFILES "+(page+1)+"/"+railPages,
+        geometry:"",
+        notes:["Extra profiles are part of the same editable 2D / 3D project.",
+          ...extraProfiles.slice(page*16,(page+1)*16).map((p,i)=>
+            String(page*16+i+1)+". "+take(p.label||"Extra rail",36)+" / "+take(p.profile,24)+
+            " / FROM "+Math.round(N(p.fromMm,0,total,0))+" mm / TO "+Math.round(N(p.toMm,0,total,total))+
+            " mm / GAP "+Math.round(N(p.gapMm,-500,2000,80))+" mm / SIDE "+Math.round(N(p.sideMm,-1000,1000,0))+" mm"),
+          "Verify connections, spacing, supports and load transfer before fabrication."]
       });
     }
     return [{title:`SteelVision Detailer v4 ${product} - ${idx+1}. ${take(d.name||s.itemName||"Drawing",45)}`,
