@@ -234,6 +234,12 @@ function setInfill(raw,requested='Brak'){
  const choice=String(requested||'Brak').trim();
  d.panelType=!choice||['brak','none','bez wypełnienia','no infill'].includes(choice.toLowerCase())?'Brak':safe(choice,80);
  if(d.panelType==='Brak')d.objects=d.objects.filter(o=>o.kind!=='panel');
+ else if(!['railing','fence','screen','custom'].includes(d.productType)&&!d.objects.some(o=>o.kind==='panel')&&d.objects.length<400){
+   // In product families without automatic bays, adding infill creates an
+   // explicit editable panel. It may then be resized, moved or removed.
+   const L=length(d);d.objects.push({id:makeId(),kind:'panel',label:'Nowe wypełnienie',
+      xMm:Math.min(L/2,50),zMm:100,spanMm:Math.max(100,L-100),riseMm:Math.max(100,d.heightMm-200)});
+ }
  return normalize(d);
 }
 /**
