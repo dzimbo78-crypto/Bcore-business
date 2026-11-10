@@ -39,6 +39,12 @@ function save(){if(!editor||!state||!Array.isArray(state.items))return;const it=
   const old=Array.isArray(it.segments)?it.segments:[];
   it.segments=drawing.segments.map((s,i)=>({name:s.name,length:Math.round(s.lengthMm)/1000,angle:s.angleDeg,jointType:old[i]?.jointType||(i===drawing.segments.length-1?'Koniec':'Spawane'),jointGap:Number(old[i]?.jointGap)||0}));
   it.qty=drawing.quantity;it.height=drawing.heightMm/10;it.topProfile=drawing.topRail;it.bottomProfile=drawing.bottomRail;it.postProfile=drawing.postProfile;
+  // The CAD drawing is authoritative for the infill after saving.  In
+  // particular, selecting "Brak" must not leave the old estimator panel in
+  // production reports or quotations.
+  if(drawing.panelType==='Brak')it.infill='none';
+  else if(/szk|glass/i.test(drawing.panelType))it.infill='glass';
+  else if(/blacha|panel|płyta|hpl/i.test(drawing.panelType))it.infill='sheet';
   if(typeof renderSegments==='function')renderSegments();
  }else{
   it.qty=drawing.quantity; // geometry for stairs/gates/frames remains a labelled supplemental sheet
