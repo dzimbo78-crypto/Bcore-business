@@ -33,6 +33,44 @@ window.addEventListener("load",()=>{
   }catch(error){document.body.dataset.qaError=String(error);}
 });
 </script>`;
+const automationSteelCategories = `<script>
+window.addEventListener("load",async()=>{
+  try{
+    window.alert=()=>{};
+    const families=["railing","fence","stairs","gate","frame","platform","screen","custom"];
+    const pause=()=>new Promise(done=>setTimeout(done,80));
+    for(const type of families){
+      const item=state.items[0];item.type=type;
+      // Preserve the previous drawing to verify that a new product gets a
+      // category-specific template rather than reusing stale geometry.
+      updateAll();await pause();
+      const button=document.getElementById("bcDetailerButton");
+      if(!button||button.closest(".actions"))throw Error("Launcher must be inside product choices, not header");
+      button.click();
+      const host=document.getElementById("bcDetailerHost");
+      if(!document.getElementById("bcDetailerDialog").open||!host.querySelector(".sv-mainpanel"))
+        throw Error("Drawing studio did not open for "+type);
+      if(host.querySelectorAll(".sv-quickviews .sv-mini").length!==2)
+        throw Error("Independent overview panes not mounted for "+type);
+      if(type==="stairs"){
+        host.querySelector('[data-view="plan"]').click();
+        host.querySelector('[data-maximize="plan"]').click();
+        if(!host.querySelector(".sv-maximized"))throw Error("Plan view cannot expand");
+        host.querySelector("#sv-detailer").dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));
+        if(host.querySelector(".sv-maximized"))throw Error("Expanded plan could not close");
+      }
+      document.getElementById("bcSaveDetails").click();
+      const drawing=state.detailSheets?.find(sheet=>sheet.itemIndex===0)?.drawing;
+      if(!drawing||drawing.productType!==type||drawing.objects.length<2)
+        throw Error("Wrong product-specific drawing for "+type+": "+drawing?.productType);
+    }
+    const marker=document.createElement("div");
+    marker.id="bcore-qa-all-8-categories-passed";
+    marker.textContent="V4 STUDIO CATEGORIES VERIFIED";
+    document.body.appendChild(marker);
+  }catch(error){document.body.dataset.qaError=String(error?.stack||error);}
+});
+</script>`;
 const automationContact="<script>\n(function(){\n  let submitted=false;\n  const check=()=>{\n    const form=document.getElementById(\"bcore-contact-form\");\n    if(!form)return;\n    const status=form.querySelector(\".bcore-form-message\");\n    if(status&&status.textContent.includes(\"BCS-QA0001\")){\n      if(!document.getElementById(\"bcore-qa-end-to-end-complete\")){\n        const badge=document.createElement(\"div\");\n        badge.id=\"bcore-qa-end-to-end-complete\";\n        badge.textContent=\"QUOTE SUCCESS\";\n        document.body.appendChild(badge);\n      }\n      return;\n    }\n    if(submitted)return;\n    const draft=sessionStorage.getItem(\"bcore-steelvision-draft\")||sessionStorage.getItem(\"bcore-steelvision-draft-idb\");\n    const message=form.querySelector(\'textarea[name=\"message\"]\');\n    if(!draft||!message)return;\n    if(message.value.length<10)message.value=\"QA SteelVision railing request 3.76 meters\";\n        form.querySelector('input[name=\"name\"]').value=\"QA Browser\";\n    form.querySelector('input[name=\"email\"]').value=\"qa@example.com\";\n    submitted=true;\n    form.requestSubmit();\n  };\n  window.addEventListener(\"DOMContentLoaded\",()=>{check();setInterval(check,150)});\n})();\n</script>";
 const fallbackInterceptor="<script>\n(function(){\nconst native=HTMLFormElement.prototype.submit;\nHTMLFormElement.prototype.submit=function(){\n if(String(this.action).startsWith('https://formsubmit.co/')){\n  const files=[...this.querySelectorAll('input[type=file]')];\n  if(files.length===3&&files.every(f=>f.files&&f.files.length===1&&f.files[0].size>0)){\n   const ok=document.createElement('div');ok.id='bcore-qa-native-multipart-ok';\n   ok.textContent='ALL 3 ATTACHMENTS PREPARED';document.body.append(ok);\n  }else document.body.dataset.qaFileError='wrong file input count';\n  return;\n }\n return native.call(this);\n};\nconst fetchOriginal=window.fetch.bind(window);\nwindow.fetch=(url,options)=>{\n if(String(url).startsWith('https://formsubmit.co/ajax/'))\n   return Promise.resolve(new Response(JSON.stringify({success:false,message:'QA simulated 403'}),{status:403,headers:{'Content-Type':'application/json'}}));\n return fetchOriginal(url,options);\n};\n})();\n</script>";
 
@@ -59,7 +97,7 @@ const server=createServer(async(req,res)=>{
         {ok:true,stored:true,emailed:true,reference:"BCS-QA0001"}));
       return;
     }
-    if(u.pathname==="/bcore-steelvision.html" && ["1","fallback","detailer"].includes(u.searchParams.get("bcore_qa"))){
+    if(u.pathname==="/bcore-steelvision.html" && ["1","fallback","detailer","categories"].includes(u.searchParams.get("bcore_qa"))){
       quoteMode=true;fallbackMode=u.searchParams.get("bcore_qa")==="fallback";
     }
     const requested=u.pathname==="/"?"/bcore-cinematic.html":u.pathname;
@@ -70,7 +108,7 @@ const server=createServer(async(req,res)=>{
     res.writeHead(200,{"Content-Type":mime[path.extname(abs)]||"application/octet-stream"});
     const raw=await readFile(abs);
     if(quoteMode && path.extname(abs)===".html" && (requested==="/bcore-cinematic.html"||requested==="/bcore-steelvision.html")){
-      const inject=requested==="/bcore-steelvision.html"?(u.searchParams.get("bcore_qa")==="detailer"?automationSteelDetailer:automationSteel):
+      const inject=requested==="/bcore-steelvision.html"?(u.searchParams.get("bcore_qa")==="detailer"?automationSteelDetailer:u.searchParams.get("bcore_qa")==="categories"?automationSteelCategories:automationSteel):
         (fallbackMode?fallbackInterceptor:"")+automationContact;
       const original=raw.toString("utf8");
       const pos=original.lastIndexOf("</body>");
@@ -150,6 +188,11 @@ try{
      testQuote?.design?.state?.items?.[0]?.segments?.[0]?.length!==3.76)
     throw Error("Drawing/fixings were not carried through the original e-mail RFQ flow: "+JSON.stringify(sheets||[]).slice(0,1000));
   console.log("PASS browser: edited wall fixing and detailSheets reach the existing RFQ endpoint");
+  const categoryDom=await check("v4 product-specific editor in all eight categories",
+    "/bcore-steelvision.html?bcore_qa=categories",["id=\"bcore-qa-all-8-categories-passed\""]);
+  if(categoryDom.includes("data-qa-error="))throw Error("Category UI error: "+categoryDom.match(/data-qa-error="[^"]{0,500}"/)?.[0]);
+  console.log("PASS browser: all eight contextual editors, independent panes and fullscreen plan");
+
 
   // Simulate an unavailable mail provider. The browser must preserve the
   // project without redirecting the visitor to an unsafe third-party site.

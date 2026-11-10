@@ -121,3 +121,62 @@ test('editor UI has repeat, multi-select, clipboard and mount kind controls',()=
  }
  assert.ok(css.includes('.sv-bulk'));
 });
+
+
+test('v4 includes eight context-specific drafting templates with editable elements',()=>{
+ for(const family of ['railing','fence','stairs','gate','frame','platform','screen','custom']){
+  const drawing=C.productPreset(family,{name:family+' QA',quantity:2});
+  const geom=C.summary(drawing);
+  assert.equal(drawing.productType,family);
+  assert.equal(drawing.name,family+' QA');
+  assert.ok(drawing.objects.length>=2,family+' should initialize editable geometry');
+  assert.ok(geom.lengthMm>0);
+  assert.ok(!C.validate(drawing).some((x:any)=>x.level==='error'),family+' has blocking geometry');
+  assert.ok(C.toDXF(drawing).includes('EOF'));
+ }
+});
+test('v4 structural primitives survive JSON normalization and DXF export',()=>{
+ const source=C.productPreset('stairs',{steps:8,lengthMm:2880});
+ assert.ok(source.objects.some((x:any)=>x.kind==='step'));
+ assert.ok(source.objects.some((x:any)=>x.kind==='beam'));
+ const loaded=C.normalize(JSON.parse(JSON.stringify(source)));
+ assert.ok(loaded.objects.some((x:any)=>x.kind==='beam'&&x.spanMm>0));
+ assert.ok(C.toDXF(loaded).includes('STEPS'));
+});
+test('v4 gate drawings include hinge positions and export to vector geometry',()=>{
+ const d=C.productPreset('gate',{lengthMm:3700,heightMm:1800});
+ assert.equal(d.objects.filter((x:any)=>x.kind==='hinge').length,2);
+ assert.ok(C.toDXF(d).includes('HINGES'));
+});
+test('v4 independent view panels clip correctly and support focus/zoom',()=>{
+ const ui=read('steelvision-detailer-ui.js'),css=read('steelvision-detailer.css'),html=read('bcore-steelvision.html');
+ for(const token of ['sv-quickviews','sv-mainpanel','data-maximize','data-zoom','view===\x27sheet\x27?det+plan:\x27\x27','sv-panehead'])
+   assert.ok(ui.includes(token),'UI missing '+token);
+ for(const token of ['overflow:hidden','sv-maximized','sv-minipaper','min-width:0'])
+   assert.ok(css.includes(token),'CSS missing '+token);
+ assert.ok(html.includes('bcore-studio-polish.css?v=4'));
+});
+test('v4 B-CORE drawing launcher follows product selection and keeps RFQ bridge',()=>{
+ const integration=read('bcore-detailer-integration.js'),bridge=read('bcore-steelvision-bridge.js');
+ for(const type of ['railing','fence','stairs','gate','frame','platform','screen','custom'])
+   assert.ok(integration.includes(type),type);
+ assert.ok(integration.includes("productArea.insertAdjacentElement('afterend',launcher)"));
+ assert.ok(integration.includes('bcDetailerGeometryButton'));
+ assert.ok(integration.includes('state.detailSheets=['));
+ assert.ok(integration.includes('if(typeof linear===') && integration.includes('it.segments=drawing.segments.map'));
+ assert.ok(bridge.includes('stageDraft(design,note)'));
+});
+test('v4 mail PDF includes category-specific sheets for stairs and gates',()=>{
+ const stairs=C.productPreset('stairs',{steps:7,lengthMm:2800});
+ const gate=C.productPreset('gate',{lengthMm:3800});
+ const src={quoteId:'SV-4-PREVIEW',state:{items:design.state.items,detailSheets:[
+  {itemIndex:0,productType:'stairs',drawing:stairs},{itemIndex:0,productType:'gate',drawing:gate}
+ ]},report:design.report};
+ const attachments=steelAttachments(contact,src,'BCS-000041');
+ assert.equal(attachments.length,3);
+ const pdf=Buffer.from(attachments[0].content,'base64').toString('latin1');
+ assert.ok(pdf.includes('STAIRS')&&pdf.includes('GATE'));
+ assert.ok(pdf.includes('MOUNTING SCHEDULE'));
+ const json=JSON.parse(Buffer.from(attachments[2].content,'base64').toString('utf8'));
+ assert.equal(json.design.state.detailSheets.length,2);
+});

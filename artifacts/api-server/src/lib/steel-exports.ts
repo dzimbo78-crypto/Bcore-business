@@ -246,12 +246,13 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
     const total = segments.reduce((sum, x) => sum + N(x.lengthMm, 50, 30000), 0);
     if (!Number.isFinite(total) || total <= 0) return [];
     const h = N(d.heightMm, 350, 3500, 1120), objects = arr(d.objects).slice(0, 400).map(obj);
+    const product = take(d.productType||s.productType||"railing",20), railFamily = ["railing","fence","screen","custom"].includes(product);
     const scale = Math.min(475 / total, 184 / h), X = (x: number) => 54 + x * scale;
     const Y = (z: number) => 363 + z * scale;
-    const commands = ["q", "0.10 0.34 0.53 RG", "0.8 w", label(50, 655, 12, "STEELVISION - DETAIL DRAWING / RYSUNEK BALUSTRADY"),
+    const commands = ["q", "0.10 0.34 0.53 RG", "0.8 w", label(50, 655, 12, "STEELVISION - DETAIL DRAWING / "+product.toUpperCase()),
       label(50, 642, 8, "Front unfolded elevation - dimensions in mm (concept only)"),
-      rect(X(0),Y(0),total*scale,h*scale),
-      line(X(0),Y(h-90),X(total),Y(h-90)),line(X(0),Y(60),X(total),Y(60)),
+      ...(railFamily ? [rect(X(0),Y(0),total*scale,h*scale),
+      line(X(0),Y(h-90),X(total),Y(h-90)),line(X(0),Y(60),X(total),Y(60))] : [line(X(0),Y(0),X(total),Y(0))]),
       "0.06 0.47 0.66 RG", "1.4 w"];
     let posts=0,fixings=0;
     for (const entry of objects) {
@@ -269,6 +270,9 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
         if(kind==="under")commands.push(line(cx,Y(0),cx,Y(-N(entry.dropMm,0,1500,170))));
       }
       if(kind==="support")commands.push(line(X(x),Y(0),X(x),Y(-N(entry.dropMm,0,1500,170))));
+      if(["beam","brace","step"].includes(kind))commands.push(line(X(x),Y(z),X(Math.min(total,x+N(entry.spanMm,0,30000,750))),Y(z+N(entry.riseMm,-3000,3000,0))));
+      if(kind==="panel")commands.push(rect(X(x),Y(z),Math.max(2,N(entry.spanMm,0,30000,600)*scale),Math.max(2,Math.abs(N(entry.riseMm,-3000,3000,300))*scale)));
+      if(kind==="hinge")commands.push(circle(X(x),Y(z),Math.max(2,N(entry.holeDiaMm,0,120,10)*scale/2)));
     }
     commands.push("0.72 0.32 0.17 RG","0.6 w",line(X(0),334,X(total),334),line(X(0),330,X(0),338),line(X(total),330,X(total),338),
       label(215,324,10,`${Math.round(total)} mm`),label(50,613,9,`Posts: ${posts} | Mountings: ${fixings} | Height: ${Math.round(h)} mm`));
@@ -290,7 +294,7 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
       commands.push(label(402,207,8,`${Math.round(w)} x ${Math.round(ht)} mm / ${n} x dia ${Math.round(diam)} mm`));
     }
     commands.push(label(50,120,8,"NOT APPROVED FOR FABRICATION. ENGINEER: verify loads, anchors, welds and concrete."),"Q");
-    const detailedMounts = objects.filter(o => ["plate","wall","under","support"].includes(String(o.kind)));
+    const detailedMounts = objects.filter(o => ["plate","wall","under","support","hinge"].includes(String(o.kind)));
     const schedules: PlanSheet[] = [];
     // Every fixing is represented by kind, face, X/Z, plate and hole geometry.
     // Keep pagination bounded: full lossless schedule always remains in JSON/CSV.
@@ -309,11 +313,11 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
       schedules.push({
         title:"STEELVISION DETAILER - MOUNTING SCHEDULE "+(page+1)+"/"+countPages,
         geometry:"",
-        notes:["Railing: "+take(d.name||s.itemName||"Railing",48), "All coordinates in mm (unfolded station); concept only.",
+        notes:["Product "+product+": "+take(d.name||s.itemName||"Drawing",48), "All coordinates in mm (unfolded station); concept only.",
           ...rows,"No automatic approval of wall/slab anchors or welds."]
       });
     }
-    return [{title:`SteelVision Detailer v3 - ${idx+1}. ${take(d.name||s.itemName||"Railing",45)}`,
+    return [{title:`SteelVision Detailer v4 ${product} - ${idx+1}. ${take(d.name||s.itemName||"Drawing",45)}`,
       geometry:commands.join("\n")+"\n",
       notes:[`Qty: ${N(d.quantity,1,100,1)} | Rev: ${take(d.revision||"A",12)} | Finish: ${take(d.finish,50)}`,
         `Length: ${Math.round(total)} mm | Elevation: ${Math.round(h)} mm`,
