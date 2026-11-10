@@ -116,3 +116,32 @@
 #sv-detailer .sv-rotate-handle{cursor:grab;touch-action:none;pointer-events:all}
 #sv-detailer .sv-rotate-handle circle{pointer-events:all}
 #sv-detailer .sv-rotate-handle:hover circle{fill:#ffd279;stroke-width:2.2}
+
+/* SteelVision v7 · cross-product mounting-detail workspace */
+#sv-detailer .sv-detail-open {border-color:#186083;background:#e7f2f8;color:#17465f;font-weight:750}
+#sv-detailer .sv-detail-modal {position:fixed;inset:1.5vh 1.5vw;z-index:100000;background:#0b2537bb;display:flex;align-items:center;justify-content:center;overflow:auto;padding:8px;overscroll-behavior:contain}
+#sv-detailer .sv-detail-shell {width:min(1500px,97vw);max-height:96vh;overflow:auto;display:flex;flex-direction:column;background:#f7fafc;border:1px solid #a7bfce;border-radius:16px;box-shadow:0 20px 60px #07172277;color:#18374b}
+#sv-detailer .sv-detail-header {position:sticky;top:0;z-index:2;background:#18384e;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;flex-wrap:wrap}
+#sv-detailer .sv-detail-header h3{font-size:19px;margin:0 0 3px;font-weight:750;color:#fff}
+#sv-detailer .sv-detail-header h3 small{font-size:11px;color:#b6d5e5;letter-spacing:.04em}
+#sv-detailer .sv-detail-header span{font-size:11px;color:#e3e9ed}
+#sv-detailer .sv-detail-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#sv-detailer .sv-detail-actions button{min-width:0;padding:8px 11px;white-space:normal}
+#sv-detailer .sv-detail-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr);gap:14px;padding:14px;min-width:0;overflow:auto}
+#sv-detailer .sv-detail-paper,#sv-detailer .sv-detail-properties{min-width:0;background:#fff;border:1px solid #cadae5;border-radius:12px;padding:16px}
+#sv-detailer .sv-detail-paper-title{font-weight:750;color:#22435a;font-size:13px;padding-bottom:10px}
+#sv-detailer .sv-detail-plate-svg{width:100%;height:auto;max-height:440px;display:block;background:#fbfdff;border:1px solid #d4e2eb;border-radius:8px;touch-action:none}
+#sv-detailer .sv-hole-grip{cursor:grab;stroke:#17475d;stroke-width:2.4;fill:#ffffff;touch-action:none}
+#sv-detailer .sv-hole-grip:active{cursor:grabbing;fill:#bdd6e6}
+#sv-detailer .sv-detail-hint{font-size:12px;color:#536e81;line-height:1.5;margin:10px 0}
+#sv-detailer .sv-detail-hole-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
+#sv-detailer .sv-detail-hole-table th,#sv-detailer .sv-detail-hole-table td{border:1px solid #d5e1e9;padding:6px;text-align:left}
+#sv-detailer .sv-detail-hole-table th{background:#eaf3f8}
+#sv-detailer .sv-detail-hole-table input{width:100%;min-width:0;padding:6px}
+#sv-detailer .sv-detail-properties h4{font-size:13px;margin:4px 0 11px;padding:10px 0 5px;border-bottom:1px solid #c5d8e3}
+#sv-detailer .sv-detail-properties .sv-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#sv-detailer .sv-detail-properties .sv-fields>*{min-width:0}
+#sv-detailer .sv-detail-properties label{min-width:0}
+#sv-detailer .sv-detail-properties input,#sv-detailer .sv-detail-properties select{width:100%;min-width:0;box-sizing:border-box}
+@media(max-width:980px){#sv-detailer .sv-detail-layout{grid-template-columns:minmax(0,1fr)}#sv-detailer .sv-detail-shell{max-height:94vh}}
+@media(max-width:560px){#sv-detailer .sv-detail-modal{inset:0;padding:0}#sv-detailer .sv-detail-shell{max-height:100vh;width:100vw;border-radius:0}#sv-detailer .sv-detail-header{padding:12px}#sv-detailer .sv-detail-layout{padding:8px}#sv-detailer .sv-detail-paper,#sv-detailer .sv-detail-properties{padding:9px}#sv-detailer .sv-detail-properties .sv-fields{grid-template-columns:minmax(0,1fr)}#sv-detailer .sv-detail-hole-table{font-size:10px}#sv-detailer .sv-detail-hole-table td{padding:4px}#sv-detailer .sv-detail-actions button{font-size:11px}}
