@@ -65,3 +65,57 @@ test('email artifact generation is deterministic for identical retries',()=>{
  const x=steelAttachments(contact,design,'BCS-000024'),y=steelAttachments(contact,design,'BCS-000024');
  assert.deepEqual(x,y);
 });
+
+test('wall and underside mounting faces survive normalization and BOM',()=>{
+ const d=structuredClone(base);
+ d.objects.find((o:any)=>o.id==='m1').face='underside';
+ d.objects.find((o:any)=>o.id==='w1').face='right';
+ const normal=C.normalize(d);
+ assert.equal(normal.objects.find((o:any)=>o.id==='m1').face,'underside');
+ assert.equal(normal.objects.find((o:any)=>o.id==='w1').face,'right');
+ const bill=C.bom(normal).map((x:any)=>x.name).join(' | ');
+ assert.ok(bill.includes('Mocowanie do ściany (right)'));
+ assert.ok(bill.includes('Wspornik od spodu'));
+});
+test('duplicate multiple supports makes unique copies preserving surfaces',()=>{
+ const r=C.duplicateObjects(base,['w1','m1'],150,0);
+ assert.equal(r.ids.length,2);
+ assert.equal(new Set(r.drawing.objects.map((x:any)=>x.id)).size,r.drawing.objects.length);
+ assert.equal(r.drawing.objects.find((o:any)=>o.id===r.ids[0]).kind,'wall');
+ assert.equal(r.drawing.objects.find((o:any)=>o.id===r.ids[1]).kind,'under');
+ assert.equal(r.drawing.objects.find((o:any)=>o.id===r.ids[0]).xMm,150);
+});
+test('repeat multiple objects at fixed increments without altering originals',()=>{
+ const original=base.objects.find((o:any)=>o.id==='m1');
+ const result=C.repeatObjects(base,['m1'],3,500);
+ assert.equal(result.ids.length,3);
+ const coords=result.ids.map((id:string)=>result.drawing.objects.find((o:any)=>o.id===id).xMm);
+ assert.deepEqual(coords,[original.xMm+500,original.xMm+1000,original.xMm+1500]);
+ assert.equal(base.objects.find((o:any)=>o.id==='m1').xMm,original.xMm);
+});
+test('bulk move and distribute respect coordinates and snap bounds',()=>{
+ const moved=C.transformObjects(base,['p3','p4'],{dx:100,dz:20});
+ assert.equal(moved.objects.find((o:any)=>o.id==='p3').xMm,base.objects.find((o:any)=>o.id==='p3').xMm+100);
+ assert.equal(moved.objects.find((o:any)=>o.id==='p4').zMm,20);
+ const evenly=C.transformObjects(base,['p3','p4','p5'],{space:true});
+ assert.ok(evenly.objects.every((o:any)=>Number.isFinite(o.xMm)));
+});
+test('different top and bottom rail sections influence estimated mass independently',()=>{
+ const heavy=structuredClone(base),lighter=structuredClone(base);
+ heavy.topRail='60x40x3';heavy.bottomRail='60x40x3';
+ lighter.topRail='60x40x3';lighter.bottomRail='40x40x2';
+ assert.ok(C.summary(heavy).massKgEstimate>C.summary(lighter).massKgEstimate);
+});
+test('DXF includes separate layers for underside/wall mounts and supports',()=>{
+ const dxf=C.toDXF(base);
+ assert.ok(dxf.includes('MOUNTS_WALL')&&dxf.includes('MOUNTS_UNDERSIDE'));
+ assert.ok(dxf.includes('SUPPORTS')&&dxf.includes('HOLES'));
+});
+test('editor UI has repeat, multi-select, clipboard and mount kind controls',()=>{
+ const ui=read('steelvision-detailer-ui.js');
+ const css=read('steelvision-detailer.css');
+ for (const marker of ['data-action="duplicate"','data-action="copy"','data-action="paste"','data-action="repeat"','data-action="align-z"','data-action="space-x"','data-edit="kind"','faceSelect','ref.selection']) {
+  assert.ok(ui.includes(marker),marker);
+ }
+ assert.ok(css.includes('.sv-bulk'));
+});
