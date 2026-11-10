@@ -126,14 +126,22 @@ holes:detailDims(o).holes}));
 function toDXF(raw){const d=normalize(raw),s=summary(d),lines=['0','SECTION','2','HEADER','9','$ACADVER','1','AC1009','0','ENDSEC','0','SECTION','2','ENTITIES'];const line=(x1,y1,x2,y2,layer)=>{lines.push('0','LINE','8',layer,'10',String(rnd(x1,3)),'20',String(rnd(y1,3)),'30','0','11',String(rnd(x2,3)),'21',String(rnd(y2,3)),'31','0')};const circ=(x,y,r,layer)=>lines.push('0','CIRCLE','8',layer,'10',String(rnd(x,3)),'20',String(rnd(y,3)),'30','0','40',String(rnd(r,3)));const rect=(x,y,w,h,layer)=>{line(x,y,x+w,y,layer);line(x+w,y,x+w,y+h,layer);line(x+w,y+h,x,y+h,layer);line(x,y+h,x,y,layer)};rect(0,0,s.lengthMm,d.heightMm,'FRONT_RAILS');for(let o of d.objects){if(o.kind==='post')rect(o.xMm-profileSection(d.postProfile).a/2,0,profileSection(d.postProfile).a,d.heightMm,'POSTS');if(['plate','wall','under'].includes(o.kind)){const dt=detailDims(o);const layer=o.kind==='wall'?'MOUNTS_WALL':o.kind==='under'?'MOUNTS_UNDERSIDE':'MOUNTS_PLATES';const shape=mountPoints2D(o);for(let i=0;i<4;i++){const a=shape.corners[i],b=shape.corners[(i+1)%4];line(a.x,a.z,b.x,b.z,layer);}for(const hole of shape.holes)circ(hole.x,hole.z,dt.dia/2,'HOLES');if(o.kind==='under'){line(o.xMm,0,o.xMm,-o.dropMm,'SUPPORTS');line(o.xMm,-o.dropMm,o.xMm+o.projectionMm,-o.dropMm,'SUPPORTS');}}if(o.kind==='support')line(o.xMm,0,o.xMm,-o.dropMm,'SUPPORTS');if(['beam','brace','step'].includes(o.kind))line(o.xMm,o.zMm,o.xMm+o.spanMm,o.zMm+o.riseMm,o.kind.toUpperCase()+'S');if(o.kind==='panel')rect(o.xMm,o.zMm,Math.max(1,o.spanMm),Math.max(1,o.riseMm||300),'PANELS');if(o.kind==='hinge')circ(o.xMm,o.zMm,Math.max(8,o.holeDiaMm/2),'HINGES');}for(const p of d.extraProfiles){if(p.toMm<=p.fromMm)continue;const z=extraProfileHeight(d,p);line(p.fromMm,z,p.toMm,z,'EXTRA_TOP_PROFILES');}const pts=pathPoints(d);for(let i=0;i<pts.length-1;i++)line(pts[i][0],pts[i][1]-2400,pts[i+1][0],pts[i+1][1]-2400,'PLAN');lines.push('0','ENDSEC','0','EOF');return lines.join('\n')+'\n';}
 function duplicateObjects(raw,ids,dx=100,dz=0){
  const d=normalize(raw),wanted=new Set(Array.isArray(ids)?ids:[ids]),existing=new Set(d.objects.map(x=>x.id));
- const copied=[];let seq=1,L=length(d);
+ const copied=[],idMap=new Map();let seq=1,L=length(d);
  for(const original of [...wanted].map(id=>d.objects.find(o=>o.id===id)).filter(Boolean)){
   if(d.objects.length+copied.length>=400)break;
-  let id;do{id=original.id+'-copy'+seq++;}while(existing.has(id));existing.add(id);
+  let id;do{id=original.id+'-copy'+seq++;}while(existing.has(id));existing.add(id);idMap.set(original.id,id);
   copied.push({...original,id,label:safe((original.label||original.kind)+' (kopia)',100),
    xMm:clamp(original.xMm+num(dx),0,L,original.xMm),zMm:clamp(original.zMm+num(dz),-1000,5000,original.zMm),
    offsetXmm:original.referenceId?original.offsetXmm+num(dx):original.offsetXmm,
    offsetZmm:original.referenceId?original.offsetZmm+num(dz):original.offsetZmm});
+ }
+ // When a member AND its mounting plate are duplicated together, rewire the
+ // copied plate to the copied member instead of the original. Avoid a double
+ // translation: the copied member already carries the global displacement.
+ for(const o of copied)if(o.referenceId&&idMap.has(o.referenceId)){
+   const original=d.objects.find(x=>x.id===Array.from(idMap).find(([,newId])=>newId===o.id)?.[0]);
+   o.referenceId=idMap.get(o.referenceId);
+   o.offsetXmm=original?.offsetXmm||0;o.offsetZmm=original?.offsetZmm||0;
  }
  d.objects.push(...copied);return {drawing:normalize(d),ids:copied.map(x=>x.id)};
 }
