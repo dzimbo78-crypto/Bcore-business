@@ -182,6 +182,8 @@ function reportLines(contact: ObjectMap, design: ObjectMap, reference: string, g
     });
     lines.push("Mounts are editable customer geometry; strength and anchors are not verified.");
   }
+  arr(report.detailerWarnings).slice(0,60).forEach((entry) =>
+    lines.push("DETAILER PROFILE DISCREPANCY: " + take(entry,250)));
   lines.push("", "AUTOMATIC GEOMETRY CORRECTIONS (before -> after)");
   const corrections = arr(report.corrections);
   if (!corrections.length) lines.push("None made automatically.");
