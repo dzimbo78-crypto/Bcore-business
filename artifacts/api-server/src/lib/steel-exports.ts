@@ -294,7 +294,7 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
       }
       if(kind==="support")commands.push(line(X(x),Y(0),X(x),Y(-N(entry.dropMm,0,1500,170))));
       if(["beam","brace","step"].includes(kind))commands.push(line(X(x),Y(z),X(Math.min(total,x+N(entry.spanMm,0,30000,750))),Y(z+N(entry.riseMm,-3000,3000,0))));
-      if(kind==="panel")commands.push(rect(X(x),Y(z),Math.max(2,N(entry.spanMm,0,30000,600)*scale),Math.max(2,Math.abs(N(entry.riseMm,-3000,3000,300))*scale)));
+      if(kind==="panel"&&d.panelType!=="Brak")commands.push(rect(X(x),Y(z),Math.max(2,N(entry.spanMm,0,30000,600)*scale),Math.max(2,Math.abs(N(entry.riseMm,-3000,3000,300))*scale)));
       if(kind==="hinge")commands.push(circle(X(x),Y(z),Math.max(2,N(entry.holeDiaMm,0,120,10)*scale/2)));
     }
     // Extra rail profiles from the same source as the interactive sketch and 3D.
@@ -400,6 +400,7 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
       geometry:commands.join("\n")+"\n",
       notes:[`Qty: ${N(d.quantity,1,100,1)} | Rev: ${take(d.revision||"A",12)} | Finish: ${take(d.finish,50)}`,
         `Length: ${Math.round(total)} mm | Elevation: ${Math.round(h)} mm`,
+        `Infill / wypelnienie: ${take(d.panelType||"Brak",60)}`,
         `Profile top/bottom: ${take(d.topRail,30)}/${take(d.bottomRail,30)}, post: ${take(d.postProfile,30)}`,
         `Attachment locations and holes must be checked against site and material.`]},
       ...schedules];

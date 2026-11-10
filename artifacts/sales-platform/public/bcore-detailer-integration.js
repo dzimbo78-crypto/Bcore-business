@@ -39,9 +39,21 @@ function save(){if(!editor||!state||!Array.isArray(state.items))return;const it=
   const old=Array.isArray(it.segments)?it.segments:[];
   it.segments=drawing.segments.map((s,i)=>({name:s.name,length:Math.round(s.lengthMm)/1000,angle:s.angleDeg,jointType:old[i]?.jointType||(i===drawing.segments.length-1?'Koniec':'Spawane'),jointGap:Number(old[i]?.jointGap)||0}));
   it.qty=drawing.quantity;it.height=drawing.heightMm/10;it.topProfile=drawing.topRail;it.bottomProfile=drawing.bottomRail;it.postProfile=drawing.postProfile;
+  // The CAD drawing is authoritative for the infill after saving.  In
+  // particular, selecting "Brak" must not leave the old estimator panel in
+  // production reports or quotations.
+  if(drawing.panelType==='Brak')it.infill='none';
+  else if(/szk|glass/i.test(drawing.panelType))it.infill='glass';
+  else if(/blacha|panel|płyta|hpl/i.test(drawing.panelType))it.infill='sheet';
   if(typeof renderSegments==='function')renderSegments();
  }else{
   it.qty=drawing.quantity; // geometry for stairs/gates/frames remains a labelled supplemental sheet
+ }
+ // updateAll() reads the visible form back into state. Update that form first,
+ // otherwise its stale old value (e.g. bars) would resurrect deleted infill.
+ if(typeof linear==='function'&&linear(it)){
+  const select=document.getElementById('infill');
+  if(select&&Array.from(select.options).some(o=>o.value===it.infill))select.value=it.infill;
  }
  if(typeof updateAll==='function')updateAll();
  editor.destroy();editor=null;$('bcDetailerDialog').close();baseline='';refresh();refreshSharedPreview();if(state.step===6&&typeof draw3D==='function'){draw3D($('view3d'),current(),mainCam,true);}

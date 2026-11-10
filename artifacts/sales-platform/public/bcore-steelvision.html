@@ -1187,6 +1187,41 @@ function bomForItem(it){
      length:len*q,count:q,mass:pr.kgm==null?null:len*q*pr.kgm,area:pr.m2m==null?null:len*q*pr.m2m});
   });
  }
+ // A saved CAD project is the one source of truth for mounting hardware.
+ // This prevents counting legacy automatic brackets on top of two edited tabs.
+ if(detail&&Array.isArray(detail.objects)){
+   const groups=new Map(),qty=Math.max(1,Number(it.qty)||1);
+   for(const o of detail.objects){
+     if(o.kind==="support"){
+       const len=Math.max(0,Number(o.dropMm)||0)/1000,profile=o.profile||detail.postProfile||it.postProfile;
+       const material=profileProps(profile);
+       rows.push({name:"CAD · wspornik pionowy",spec:profile,length:len*qty,count:qty,
+         mass:material.kgm==null?null:len*qty*material.kgm,
+         area:material.m2m==null?null:len*qty*material.m2m});
+       continue;
+     }
+     if(!["plate","wall","under","hinge"].includes(o.kind))continue;
+     const w=Math.max(10,Number(o.plateWidthMm)||120),h=Math.max(10,Number(o.plateHeightMm)||25),
+       t=Math.max(1,Number(o.plateThicknessMm)||6),holeCoords=Array.isArray(o.holePoints)&&o.holePoints.length?o.holePoints:[],
+       holeCount=holeCoords.length||Math.max(0,Number(o.holeCount)||0),dia=Number(o.holeDiaMm)||0,
+       key=JSON.stringify([o.kind,w,h,t,Math.round(dia*10)/10,o.holePattern,holeCoords,o.face,o.mountTo]);
+     if(!groups.has(key))groups.set(key,{w,h,t,n:holeCount,dia,kind:o.kind,face:o.face,mountTo:o.mountTo,count:0});
+     groups.get(key).count++;
+   }
+   if(it.type==="gate"&&detail.objects.some(o=>o.kind==="hinge")){
+     for(let i=rows.length-1;i>=0;i--)if(rows[i].name==="Zawiasy")rows.splice(i,1);
+   }
+   for(const p of groups.values()){
+     const {w,h,t,n,dia,count}=p,number=count*qty;
+     rows.push({name:"CAD · blacha mocująca "+p.kind+" / "+(p.face||"front"),
+       spec:w+"×"+h+"×"+t+" mm | "+n+"×Ø"+dia+" | "+(p.mountTo||"profil"),
+       length:null,count:number,mass:w*h*t*7.85e-6*number,
+       area:2*(w*h+w*t+h*t)*1e-6*number});
+     if(n>0)rows.push({name:"CAD · otwory / punkty zakotwienia",spec:n+"×Ø"+dia+" — kotwy do doboru",
+       length:null,count:n*number,mass:null,area:null});
+   }
+   return rows;
+ }
  if(["fence","gate"].includes(it.type))return rows;
  if(it.mountMode==="custom"){
    const groups={};it.customMounts.forEach(m=>{const s=effectiveMountSpec(it,m),key=[s.plateW,s.plateH,s.plateT,s.anchorType,s.anchorDia,s.holeCount,s.holeDia].join("|");if(!groups[key])groups[key]={s,count:0};groups[key].count++});
@@ -3616,9 +3651,9 @@ v18LocalizeFlow();
 // Browser back/forward cache is a new simulator entry; reset the configuration too.
 window.addEventListener('pageshow', event => { if(event.persisted && typeof v14EmptyProject==='function') v14EmptyProject(); });
 </script>
-<link rel="stylesheet" href="/steelvision-detailer.css?v=7">
-<script src="/steelvision-detailer-core.js?v=7" defer></script>
-<script src="/steelvision-detailer-ui.js?v=7" defer></script>
+<link rel="stylesheet" href="/steelvision-detailer.css?v=8">
+<script src="/steelvision-detailer-core.js?v=8" defer></script>
+<script src="/steelvision-detailer-ui.js?v=8" defer></script>
 <script src="/bcore-detailer-integration.js?v=6" defer></script>
 <script src="/bcore-steelvision-bridge.js?v=20" defer></script>
 </body>
