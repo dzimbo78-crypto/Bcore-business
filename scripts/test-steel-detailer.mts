@@ -291,3 +291,10 @@ test('v6 CAD: PDF email attachment includes rotated plate and dimensioned mount 
  const json=JSON.parse(Buffer.from(a[2].content,'base64').toString('utf8'));
  assert.equal(json.design.state.detailSheets[0].drawing.objects.find((o:any)=>o.kind==='wall').rotationDeg,37);
 });
+
+test('v6 interactive 3D preview renders true rotated mounting plate polygons',()=>{
+ const ui=read('steelvision-detailer-ui.js');
+ assert.ok(ui.includes('const axisU=pl.uAxis'));
+ assert.ok(ui.includes('pl.vAxis'));
+ assert.ok(ui.includes('corners.slice(1).forEach'));
+});
