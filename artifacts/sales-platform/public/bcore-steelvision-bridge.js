@@ -84,6 +84,10 @@
     for(const entry of sheets){
       const index=Number(entry?.itemIndex),item=state?.items?.[index],drawing=entry?.drawing;
       if(!item||!drawing||!Array.isArray(drawing.segments)){critical.push("Drawing without a matching item");continue}
+      if(drawing.productType && item.type && String(drawing.productType)!==String(item.type)){
+        critical.push((item.name||"Item")+": saved drawing belongs to "+drawing.productType+", not "+item.type+"; reopen the editor and save a new sheet");
+        continue;
+      }
       if(typeof linear==="function"&&!linear(item))continue;
       const segments=Array.isArray(item.segments)?item.segments:[];
       if(segments.length!==drawing.segments.length){critical.push((item.name||"Item")+": section count differs from drawing");continue}
