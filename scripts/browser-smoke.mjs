@@ -26,6 +26,20 @@ window.addEventListener("load",()=>{
     document.getElementById("bcDetailerButton").click();
     const host=document.getElementById("bcDetailerHost");
     host.querySelector("[data-add=wall]").click();
+    // The dedicated CAD mounting workspace must be available in B-CORE.
+    host.querySelector('[data-action="edit-mount-detail"]').click();
+    if(!host.querySelector('.sv-detail-overlay'))throw Error("Separate mounting detail dialog not opened");
+    const reference=host.querySelector('[data-detail-key="referenceId"]');
+    const post=Array.from(reference.options).find(o=>o.textContent.includes("Słupek"));
+    if(!post)throw Error("Cannot attach mounting to a member");
+    reference.value=post.value;reference.dispatchEvent(new Event("change",{bubbles:true}));
+    const thick=host.querySelector('[data-detail-key="plateThicknessMm"]');
+    thick.value="9";thick.dispatchEvent(new Event("change",{bubbles:true}));
+    host.querySelector('[data-detail-action="custom-holes"]').click();
+    const hole=host.querySelector('[data-hole-index="0"][data-hole-axis="x"]');
+    if(!hole)throw Error("Custom hole coordinates editor not mounted");
+    hole.value="17";hole.dispatchEvent(new Event("change",{bubbles:true}));
+    host.querySelector('[data-detail-action="close"]').click();
     const face=host.querySelector("[data-edit=face]");
     face.value="right";face.dispatchEvent(new Event("change",{bubbles:true}));
     const initialStep=state.step;
@@ -45,7 +59,7 @@ window.addEventListener("load",()=>{
     document.getElementById("bcSaveDetails").click();
     const saved=state.detailSheets?.[0]?.drawing;
     if(!saved?.extraProfiles?.length||saved.extraProfiles[0].gapMm!==120 ||
-       !saved.objects.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25))
+       !saved.objects.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25&&o.plateThicknessMm===9&&o.referenceId&&o.holePattern==="custom"&&o.customHoles[0].x===17))
       throw Error("Cannot save extra top rail geometry");
     const sketchGeometry=SVDetailCore.sceneFrom(saved);
     const sceneGeometry=buildGeom(state.items[0]);
@@ -213,7 +227,7 @@ try{
   const sheets=testQuote?.design?.state?.detailSheets;
   if(!sheets?.length || !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.face==="right") ||
      sheets[0].drawing?.extraProfiles?.[0]?.gapMm!==120 ||
-     !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25) ||
+     !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25&&o.plateThicknessMm===9&&o.referenceId&&o.customHoles?.[0]?.x===17) ||
      testQuote?.design?.state?.items?.[0]?.segments?.[0]?.length!==3.76)
     throw Error("Drawing/fixings were not carried through the original e-mail RFQ flow: "+JSON.stringify(sheets||[]).slice(0,1000));
   console.log("PASS browser: edited wall fixing and detailSheets reach the existing RFQ endpoint");
