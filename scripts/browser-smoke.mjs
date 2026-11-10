@@ -14,6 +14,25 @@ let testQuote=null;
 let quoteMode=false;
 let fallbackMode=false;
 const automationSteel="<script>\nwindow.addEventListener(\"load\",()=>{\n  try {\n    state.items[0].shape=\"I\";\n    state.items[0].segments=[{name:\"Front\",length:3.76,angle:0,jointType:\"Koniec\",jointGap:0}];\n    document.getElementById(\"projectName\").value=\"B-CORE QA BROWSER TEST\";\n    document.getElementById(\"projectRef\").value=\"QA-376\";\n    updateAll();\n    setTimeout(()=>document.getElementById(\"bcoreSteelVisionV19Quote\").click(),150);\n  } catch(error) { document.body.dataset.qaError=String(error); }\n});\n</script>";
+const automationSteelDetailer = `<script>
+window.addEventListener("load",()=>{
+  try {
+    window.alert=()=>{};
+    state.items[0].shape="I";
+    state.items[0].segments=[{name:"Front",length:3.76,angle:0,jointType:"Koniec",jointGap:0}];
+    document.getElementById("projectName").value="STEELVISION DETAILER QA";
+    document.getElementById("projectRef").value="QA-FIXINGS";
+    updateAll();
+    document.getElementById("bcDetailerButton").click();
+    const host=document.getElementById("bcDetailerHost");
+    host.querySelector("[data-add=wall]").click();
+    const face=host.querySelector("[data-edit=face]");
+    face.value="right";face.dispatchEvent(new Event("change",{bubbles:true}));
+    document.getElementById("bcSaveDetails").click();
+    setTimeout(()=>document.getElementById("bcoreSteelVisionV19Quote").click(),150);
+  }catch(error){document.body.dataset.qaError=String(error);}
+});
+</script>`;
 const automationContact="<script>\n(function(){\n  let submitted=false;\n  const check=()=>{\n    const form=document.getElementById(\"bcore-contact-form\");\n    if(!form)return;\n    const status=form.querySelector(\".bcore-form-message\");\n    if(status&&status.textContent.includes(\"BCS-QA0001\")){\n      if(!document.getElementById(\"bcore-qa-end-to-end-complete\")){\n        const badge=document.createElement(\"div\");\n        badge.id=\"bcore-qa-end-to-end-complete\";\n        badge.textContent=\"QUOTE SUCCESS\";\n        document.body.appendChild(badge);\n      }\n      return;\n    }\n    if(submitted)return;\n    const draft=sessionStorage.getItem(\"bcore-steelvision-draft\")||sessionStorage.getItem(\"bcore-steelvision-draft-idb\");\n    const message=form.querySelector(\'textarea[name=\"message\"]\');\n    if(!draft||!message)return;\n    if(message.value.length<10)message.value=\"QA SteelVision railing request 3.76 meters\";\n        form.querySelector('input[name=\"name\"]').value=\"QA Browser\";\n    form.querySelector('input[name=\"email\"]').value=\"qa@example.com\";\n    submitted=true;\n    form.requestSubmit();\n  };\n  window.addEventListener(\"DOMContentLoaded\",()=>{check();setInterval(check,150)});\n})();\n</script>";
 const fallbackInterceptor="<script>\n(function(){\nconst native=HTMLFormElement.prototype.submit;\nHTMLFormElement.prototype.submit=function(){\n if(String(this.action).startsWith('https://formsubmit.co/')){\n  const files=[...this.querySelectorAll('input[type=file]')];\n  if(files.length===3&&files.every(f=>f.files&&f.files.length===1&&f.files[0].size>0)){\n   const ok=document.createElement('div');ok.id='bcore-qa-native-multipart-ok';\n   ok.textContent='ALL 3 ATTACHMENTS PREPARED';document.body.append(ok);\n  }else document.body.dataset.qaFileError='wrong file input count';\n  return;\n }\n return native.call(this);\n};\nconst fetchOriginal=window.fetch.bind(window);\nwindow.fetch=(url,options)=>{\n if(String(url).startsWith('https://formsubmit.co/ajax/'))\n   return Promise.resolve(new Response(JSON.stringify({success:false,message:'QA simulated 403'}),{status:403,headers:{'Content-Type':'application/json'}}));\n return fetchOriginal(url,options);\n};\n})();\n</script>";
 
@@ -40,7 +59,7 @@ const server=createServer(async(req,res)=>{
         {ok:true,stored:true,emailed:true,reference:"BCS-QA0001"}));
       return;
     }
-    if(u.pathname==="/bcore-steelvision.html" && ["1","fallback"].includes(u.searchParams.get("bcore_qa"))){
+    if(u.pathname==="/bcore-steelvision.html" && ["1","fallback","detailer"].includes(u.searchParams.get("bcore_qa"))){
       quoteMode=true;fallbackMode=u.searchParams.get("bcore_qa")==="fallback";
     }
     const requested=u.pathname==="/"?"/bcore-cinematic.html":u.pathname;
@@ -51,7 +70,7 @@ const server=createServer(async(req,res)=>{
     res.writeHead(200,{"Content-Type":mime[path.extname(abs)]||"application/octet-stream"});
     const raw=await readFile(abs);
     if(quoteMode && path.extname(abs)===".html" && (requested==="/bcore-cinematic.html"||requested==="/bcore-steelvision.html")){
-      const inject=requested==="/bcore-steelvision.html"?automationSteel:
+      const inject=requested==="/bcore-steelvision.html"?(u.searchParams.get("bcore_qa")==="detailer"?automationSteelDetailer:automationSteel):
         (fallbackMode?fallbackInterceptor:"")+automationContact;
       const original=raw.toString("utf8");
       const pos=original.lastIndexOf("</body>");
@@ -123,6 +142,15 @@ try{
      testQuote.email!=="qa@example.com")
     throw Error("Browser quotation payload is incomplete: "+JSON.stringify(testQuote).slice(0,1200));
   console.log("PASS browser: complete JSON project posted from advanced simulator through contact form");
+  testQuote=null;
+  const drawingDom=await check("editable wall fixing travels in the original RFQ + mail handoff",
+    "/bcore-steelvision.html?bcore_qa=detailer",['id="bcore-contact-form"','id="bcore-qa-end-to-end-complete"']);
+  const sheets=testQuote?.design?.state?.detailSheets;
+  if(!sheets?.length || !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.face==="right") ||
+     testQuote?.design?.state?.items?.[0]?.segments?.[0]?.length!==3.76)
+    throw Error("Drawing/fixings were not carried through the original e-mail RFQ flow: "+JSON.stringify(sheets||[]).slice(0,1000));
+  console.log("PASS browser: edited wall fixing and detailSheets reach the existing RFQ endpoint");
+
   // Simulate an unavailable mail provider. The browser must preserve the
   // project without redirecting the visitor to an unsafe third-party site.
   const fallbackDom=await check("stored project after provider error",
