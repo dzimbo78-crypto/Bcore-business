@@ -56,7 +56,9 @@ test('email attachment generation retains PDF CSV and JSON with detailer',()=>{
  assert.deepEqual(a.map(x=>x.filename.split('.').pop()),['pdf','csv','json']);
  const pdf=Buffer.from(a[0].content,'base64').toString('latin1');
  assert.ok(pdf.startsWith('%PDF-1.4'));assert.ok(pdf.includes('DETAIL DRAWING'));
- assert.ok(pdf.includes('MOUNTING DETAIL'));assert.ok(pdf.endsWith('%%EOF\n'));
+ assert.ok(pdf.includes('MOUNTING DETAIL'));
+ assert.ok(pdf.includes('MOUNTING SCHEDULE'));
+ assert.ok(pdf.includes('face left')&&pdf.includes('wall'));assert.ok(pdf.endsWith('%%EOF\n'));
  const csv=Buffer.from(a[1].content,'base64').toString('utf8');assert.ok(csv.includes('design.state.detailSheets[0].drawing.objects'));
  const json=JSON.parse(Buffer.from(a[2].content,'base64').toString('utf8'));
  assert.equal(json.design.state.detailSheets[0].drawing.schema,3);
