@@ -290,12 +290,36 @@ function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
       commands.push(label(402,207,8,`${Math.round(w)} x ${Math.round(ht)} mm / ${n} x dia ${Math.round(diam)} mm`));
     }
     commands.push(label(50,120,8,"NOT APPROVED FOR FABRICATION. ENGINEER: verify loads, anchors, welds and concrete."),"Q");
+    const detailedMounts = objects.filter(o => ["plate","wall","under","support"].includes(String(o.kind)));
+    const schedules: PlanSheet[] = [];
+    // Every fixing is represented by kind, face, X/Z, plate and hole geometry.
+    // Keep pagination bounded: full lossless schedule always remains in JSON/CSV.
+    const perSchedule = 19, maxPages = 22, countPages = Math.min(maxPages,Math.ceil(detailedMounts.length/perSchedule));
+    for (let page=0;page<countPages;page++) {
+      const rows = detailedMounts.slice(page*perSchedule,(page+1)*perSchedule).map((o,j) =>
+        String(page*perSchedule+j+1).padStart(2,"0") + " " +
+        take(o.label||o.kind,28) + " / "+take(o.kind,14) + " / face "+take(o.face||"front",12) +
+        " / X "+Math.round(N(o.xMm,0,total,0)) + " / Z "+Math.round(N(o.zMm,-1000,5000,0)) +
+        " / "+Math.round(N(o.plateWidthMm,10,1000,120))+"x"+Math.round(N(o.plateHeightMm,10,1000,25))+
+        " / "+Math.floor(N(o.holeCount,0,16,2))+"x dia"+Math.round(N(o.holeDiaMm,0,120,10))+
+        " / projection "+Math.round(N(o.projectionMm,0,2000,0))+
+        " / drop "+Math.round(N(o.dropMm,0,1500,0)));
+      if(page===countPages-1&&detailedMounts.length>perSchedule*maxPages)
+        rows.push("Further "+(detailedMounts.length-perSchedule*maxPages)+" fixings: see attached JSON/CSV.");
+      schedules.push({
+        title:"STEELVISION DETAILER - MOUNTING SCHEDULE "+(page+1)+"/"+countPages,
+        geometry:"",
+        notes:["Railing: "+take(d.name||s.itemName||"Railing",48), "All coordinates in mm (unfolded station); concept only.",
+          ...rows,"No automatic approval of wall/slab anchors or welds."]
+      });
+    }
     return [{title:`SteelVision Detailer v3 - ${idx+1}. ${take(d.name||s.itemName||"Railing",45)}`,
       geometry:commands.join("\n")+"\n",
       notes:[`Qty: ${N(d.quantity,1,100,1)} | Rev: ${take(d.revision||"A",12)} | Finish: ${take(d.finish,50)}`,
         `Length: ${Math.round(total)} mm | Elevation: ${Math.round(h)} mm`,
         `Profile top/bottom: ${take(d.topRail,30)}/${take(d.bottomRail,30)}, post: ${take(d.postProfile,30)}`,
-        `Attachment locations and holes must be checked against site and material.`]}];
+        `Attachment locations and holes must be checked against site and material.`]},
+      ...schedules];
   });
 }
 export function steelAttachments(contact: ObjectMap, design: ObjectMap, reference: string) {
