@@ -176,7 +176,7 @@ function reportLines(contact: ObjectMap, design: ObjectMap, reference: string, g
     lines.push("", "EDITABLE DETAILING SHEETS / DETALE BALUSTRAD");
     drawings.slice(0,60).forEach((entry,i) => {
       const v=obj(entry), d=obj(v.drawing), geometry=arr(d.segments);
-      const amount=geometry.reduce((n,x)=>n+Number(obj(x).lengthMm||0),0);
+      const amount=geometry.reduce<number>((n,x)=>n+Number(obj(x).lengthMm||0),0);
       lines.push("  Sheet "+(i+1)+": "+take(d.name||v.itemName)+
         " / "+amount.toFixed(0)+" mm / "+arr(d.objects).length+" objects / REV "+take(d.revision));
     });
