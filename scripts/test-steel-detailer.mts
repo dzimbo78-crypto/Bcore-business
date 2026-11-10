@@ -274,7 +274,7 @@ test('v6 CAD: workshop drawing data contains exact X/Z, holes and profile cuts',
 });
 test('v6 CAD: UI contains collapsible tool panels, angle controls and dimensioned A3 package',()=>{
  const ui=read('steelvision-detailer-ui.js'),css=read('steelvision-detailer.css');
- for(const word of ['decoratePanels','sv-panelcard',"field(\'rotationDeg\'",'data-action="show-points"','data-action="snap-points"','fabri'+'cationHTML','data-helper-kind','data-action="print"'])assert.ok(ui.includes(word),word);
+ for(const word of ['decoratePanels','sv-panelcard',"field(\'rotationDeg\'",'data-action="show-points"','data-action="snap-points"','fabri'+'cationHTML','data-helper-kind','data-action="print"','sv-rotate-handle','rotationDrag'])assert.ok(ui.includes(word),word);
  assert.ok(ui.includes("ev.stopPropagation()"),'editor events must not trigger calculator navigation');
  assert.ok(css.includes('.sv-panelcard')&&css.includes('.sv-cadbar'));
 });
