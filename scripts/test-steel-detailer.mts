@@ -354,7 +354,7 @@ test('v7 HTML/CSS exposes exact editable detail dialog and category defaults',()
   assert.ok(ui.includes(marker),marker);
  }
  assert.ok(css.includes('.sv-detail-layout')&&css.includes('sv-detail-hole-table'));
- assert.ok(html.includes('steelvision-detailer-ui.js?v=7'));
+ assert.ok(html.includes('steelvision-detailer-ui.js?v=8'));
  assert.equal((html.match(/bcore-steelvision-bridge\.js/g)||[]).length,1);
 });
 test('v7 mail package carries manual hole layouts, mounting side and exact X/Y coordinates in PDF and CSV',()=>{
