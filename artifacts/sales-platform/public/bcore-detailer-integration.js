@@ -9,7 +9,7 @@ const $=id=>document.getElementById(id);
 const T=(pl,en,de)=>{let l=typeof svPreferences==='undefined'?'pl':svPreferences.lang;return l==='en'?en:l==='de'?de:pl;};
 function drawingFor(it,index){const saved=Array.isArray(state.detailSheets)?state.detailSheets.find(s=>s&&s.itemIndex===index)?.drawing:null;
  if(saved&&saved.app==='steelvision-detailer')return C.normalize(saved);
- let d=C.base();d.name=String(it.name||('Balustrada '+(index+1)));d.quantity=Math.max(1,Math.floor(Number(it.qty)||1));d.material=String(it.material||'Stal');d.finish=String(it.finish||'Do uzgodnienia');d.heightMm=Math.round(Math.max(0.5,Number(it.height)||1.12)*1000);
+ let d=C.base();d.name=String(it.name||('Balustrada '+(index+1)));d.quantity=Math.max(1,Math.floor(Number(it.qty)||1));d.material=String(it.material||'Stal');d.finish=String(it.finish||'Do uzgodnienia');const height=Number(it.height);d.heightMm=Math.round(Number.isFinite(height)&&height>0?(height>5?height*10:height*1000):1120);d.topRail=String(it.topProfile||d.topRail);d.bottomRail=String(it.bottomProfile||d.bottomRail);d.postProfile=String(it.postProfile||d.postProfile);
  const segs=Array.isArray(it.segments)?it.segments.filter(s=>s&&Number(s.length)>0):[];
  if(segs.length){d.segments=segs.slice(0,30).map((s,i)=>({id:'seg-'+i,name:String(s.name||('Odcinek '+(i+1))),lengthMm:Math.round(Number(s.length)*1000),angleDeg:Number(s.angle)||0}));
  let L=d.segments.reduce((a,b)=>a+b.lengthMm,0),spacing=Math.max(250,Math.min(4000,(Number(it.postSpacing)||100)*10));const stations=new Set([0,L]);let at=0;for(let seg of d.segments){const n=Math.max(1,Math.ceil(seg.lengthMm/spacing));for(let i=0;i<=n;i++)stations.add(Math.round(at+seg.lengthMm*i/n));at+=seg.lengthMm;}
@@ -26,6 +26,7 @@ function save(){if(!editor||!state||!Array.isArray(state.items))return;const it=
  const old=Array.isArray(it.segments)?it.segments:[];
  it.segments=drawing.segments.map((s,i)=>({name:s.name,length:Math.round(s.lengthMm)/1000,angle:s.angleDeg,jointType:old[i]?.jointType||(i===drawing.segments.length-1?'Koniec':'Spawane'),jointGap:Number(old[i]?.jointGap)||0}));
  it.qty=drawing.quantity;
+ it.height=drawing.heightMm/10; // existing SteelVision linear height is in centimetres
  if(typeof renderSegments==='function')renderSegments();
  if(typeof updateAll==='function')updateAll();
  }
