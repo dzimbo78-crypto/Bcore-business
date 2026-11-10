@@ -188,3 +188,59 @@ test('v4 stale-category quote guard is present on client and server',()=>{
  const server=readFileSync(new URL('../artifacts/api-server/src/routes/steel-enquiries.ts',import.meta.url),'utf8');
  assert.ok(server.includes('stale_detail_sheet'));
 });
+
+
+test("v5: extra top rail geometry is shared by 2D, 3D, BOM and DXF",()=>{
+ const d=structuredClone(base);
+ d.extraProfiles=[{id:"extra1",label:"Second upper rail",profile:"60x40x3",fromMm:380,toMm:5520,gapMm:110,sideMm:45}];
+ const model=C.normalize(d),sc=C.sceneFrom(model),mass=C.summary(model);
+ const rails=sc.lines.filter((l:any)=>l.kind==="accent"&&l.profile==="60x40x3");
+ assert.ok(rails.length>=4);
+ assert.equal(mass.extraRailM,5.14);
+ assert.ok(mass.massKgEstimate>C.summary(base).massKgEstimate);
+ assert.ok(C.toDXF(model).includes("EXTRA_TOP_PROFILES"));
+ assert.ok(C.bom(model).some((r:any)=>r.name.includes("Dodatkowy profil górny")&&r.lengthMm===5140));
+ const z=C.extraProfileHeight(model,model.extraProfiles[0]);
+ assert.ok(rails.some((r:any)=>Math.abs(r.a[2]-z/1000)<1e-6));
+});
+test("v5: saved legacy v4 project without extra profiles remains valid",()=>{
+ const old=structuredClone(base);delete old.extraProfiles;
+ const upgraded=C.normalize(old);
+ assert.equal(upgraded.schema,3);assert.equal(upgraded.extraProfiles.length,0);
+ assert.ok(C.sceneFrom(upgraded).lines.length>0);
+});
+test("v5: 3D scene shares exactly the sketch attachment location and panel geometry",()=>{
+ const d=structuredClone(base);d.objects.find((x:any)=>x.kind==="under").xMm=990;
+ d.objects.find((x:any)=>x.kind==="wall").face="right";
+ const scene=C.sceneFrom(d);
+ assert.equal(scene.plates.length,d.objects.filter((x:any)=>["plate","under","wall","hinge"].includes(x.kind)).length);
+ assert.ok(scene.anchors.length>=scene.plates.length);
+ assert.ok(scene.panels.length>0);
+ const p=C.atStation(d,990);
+ assert.ok(scene.plates.some((x:any)=>Math.abs(x.p[0]-p[0]/1000)<1e-4));
+});
+test("v5: studio has live 3D canvas alongside 2D with adaptive fitted layout",()=>{
+ const ui=read("steelvision-detailer-ui.js"),css=read("steelvision-detailer.css"),integration=read("bcore-detailer-integration.js"),html=read("bcore-steelvision.html");
+ for(const key of ["sv5-dual","data-sv-3d","drawPreview3D","add-extra-profile","data-rail-prop","sceneFrom"])
+  assert.ok(ui.includes(key),key);
+ for(const key of ["sv5-dual","minmax(0,1fr)","sv-preview3d","sv-extra-row"])
+  assert.ok(css.includes(key),key);
+ for(const key of ["sv5SharedGrid","sv5SharedSketch","svRefreshSharedPreview","mountSharedPreview"])
+  assert.ok(integration.includes(key),key);
+ assert.ok(html.includes("if(sheet?.drawing && window.SVDetailCore?.sceneFrom)"));
+ assert.ok(html.includes("window.svRefreshSharedPreview?.()"));
+ assert.ok(html.includes("profil dodatkowy"));
+});
+test("v5: PDF/CSV/JSON email artefacts contain extra rail drawing and exact editable values",()=>{
+ const d=structuredClone(base);
+ d.extraProfiles=[{id:"top-2",label:"Secondary rail",profile:"60x40x3",fromMm:0,toMm:5900,gapMm:90,sideMm:35}];
+ const data=structuredClone(design);data.state.detailSheets[0].drawing=d;
+ const attachments=steelAttachments(contact,data,"BCS-0055");
+ assert.equal(attachments.length,3);
+ const pdf=Buffer.from(attachments[0].content,"base64").toString("latin1");
+ assert.ok(pdf.includes("EXTRA TOP PROFILES"));assert.ok(pdf.includes("Secondary rail"));
+ const json=JSON.parse(Buffer.from(attachments[2].content,"base64").toString("utf8"));
+ assert.equal(json.design.state.detailSheets[0].drawing.extraProfiles[0].gapMm,90);
+ const csv=Buffer.from(attachments[1].content,"base64").toString("utf8");
+ assert.ok(csv.includes("extraProfiles[0].sideMm"));
+});

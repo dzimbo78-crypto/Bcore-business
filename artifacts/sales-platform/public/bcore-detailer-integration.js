@@ -38,13 +38,13 @@ function save(){if(!editor||!state||!Array.isArray(state.items))return;const it=
  if(typeof linear==='function'&&linear(it)){
   const old=Array.isArray(it.segments)?it.segments:[];
   it.segments=drawing.segments.map((s,i)=>({name:s.name,length:Math.round(s.lengthMm)/1000,angle:s.angleDeg,jointType:old[i]?.jointType||(i===drawing.segments.length-1?'Koniec':'Spawane'),jointGap:Number(old[i]?.jointGap)||0}));
-  it.qty=drawing.quantity;it.height=drawing.heightMm/10;
+  it.qty=drawing.quantity;it.height=drawing.heightMm/10;it.topProfile=drawing.topRail;it.bottomProfile=drawing.bottomRail;it.postProfile=drawing.postProfile;
   if(typeof renderSegments==='function')renderSegments();
  }else{
   it.qty=drawing.quantity; // geometry for stairs/gates/frames remains a labelled supplemental sheet
  }
  if(typeof updateAll==='function')updateAll();
- editor.destroy();editor=null;$('bcDetailerDialog').close();baseline='';refresh();
+ editor.destroy();editor=null;$('bcDetailerDialog').close();baseline='';refresh();refreshSharedPreview();if(state.step===6&&typeof draw3D==='function'){draw3D($('view3d'),current(),mainCam,true);}
  const msg=$('bcStudioMessage');if(msg){msg.textContent=T('Rysunek zapisany w projekcie. PDF / CSV / JSON dołączy go do zapytania.','Drawing saved with the project and included in the RFQ.','Zeichnung mit dem Projekt gespeichert.');}
 }
 function open(){if(!state||!Array.isArray(state.items)||!state.items.length)return alert(T('Najpierw wybierz produkt.','Choose a product first.','Bitte zuerst ein Produkt auswählen.'));
@@ -63,6 +63,25 @@ function refresh(){const it=state?.items?.[Math.max(0,Math.min(Number(state.sele
  if(hint)hint.textContent=T('Dodawaj, przesuwaj i duplikuj: '+l[1]+'.','Add, move and duplicate '+l[1]+'.','Elemente zeichnen, verschieben und duplizieren.');
  const existing=Array.isArray(state?.detailSheets)&&state.detailSheets.some(x=>x&&x.itemIndex===state.selected);
  for(const el of [b,secondary])if(el){el.dataset.saved=existing?'1':'0';el.title=existing?'Edytuj zapisany rysunek':'Utwórz rysunek i detale';}
+}
+let sharedView='front';
+function refreshSharedPreview(){const box=$('sv5SharedSketch'),caption=$('sv5SharedCaption');if(!box||!state||!state.items?.length)return;
+ const idx=Math.max(0,Math.min(Number(state.selected)||0,state.items.length-1)),it=state.items[idx],saved=Array.isArray(state.detailSheets)?state.detailSheets.find(x=>x.itemIndex===idx&&(x.drawing?.productType||'railing')===it.type):null;
+ const doc=saved?.drawing||drawingFor(it,idx);box.innerHTML=U.drawingSvg(doc,'',sharedView);
+ if(caption)caption.textContent=saved?T('2D i 3D: ten sam zapisany model','2D and 3D use one saved model','2D und 3D: gemeinsames Modell'):
+ T('Szkic roboczy — zapisz w Studiu, aby zsynchronizować model 3D','Draft sketch — save it to synchronize 3D','Entwurf — speichern, um 3D zu synchronisieren');
+}
+function mountSharedPreview(){const canvas=$('view3d');if(!canvas||$('sv5SharedGrid'))return;
+ const wrapper=canvas.closest('.canvasWrap');if(!wrapper)return;
+ const grid=document.createElement('section');grid.id='sv5SharedGrid';grid.setAttribute('aria-label','Wspólne studio szkicu i modelu przestrzennego');
+ wrapper.parentNode.insertBefore(grid,wrapper);
+ const sketch=document.createElement('section');sketch.className='sv5-shared-sketch';sketch.innerHTML='<div class="sv5-shared-head"><b>Szkic 2D · bieżąca konstrukcja</b><div><button type="button" data-sketch-view="front">Elewacja</button><button type="button" data-sketch-view="plan">Rzut</button><button type="button" id="sv5SharedEdit">✎ Edytuj szczegóły</button><button type="button" id="sv5SharedMax">⛶</button></div></div><div id="sv5SharedSketch" class="sv5-shared-canvas"></div><div id="sv5SharedCaption" class="sv5-shared-caption"></div>';
+ grid.append(sketch,wrapper);
+ $('sv5SharedEdit').addEventListener('click',open);
+ sketch.querySelectorAll('[data-sketch-view]').forEach(b=>b.addEventListener('click',()=>{sharedView=b.dataset.sketchView;refreshSharedPreview()}));
+ $('sv5SharedMax').addEventListener('click',()=>{sketch.classList.toggle('sv5-shared-max');$('sv5SharedMax').textContent=sketch.classList.contains('sv5-shared-max')?'× Zamknij':'⛶';});
+ const observer=typeof ResizeObserver==='function'?new ResizeObserver(()=>{if(state.step===6&&typeof draw3D==='function')requestAnimationFrame(()=>draw3D(canvas,current(),mainCam,false));}):null;
+ observer?.observe(wrapper);window.svRefreshSharedPreview=refreshSharedPreview;refreshSharedPreview();
 }
 function init(){if($('bcDetailerButton'))return;
  const css=document.createElement('style');css.textContent=`
@@ -85,6 +104,22 @@ function init(){if($('bcDetailerButton'))return;
  #bcStudioGeometryBar{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;margin:12px 0;padding:10px 13px;border:1px solid #d2e1eb;background:#f5f9fc;border-radius:10px}
  #bcStudioGeometryBar span{font-size:11px;color:#45677c;font-weight:650}
  #bcDetailerGeometryButton{background:#183d57;color:white;border:0;border-radius:8px;padding:10px 14px;min-height:40px;cursor:pointer;font-weight:700}
+ #sv5SharedGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0;align-items:stretch;margin:0 0 16px}
+ #sv5SharedGrid>*{min-width:0;min-height:0}
+ #sv5SharedGrid .canvasWrap{width:100%;min-width:0;max-width:100%;margin:0;overflow:hidden;border-radius:12px;align-self:stretch}
+ #sv5SharedGrid #view3d{display:block;width:100%;height:clamp(390px,48vh,650px)}
+ #sv5SharedGrid .sv5-shared-sketch{display:flex;flex-direction:column;min-width:0;overflow:hidden;background:white;border:1px solid #d3e1e8;border-radius:12px;box-shadow:0 7px 21px #17394d0e}
+ #sv5SharedGrid .sv5-shared-head{display:flex;justify-content:space-between;gap:9px;align-items:center;flex-wrap:wrap;padding:11px 12px;background:#f3f7fa;border-bottom:1px solid #d9e7ee}
+ #sv5SharedGrid .sv5-shared-head b{font-size:12px;color:#163a52}
+ #sv5SharedGrid .sv5-shared-head>div{display:flex;flex-wrap:wrap;gap:4px}
+ #sv5SharedGrid .sv5-shared-head button{border:1px solid #bfcfda;background:#fff;color:#254c64;min-height:29px;padding:4px 8px;font-size:10px;border-radius:6px}
+ #sv5SharedGrid .sv5-shared-canvas{height:clamp(340px,42vh,610px);min-width:0;overflow:hidden;padding:8px;background:#fff;display:flex;align-items:center;justify-content:center}
+ #sv5SharedGrid .sv5-shared-canvas svg{width:100%;height:100%;display:block;object-fit:contain;min-width:0}
+ #sv5SharedGrid .sv5-shared-caption{font-size:11px;color:#5a7689;padding:8px 12px;border-top:1px solid #e2ebf1}
+ #sv5SharedGrid .sv5-shared-max{position:fixed;inset:10px;z-index:2147483000;box-shadow:0 0 0 120vmax #071b2bcf,0 25px 70px #0007}
+ #sv5SharedGrid .sv5-shared-max .sv5-shared-canvas{height:auto;min-height:0;flex:1}
+ @media(max-width:1250px){#sv5SharedGrid{grid-template-columns:minmax(0,1fr)}#sv5SharedGrid .sv5-shared-canvas{height:360px}#sv5SharedGrid #view3d{height:500px}}
+ @media(max-width:650px){#sv5SharedGrid .sv5-shared-canvas{height:260px}#sv5SharedGrid #view3d{height:380px}#sv5SharedGrid .sv5-shared-head{padding:8px}#sv5SharedGrid .sv5-shared-head button{font-size:10px}}
  #bcoreSteelVisionV19QuoteTop{display:none!important}
  @media(max-width:800px){#bcDetailerDialog{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0}#bcDetailerDialog #bcDetailerHost{max-height:calc(100dvh - 62px)}#bcDetailerDialog .bc-head{padding:9px 11px}}
  `;document.head.appendChild(css);
@@ -102,7 +137,7 @@ function init(){if($('bcDetailerButton'))return;
  let scheduled=false;const queue=()=>{if(!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;refresh()})}};
  document.addEventListener('click',queue);document.addEventListener('change',queue);document.addEventListener('input',queue);
  const obs=new MutationObserver(queue);const group=document.querySelector('.productGrid');if(group)obs.observe(group,{subtree:true,attributes:true,attributeFilter:['class']});
- refresh();
+ mountSharedPreview();refresh();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
