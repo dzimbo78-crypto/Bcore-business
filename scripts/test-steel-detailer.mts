@@ -374,3 +374,79 @@ test('v7 mail package carries manual hole layouts, mounting side and exact X/Y c
  const json=JSON.parse(Buffer.from(attachments[2].content,'base64').toString('utf8'));
  assert.equal(json.design.state.detailSheets[0].drawing.objects.find((x:any)=>x.id===mount.id).holePoints[1].y,55.5);
 });
+
+
+test('v8: removing infill across all eight product families clears every representation',()=>{
+ for(const family of Object.keys(C.PRODUCT_TYPES)){
+  const model=C.productPreset(family),cleared=C.setInfill(model,'Brak');
+  assert.equal(cleared.panelType,'Brak',family);
+  assert.equal(cleared.objects.filter((o:any)=>o.kind==='panel').length,0,family);
+  assert.equal(C.summary(cleared).panelM2,0,family);
+  assert.equal(C.sceneFrom(cleared).panels.length,0,family);
+  assert.ok(!C.bom(cleared).some((p:any)=>p.unit==='m²'),family);
+  assert.ok(!C.toDXF(cleared).includes('\nPANELS\n'),family);
+  const restored=C.setInfill(cleared,'Szkło');
+  assert.equal(restored.panelType,'Szkło');
+ }
+});
+test('v8: underside slab bracket is a real stem with two one-hole mounting tabs',()=>{
+ for(const family of Object.keys(C.PRODUCT_TYPES)){
+  const project=C.setInfill(C.productPreset(family),'Brak');
+  const beforeCount=project.objects.length;
+  const out=C.insertUndersideBracket(project,C.length(project)/2);
+  assert.equal(out.ids.length,3,family);
+  assert.equal(out.drawing.objects.length,beforeCount+3,family);
+  const assembly=out.drawing.objects.filter((o:any)=>o.assemblyId===out.assemblyId);
+  assert.equal(assembly.length,3,family);
+  assert.equal(assembly.filter((o:any)=>o.kind==='support').length,1,family);
+  const tabs=assembly.filter((o:any)=>o.kind==='plate');
+  assert.equal(tabs.length,2,family);
+  assert.ok(tabs.every((x:any)=>x.face==='underside'&&x.mountTo==='slab'&&x.holeCount===1));
+  assert.notEqual(tabs[0].xMm,tabs[1].xMm);
+  const rendered=C.sceneFrom(out.drawing);
+  assert.equal(rendered.plates.filter((p:any)=>p.assemblyId===out.assemblyId).length,2,family);
+  assert.ok(rendered.anchors.filter((p:any)=>out.ids.includes(p.mountId)).length>=2);
+  assert.ok(C.fabricationPlan(out.drawing).pieces.some((p:any)=>p.label.includes('profil wspornika')));
+ }
+});
+test('v8: removing just one bracket tab keeps support and other tab editable',()=>{
+ const out=C.insertUndersideBracket(C.setInfill(C.productPreset('railing'),'Brak'),1450);
+ const d=C.normalize(out.drawing);d.objects=d.objects.filter((o:any)=>o.id!==out.ids[1]);
+ assert.equal(d.objects.filter((o:any)=>o.assemblyId===out.assemblyId).length,2);
+ assert.equal(C.sceneFrom(d).plates.filter((o:any)=>o.assemblyId===out.assemblyId).length,1);
+ assert.ok(C.toDXF(d).includes('MOUNTS_PLATES'));
+});
+test('v8: advanced calculator has quick configuration and authoritative CAD mounting BOM',()=>{
+ const ui=read('steelvision-detailer-ui.js'),core=read('steelvision-detailer-core.js');
+ const html=read('bcore-steelvision.html');
+ const integration=read('bcore-detailer-integration.js');
+ assert.ok(ui.includes('data-infill-choice'));
+ assert.ok(ui.includes('data-action="remove-infill"'));
+ assert.ok(ui.includes('data-action="add-underside-bracket"'));
+ assert.ok(ui.includes('data-action="select-assembly"'));
+ assert.ok(core.includes('function insertUndersideBracket'));
+ assert.ok(core.includes('function setInfill'));
+ assert.ok(html.includes('CAD · wspornik pionowy'));
+ assert.ok(html.includes('if(detail&&Array.isArray(detail.objects))'));
+ assert.ok(html.includes('steelvision-detailer-ui.js?v=8'));
+ assert.ok(integration.includes("if(drawing.panelType==='Brak')it.infill='none'"));
+ assert.equal((html.match(/bcore-steelvision-bridge\.js/g)||[]).length,1);
+});
+test('v8: email package receives explicit no-infill and both underside fixing tabs',()=>{
+ const photo=C.insertUndersideBracket(C.setInfill(base,'Brak'),1200);
+ const payload=structuredClone(design);
+ payload.state.detailSheets=[{itemIndex:0,productType:'railing',drawing:photo.drawing}];
+ const files=steelAttachments(contact,payload,'BCS-V8-PHOTO');
+ assert.equal(files.length,3);
+ const pdf=Buffer.from(files[0].content,'base64').toString('latin1');
+ assert.ok(pdf.includes('Infill / wypelnienie: Brak'));
+ assert.ok(pdf.includes('MOUNTING SCHEDULE'));
+ const json=JSON.parse(Buffer.from(files[2].content,'base64').toString('utf8'));
+ const received=json.design.state.detailSheets[0].drawing;
+ assert.equal(received.panelType,'Brak');
+ assert.equal(received.objects.filter((o:any)=>o.assemblyId===photo.assemblyId).length,3);
+ assert.equal(received.objects.filter((o:any)=>o.assemblyId===photo.assemblyId&&o.holeCount===1).length,2);
+ const csv=Buffer.from(files[1].content,'base64').toString('utf8');
+ assert.ok(csv.includes('assemblyId'));
+ assert.ok(csv.includes('underside'));
+});
