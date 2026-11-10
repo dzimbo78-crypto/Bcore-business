@@ -298,3 +298,71 @@ test('v6 interactive 3D preview renders true rotated mounting plate polygons',()
  assert.ok(ui.includes('pl.vAxis'));
  assert.ok(ui.includes('corners.slice(1).forEach'));
 });
+
+
+test('v7: each of eight product families can anchor custom plate detail to its own component',()=>{
+ for(const family of Object.keys(C.PRODUCT_TYPES)){
+  const d=C.productPreset(family,{quantity:2,name:'Test '+family});
+  const member=d.objects.find((x:any)=>['post','step','beam','panel'].includes(x.kind));
+  assert.ok(member,family+' missing an attachable component');
+  d.objects.push({id:'V7-P',kind:'plate',label:'Plate '+family,xMm:0,zMm:0,
+   referenceId:'',plateWidthMm:160,plateHeightMm:100,plateThicknessMm:8,face:'left',
+   holePattern:'custom',holeCount:3,holeDiaMm:10,customHoles:[{x:15,y:15},{x:145,y:15},{x:80,y:85}]});
+  const linked=C.attachMount(d,'V7-P',member.id);
+  const plate=linked.objects.find((x:any)=>x.id==='V7-P');
+  assert.equal(plate.referenceId,member.id);
+  assert.deepEqual(JSON.parse(JSON.stringify(C.detailDims(plate).holes)),[{x:15,y:15},{x:145,y:15},{x:80,y:85}]);
+  const moved=C.moveAbsolute(linked,'V7-P',member.xMm+50,member.zMm+30);
+  assert.equal(moved.objects.find((x:any)=>x.id==='V7-P').offsetXmm,50);
+  const scene=C.sceneFrom(moved);
+  assert.ok(scene.plates.some((x:any)=>x.mountId==='V7-P'));
+  assert.ok(C.toDXF(moved).includes('HOLES'));
+  assert.ok(C.fabricationPlan(moved).mounts.some((x:any)=>x.id==='V7-P'&&x.plateThicknessMm===8));
+ }
+});
+test('v7: moving a base member also relocates its linked plate',()=>{
+ const raw=C.productPreset('frame',{lengthMm:4000});
+ const member=raw.objects.find((x:any)=>x.kind==='post');
+ raw.objects.push({id:'PL-V7',kind:'plate',label:'Linked plate',referenceId:member.id,offsetXmm:80,offsetZmm:45,plateWidthMm:160,plateHeightMm:90,holeDiaMm:10,holeCount:2});
+ const initial=C.normalize(raw),before=initial.objects.find((x:any)=>x.id==='PL-V7');
+ const next=C.transformObjects(initial,[member.id],{dx:300,dz:70}),after=next.objects.find((x:any)=>x.id==='PL-V7');
+ assert.equal(after.xMm,before.xMm+300);assert.equal(after.zMm,before.zMm+70);
+ const detached=C.attachMount(next,'PL-V7','');
+ assert.equal(detached.objects.find((x:any)=>x.id==='PL-V7').xMm,after.xMm);
+});
+test('v7: hole collision and plate-edge violations are detected before export',()=>{
+ const d=C.productPreset('gate');const plate=d.objects.find((x:any)=>x.kind==='hinge');
+ plate.holePattern='custom';plate.holeCount=2;plate.holeDiaMm=24;plate.customHoles=[{x:1,y:1},{x:5,y:5}];
+ assert.ok(C.validate(d).some((x:any)=>x.code==='HOLE_OUTSIDE'));
+ assert.ok(C.validate(d).some((x:any)=>x.code==='HOLES_OVERLAP'));
+});
+test('v7: professional mount-detail editor has own workspace and controls',()=>{
+ const ui=read('steelvision-detailer-ui.js'),css=read('steelvision-detailer.css');
+ for(const token of ['detailModal','sv-detail-overlay','data-detail-key','data-hole-drag','data-detail-action="custom-holes"','mountTargets','attachMount','moveAbsolute','DETAIL_PRESETS','data-action="add-detail-mount"']){
+  assert.ok(ui.includes(token),'missing '+token);
+ }
+ assert.ok(css.includes('.sv-detail-dialog')&&css.includes('.sv-detail-form'));
+});
+test('v7: quotation PDF and CSV/JSON retain individually positioned custom holes and plate reference',()=>{
+ const d=structuredClone(base);
+ d.objects.push({id:'PL-V7',kind:'plate',label:'One-off plate',
+  xMm:1200,zMm:500,referenceId:'@upper',offsetXmm:80,offsetZmm:-100,
+  face:'right',plateWidthMm:160,plateHeightMm:110,plateThicknessMm:9,
+  holePattern:'custom',holeCount:2,holeDiaMm:12,customHoles:[{x:17,y:23},{x:143,y:87}],
+  normalOffsetMm:30,connectionMethod:'bolt'});
+ const linked=C.normalize(d);
+ const payload=structuredClone(design);payload.state.detailSheets=[{itemIndex:0,productType:'railing',drawing:linked}];
+ const a=steelAttachments(contact,payload,'BCS-0000-V7');
+ assert.equal(a.length,3);
+ const pdf=Buffer.from(a[0].content,'base64').toString('latin1');
+ assert.ok(pdf.includes('DIMENSIONED MOUNT PLATE'));
+ assert.ok(pdf.includes('Hole 1: X 17.0'));
+ assert.ok(pdf.includes('Hole 2: X 143.0'));
+ assert.ok(pdf.includes('LINK @upper'));
+ const json=JSON.parse(Buffer.from(a[2].content,'base64').toString('utf8'));
+ const one=json.design.state.detailSheets[0].drawing.objects.find((o:any)=>o.id==='PL-V7');
+ assert.equal(one.referenceId,'@upper');assert.equal(one.customHoles[1].x,143);
+ assert.equal(one.plateThicknessMm,9);assert.equal(one.normalOffsetMm,30);
+ const csv=Buffer.from(a[1].content,'base64').toString('utf8');
+ assert.ok(csv.includes('customHoles[1].x')&&csv.includes('referenceId'));
+});
