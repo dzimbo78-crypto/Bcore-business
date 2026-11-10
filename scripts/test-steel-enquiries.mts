@@ -222,3 +222,15 @@ test("dual outage returns error, never success",async()=>{
     if(originalKey!==undefined)process.env.RESEND_API_KEY=originalKey;
   }
 });
+
+
+test("stale detailer product category is rejected before storage or email",async()=>{
+  const bad=structuredClone(good);
+  bad.design.state.detailSheets=[{itemIndex:0,drawing:{
+    app:"steelvision-detailer",schema:3,productType:"stairs",
+    segments:[{name:"Front",lengthMm:4600,angleDeg:0}],objects:[]
+  }}];
+  const response=await call(bad);
+  assert.equal(response.code,400);
+  assert.equal(response.payload?.code,"stale_detail_sheet");
+});
