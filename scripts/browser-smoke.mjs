@@ -28,7 +28,22 @@ window.addEventListener("load",()=>{
     host.querySelector("[data-add=wall]").click();
     const face=host.querySelector("[data-edit=face]");
     face.value="right";face.dispatchEvent(new Event("change",{bubbles:true}));
+    host.querySelector('[data-action="add-extra-profile"]').click();
+    const gap=host.querySelector('[data-rail-prop="gapMm"]');
+    gap.value="120";gap.dispatchEvent(new Event("change",{bubbles:true}));
     document.getElementById("bcSaveDetails").click();
+    const saved=state.detailSheets?.[0]?.drawing;
+    if(!saved?.extraProfiles?.length||saved.extraProfiles[0].gapMm!==120)
+      throw Error("Cannot save extra top rail geometry");
+    const sketchGeometry=SVDetailCore.sceneFrom(saved);
+    const sceneGeometry=buildGeom(state.items[0]);
+    if(sketchGeometry.lines.length!==sceneGeometry.lines.length ||
+       sketchGeometry.plates.length!==sceneGeometry.plates.length)
+      throw Error("3D geometry does not match the saved 2D sketch");
+    setStep(6);
+    if(!document.getElementById("sv5SharedGrid") ||
+       !document.getElementById("sv5SharedSketch").querySelector("svg"))
+      throw Error("Shared side-by-side 2D and 3D workspaces not visible");
     setTimeout(()=>document.getElementById("bcoreSteelVisionV19Quote").click(),150);
   }catch(error){document.body.dataset.qaError=String(error);}
 });
@@ -185,6 +200,7 @@ try{
     "/bcore-steelvision.html?bcore_qa=detailer",['id="bcore-contact-form"','id="bcore-qa-end-to-end-complete"']);
   const sheets=testQuote?.design?.state?.detailSheets;
   if(!sheets?.length || !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.face==="right") ||
+     sheets[0].drawing?.extraProfiles?.[0]?.gapMm!==120 ||
      testQuote?.design?.state?.items?.[0]?.segments?.[0]?.length!==3.76)
     throw Error("Drawing/fixings were not carried through the original e-mail RFQ flow: "+JSON.stringify(sheets||[]).slice(0,1000));
   console.log("PASS browser: edited wall fixing and detailSheets reach the existing RFQ endpoint");
