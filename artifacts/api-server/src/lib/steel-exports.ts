@@ -171,6 +171,19 @@ function reportLines(contact: ObjectMap, design: ObjectMap, reference: string, g
         " / gap " + take(s.jointGap) + " mm");
     });
   });
+  const drawings = arr(state.detailSheets);
+  if (drawings.length) {
+    lines.push("", "EDITABLE DETAILING SHEETS / DETALE BALUSTRAD");
+    drawings.slice(0,60).forEach((entry,i) => {
+      const v=obj(entry), d=obj(v.drawing), geometry=arr(d.segments);
+      const amount=geometry.reduce<number>((n,x)=>n+Number(obj(x).lengthMm||0),0);
+      lines.push("  Sheet "+(i+1)+": "+take(d.name||v.itemName)+
+        " / "+amount.toFixed(0)+" mm / "+arr(d.objects).length+" objects / REV "+take(d.revision));
+    });
+    lines.push("Mounts are editable customer geometry; strength and anchors are not verified.");
+  }
+  arr(report.detailerWarnings).slice(0,60).forEach((entry) =>
+    lines.push("DETAILER PROFILE DISCREPANCY: " + take(entry,250)));
   lines.push("", "AUTOMATIC GEOMETRY CORRECTIONS (before -> after)");
   const corrections = arr(report.corrections);
   if (!corrections.length) lines.push("None made automatically.");
@@ -203,6 +216,88 @@ function reportLines(contact: ObjectMap, design: ObjectMap, reference: string, g
   return lines;
 }
 
+/** Converts editable SteelVision Detailer v3 sheets to printable PDF vector
+ * geometry. Values are customer-supplied concept dimensions, never approvals. */
+function buildDetailerSheets(design: ObjectMap): PlanSheet[] {
+  const raw = arr(obj(design.state).detailSheets).slice(0, 60);
+  const N = (v: unknown, min: number, max: number, fallback = min) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+  };
+  const P = (n: number) => n.toFixed(2);
+  const line = (x1: number, y1: number, x2: number, y2: number) =>
+    `${P(x1)} ${P(y1)} m ${P(x2)} ${P(y2)} l S`;
+  const rect = (x: number, y: number, w: number, h: number) =>
+    `${P(x)} ${P(y)} ${P(w)} ${P(h)} re S`;
+  const circle = (x: number, y: number, radius: number) => {
+    const r = Math.max(.7, radius), k = 0.55228474983 * r;
+    return `${P(x+r)} ${P(y)} m ${P(x+r)} ${P(y+k)} ${P(x+k)} ${P(y+r)} ${P(x)} ${P(y+r)} c ` +
+      `${P(x-k)} ${P(y+r)} ${P(x-r)} ${P(y+k)} ${P(x-r)} ${P(y)} c ` +
+      `${P(x-r)} ${P(y-k)} ${P(x-k)} ${P(y-r)} ${P(x)} ${P(y-r)} c ` +
+      `${P(x+k)} ${P(y-r)} ${P(x+r)} ${P(y-k)} ${P(x+r)} ${P(y)} c S`;
+  };
+  const label = (x: number, y: number, size: number, value: unknown) =>
+    `BT /F1 ${size} Tf ${P(x)} ${P(y)} Td (${pdfEscape(take(value, 120))}) Tj ET`;
+  return raw.flatMap((sheet, idx): PlanSheet[] => {
+    const s = obj(sheet), d = obj(s.drawing);
+    if (d.app !== "steelvision-detailer" || d.schema !== 3) return [];
+    const segments = arr(d.segments).slice(0, 30).map(obj).filter(x => Number(x.lengthMm)>0);
+    if (!segments.length) return [];
+    const total = segments.reduce((sum, x) => sum + N(x.lengthMm, 50, 30000), 0);
+    if (!Number.isFinite(total) || total <= 0) return [];
+    const h = N(d.heightMm, 350, 3500, 1120), objects = arr(d.objects).slice(0, 400).map(obj);
+    const scale = Math.min(475 / total, 184 / h), X = (x: number) => 54 + x * scale;
+    const Y = (z: number) => 363 + z * scale;
+    const commands = ["q", "0.10 0.34 0.53 RG", "0.8 w", label(50, 655, 12, "STEELVISION - DETAIL DRAWING / RYSUNEK BALUSTRADY"),
+      label(50, 642, 8, "Front unfolded elevation - dimensions in mm (concept only)"),
+      rect(X(0),Y(0),total*scale,h*scale),
+      line(X(0),Y(h-90),X(total),Y(h-90)),line(X(0),Y(60),X(total),Y(60)),
+      "0.06 0.47 0.66 RG", "1.4 w"];
+    let posts=0,fixings=0;
+    for (const entry of objects) {
+      const kind=String(entry.kind||""),x=N(entry.xMm,0,total,0),z=N(entry.zMm,-1000,5000,0);
+      if(kind==="post"){
+        posts++;
+        commands.push(line(X(x),Y(0),X(x),Y(h)));
+      }
+      if (["plate","under","wall"].includes(kind)) {
+        fixings++;
+        const w=N(entry.plateWidthMm,10,1000,120),ht=N(entry.plateHeightMm,10,1000,25),n=Math.floor(N(entry.holeCount,0,16,2)),diam=N(entry.holeDiaMm,0,120,10);
+        const cx=X(x),cy=Y(z),pw=Math.max(2,w*scale),ph=Math.max(2,ht*scale);
+        commands.push(rect(cx-pw/2,cy-ph/2,pw,ph));
+        for(let j=0;j<n;j++) commands.push(circle(cx-pw/2+(j+1)*pw/(n+1),cy,Math.max(.8,diam*scale/2)));
+        if(kind==="under")commands.push(line(cx,Y(0),cx,Y(-N(entry.dropMm,0,1500,170))));
+      }
+      if(kind==="support")commands.push(line(X(x),Y(0),X(x),Y(-N(entry.dropMm,0,1500,170))));
+    }
+    commands.push("0.72 0.32 0.17 RG","0.6 w",line(X(0),334,X(total),334),line(X(0),330,X(0),338),line(X(total),330,X(total),338),
+      label(215,324,10,`${Math.round(total)} mm`),label(50,613,9,`Posts: ${posts} | Mountings: ${fixings} | Height: ${Math.round(h)} mm`));
+    // Plan view follows the true segment angles, not just the unfolded length.
+    const points: number[][]=[[0,0]];
+    for(const seg of segments){const prev=points[points.length-1];const a=N(seg.angleDeg,-360,360)*Math.PI/180,l=N(seg.lengthMm,50,30000);
+      points.push([prev[0]+l*Math.cos(a),prev[1]+l*Math.sin(a)]);}
+    const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);
+    const sx=Math.max(1,Math.max(...xs)-Math.min(...xs)),sy=Math.max(1,Math.max(...ys)-Math.min(...ys));
+    const factor=Math.min(320/sx,100/sy,1);const xx=(v:number)=>100+(v-Math.min(...xs))*factor, yy=(v:number)=>195+(v-Math.min(...ys))*factor;
+    commands.push("0.18 0.43 0.59 RG","1.5 w",label(50,303,10,"PLAN VIEW / RZUT Z GORY"));
+    for(let i=1;i<points.length;i++)commands.push(line(xx(points[i-1][0]),yy(points[i-1][1]),xx(points[i][0]),yy(points[i][1])));
+    const firstFixing=objects.find(o=>["plate","under","wall"].includes(String(o.kind)));
+    if(firstFixing){const w=N(firstFixing.plateWidthMm,10,1000,120),ht=N(firstFixing.plateHeightMm,10,1000,25),n=Math.floor(N(firstFixing.holeCount,0,16,2)),diam=N(firstFixing.holeDiaMm,0,120,10);
+      const sc=Math.min(100/w,30/ht,2);
+      const rw=w*sc,rh=ht*sc,x=460-rw/2,y=225;
+      commands.push(label(402,303,10,"MOUNTING DETAIL (sample)"),rect(x,y,rw,rh));
+      for(let j=0;j<n;j++)commands.push(circle(x+(j+1)*rw/(n+1),y+rh/2,Math.max(1,diam*sc/2)));
+      commands.push(label(402,207,8,`${Math.round(w)} x ${Math.round(ht)} mm / ${n} x dia ${Math.round(diam)} mm`));
+    }
+    commands.push(label(50,120,8,"NOT APPROVED FOR FABRICATION. ENGINEER: verify loads, anchors, welds and concrete."),"Q");
+    return [{title:`SteelVision Detailer v3 - ${idx+1}. ${take(d.name||s.itemName||"Railing",45)}`,
+      geometry:commands.join("\n")+"\n",
+      notes:[`Qty: ${N(d.quantity,1,100,1)} | Rev: ${take(d.revision||"A",12)} | Finish: ${take(d.finish,50)}`,
+        `Length: ${Math.round(total)} mm | Elevation: ${Math.round(h)} mm`,
+        `Profile top/bottom: ${take(d.topRail,30)}/${take(d.bottomRail,30)}, post: ${take(d.postProfile,30)}`,
+        `Attachment locations and holes must be checked against site and material.`]}];
+  });
+}
 export function steelAttachments(contact: ObjectMap, design: ObjectMap, reference: string) {
   const prefix = reference.replace(/[^A-Za-z0-9_-]/g, "_");
   // Stable bytes matter for provider idempotency: a retry with identical
@@ -212,7 +307,7 @@ export function steelAttachments(contact: ObjectMap, design: ObjectMap, referenc
     ? new Date(report.createdAt).toISOString() : "1970-01-01T00:00:00.000Z";
   const json = JSON.stringify({ reference, contact, design, generatedAt: date }, null, 2);
   const csv = csvFromDesign({ reference, contact, ...design });
-  const pdf = createPdf(reportLines(contact, design, reference, date), buildPlanSheets(design));
+  const pdf = createPdf(reportLines(contact, design, reference, date), [...buildPlanSheets(design), ...buildDetailerSheets(design)]);
   return [
     { filename: prefix + "_SteelVision_Report.pdf", content: pdf.toString("base64") },
     { filename: prefix + "_SteelVision_Full_Data.csv", content: Buffer.from(csv, "utf8").toString("base64") },

@@ -78,6 +78,31 @@
     if(changes.length&&typeof updateAll==="function")updateAll();
     return {changes,unresolved};
   }
+  function detailerConsistency(){
+    const critical=[],warnings=[];
+    const sheets=Array.isArray(state?.detailSheets)?state.detailSheets:[];
+    for(const entry of sheets){
+      const index=Number(entry?.itemIndex),item=state?.items?.[index],drawing=entry?.drawing;
+      if(!item||!drawing||!Array.isArray(drawing.segments)){critical.push("Drawing without a matching item");continue}
+      if(typeof linear==="function"&&!linear(item))continue;
+      const segments=Array.isArray(item.segments)?item.segments:[];
+      if(segments.length!==drawing.segments.length){critical.push((item.name||"Item")+": section count differs from drawing");continue}
+      for(let i=0;i<segments.length;i++){
+        const actual=Number(segments[i]?.length)*1000,requested=Number(drawing.segments[i]?.lengthMm);
+        const a=Number(segments[i]?.angle)||0,b=Number(drawing.segments[i]?.angleDeg)||0;
+        if(!Number.isFinite(actual)||!Number.isFinite(requested)||Math.abs(actual-requested)>1||Math.abs(a-b)>.01){
+          critical.push((item.name||"Item")+": segment "+(i+1)+" changed after saving the detail drawing");break;
+        }
+      }
+      if(Number.isFinite(+item.height)&&Number.isFinite(+drawing.heightMm)&&Math.abs(Number(item.height)*10-Number(drawing.heightMm))>1)
+        critical.push((item.name||"Item")+": height changed after saving the detail drawing");
+      for(const [key,k] of [["topProfile","topRail"],["bottomProfile","bottomRail"],["postProfile","postProfile"]]){
+        if(item[key]&&drawing[k]&&String(item[key])!==String(drawing[k]))
+          warnings.push((item.name||"Item")+": profile "+key+" differs from saved detail drawing; verify takeoff before quotation");
+      }
+    }
+    return {critical,warnings};
+  }
   function buildReport(review){
     const validation=typeof projectValidationSummary==="function"?projectValidationSummary():{issues:[],blockers:0,warnings:0};
     const integrity=typeof v16IntegrityAudit==="function"?v16IntegrityAudit():{issues:[],passed:0,total:0};
@@ -116,13 +141,18 @@
       if(typeof pieceLength==="function" &&
         state.items.every(it=>!Number.isFinite(+pieceLength(it))||+pieceLength(it)<=0))
         throw Error("No project geometry");
+      const consistency=detailerConsistency();
+      if(consistency.critical.length){
+        alert(pick("Rysunek techniczny nie zgadza się z aktualną geometrią kalkulatora. Otwórz edytor detali i zapisz rysunek ponownie.\n","Drawing differs from the current calculator geometry. Reopen the detail editor and save again.\n","Die Detailzeichnung stimmt nicht mit der Kalkulatorgeometrie überein. Zeichnung erneut speichern.\n")+consistency.critical.slice(0,4).join("\n"));
+        return;
+      }
       const review=automaticGeometryReview();
       const project={};
       for(const id of projectIds)project[id]=$id(id)?.value||"";
       const design=JSON.parse(JSON.stringify({
         version:"B-CORE-SteelVision-19",
         quoteId:(window.crypto?.randomUUID?.()||("q"+Date.now()+"-"+Math.random().toString(16).slice(2))),
-        project,state,report:buildReport(review)
+        project,state,report:{...buildReport(review),detailerWarnings:consistency.warnings}
       }));
       const brief=typeof orderText==="function"?orderText():"SteelVision project: "+(project.projectName||"");
       // Contact textarea is max 10k; JSON/CSV/PDF carry the complete design.
