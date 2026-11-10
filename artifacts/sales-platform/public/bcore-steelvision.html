@@ -1187,6 +1187,36 @@ function bomForItem(it){
      length:len*q,count:q,mass:pr.kgm==null?null:len*q*pr.kgm,area:pr.m2m==null?null:len*q*pr.m2m});
   });
  }
+ // If CAD detailing was saved, its mounting schedule is authoritative.
+ // Do not add automatic plates/anchors again on top of the edited drawing.
+ const index=state.items.indexOf(it),savedCAD=Array.isArray(state.detailSheets)
+   ?state.detailSheets.find(x=>x?.itemIndex===index&&x?.drawing?.productType===it.type)?.drawing:null;
+ if(savedCAD&&Array.isArray(savedCAD.objects)){
+   const grouped=new Map(),qty=Math.max(1,Number(it.qty)||1);
+   for(const o of savedCAD.objects){
+     if(!["plate","wall","under","hinge"].includes(o.kind))continue;
+     const w=Math.max(10,Number(o.plateWidthMm)||120),h=Math.max(10,Number(o.plateHeightMm)||25),
+       t=Math.max(1,Number(o.plateThicknessMm)||6),n=o.holePattern==="custom"
+         ?Math.min(16,Array.isArray(o.customHoles)?o.customHoles.length:0)
+         :Math.max(0,Number(o.holeCount)||0);
+     const tag=[o.kind,w,h,t,n,o.holeDiaMm,o.face,o.connectionMethod].join("|");
+     if(!grouped.has(tag))grouped.set(tag,{w,h,t,n,dia:Number(o.holeDiaMm)||0,
+       kind:o.kind,face:o.face,method:o.connectionMethod,count:0});
+     grouped.get(tag).count++;
+   }
+   for(const entry of grouped.values()){
+     const {w,h,t,n,dia,kind,face,count}=entry,number=count*qty;
+     // mm³ * 7.85e-6 => kg, blank mass (holes and welds not deducted).
+     rows.push({name:"CAD · blacha mocowania "+kind+" ("+face+")",
+       spec:w+"×"+h+"×"+t+" mm / "+n+"×Ø"+dia,
+       length:null,count:number,mass:w*h*t*7.85e-6*number,
+       area:2*(w*h+w*t+h*t)*1e-6*number});
+     if(n>0)rows.push({name:"CAD · punkty kotwienia / łączniki "+kind,
+       spec:n+"×Ø"+dia+" / "+(entry.method||"wg projektu"),
+       length:null,count:n*number,mass:null,area:null});
+   }
+   return rows;
+ }
  if(["fence","gate"].includes(it.type))return rows;
  if(it.mountMode==="custom"){
    const groups={};it.customMounts.forEach(m=>{const s=effectiveMountSpec(it,m),key=[s.plateW,s.plateH,s.plateT,s.anchorType,s.anchorDia,s.holeCount,s.holeDia].join("|");if(!groups[key])groups[key]={s,count:0};groups[key].count++});
