@@ -62,7 +62,7 @@ window.addEventListener("load",()=>{
        saved.panelType!=="Brak" || saved.objects.some(o=>o.kind==="panel") || state.items[0].infill!=="none" ||
        !saved.objects.some(o=>o.kind==="support"&&o.assemblyId&&saved.objects.filter(x=>x.assemblyId===o.assemblyId).length===3) ||
        !saved.objects.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25))
-      throw Error("Cannot save extra top rail geometry");
+      throw Error("Cannot save extra top rail geometry | "+JSON.stringify({saved:!!saved,bracket:saved?.objects?.filter(x=>x.assemblyId).map(x=>({k:x.kind,group:x.assemblyId})).slice(-10),panel:saved?.panelType,panels:saved?.objects?.filter(x=>x.kind==="panel").length,gap:saved?.extraProfiles?.[0]?.gapMm,infill:state.items[0].infill,wall:saved?.objects?.filter(x=>x.kind==="wall").map(x=>({r:x.rotationDeg,y:x.yawDeg})),dialog:document.getElementById("bcDetailerDialog")?.open}));
     const sketchGeometry=SVDetailCore.sceneFrom(saved);
     const sceneGeometry=buildGeom(state.items[0]);
     if(sketchGeometry.lines.length!==sceneGeometry.lines.length ||
