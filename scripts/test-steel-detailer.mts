@@ -46,7 +46,7 @@ test('quote portal still loads existing full-project email bridge exactly once',
 test('bridge includes saved drawings in state and does not intercept server mail',()=>{
  const integration=read('bcore-detailer-integration.js');const bridge=read('bcore-steelvision-bridge.js');
  assert.ok(integration.includes('state.detailSheets=['));assert.ok(integration.includes('it.segments=drawing.segments.map'));
- assert.ok(bridge.includes('JSON.parse(JSON.stringify({'));assert.ok(bridge.includes('state,report:buildReport'));
+ assert.ok(bridge.includes('JSON.parse(JSON.stringify({'));assert.ok(bridge.includes('project,state,report:') && bridge.includes('detailerConsistency()'));
  assert.ok(bridge.includes('stageDraft(design,note)'));
 });
 const design={quoteId:'SV20261110-abcde',project:{projectName:'Balustrada 514'},state:{items:[{name:'Balustrada',type:'railing',qty:2,segments:[{length:.38,angle:90},{length:5.14,angle:0},{length:.38,angle:-90}]}],detailSheets:[{itemIndex:0,itemName:'Balustrada',drawing:base}]},report:{createdAt:'2026-11-10T09:00:00.000Z',issues:[],recommendations:[]}};
