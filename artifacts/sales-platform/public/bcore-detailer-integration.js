@@ -49,6 +49,12 @@ function save(){if(!editor||!state||!Array.isArray(state.items))return;const it=
  }else{
   it.qty=drawing.quantity; // geometry for stairs/gates/frames remains a labelled supplemental sheet
  }
+ // updateAll() reads the visible form back into state. Update that form first,
+ // otherwise its stale old value (e.g. bars) would resurrect deleted infill.
+ if(typeof linear==='function'&&linear(it)){
+  const select=document.getElementById('infill');
+  if(select&&Array.from(select.options).some(o=>o.value===it.infill))select.value=it.infill;
+ }
  if(typeof updateAll==='function')updateAll();
  editor.destroy();editor=null;$('bcDetailerDialog').close();baseline='';refresh();refreshSharedPreview();if(state.step===6&&typeof draw3D==='function'){draw3D($('view3d'),current(),mainCam,true);}
  const msg=$('bcStudioMessage');if(msg){msg.textContent=T('Rysunek zapisany w projekcie. PDF / CSV / JSON dołączy go do zapytania.','Drawing saved with the project and included in the RFQ.','Zeichnung mit dem Projekt gespeichert.');}
