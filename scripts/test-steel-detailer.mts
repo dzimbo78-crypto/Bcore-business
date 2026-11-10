@@ -244,3 +244,50 @@ test("v5: PDF/CSV/JSON email artefacts contain extra rail drawing and exact edit
  const csv=Buffer.from(attachments[1].content,"base64").toString("utf8");
  assert.ok(csv.includes("extraProfiles[0].sideMm"));
 });
+
+
+test('v6 CAD: rotating and orienting plates affects true 3D positions and DXF',()=>{
+ const d=structuredClone(base);
+ d.objects.push({id:'w3',kind:'wall',label:'QA rotated wall plate',face:'right',xMm:470,zMm:460,plateWidthMm:120,plateHeightMm:80,holeCount:4,holeDiaMm:10,holePattern:'grid',holeEdgeMm:15,rotationDeg:47,yawDeg:30});
+ const model=C.normalize(d);
+ const mount=model.objects.find((o:any)=>o.id==='w3');
+ assert.equal(mount.rotationDeg,47);assert.equal(mount.yawDeg,30);
+ const pts=C.mountPoints2D(mount);assert.equal(pts.holes.length,4);
+ assert.ok(pts.corners[0].x!==470-60);
+ const scene=C.sceneFrom(model),plate=scene.plates.find((p:any)=>p.mountId==='w3');
+ assert.equal(plate.surface,'face_minus');assert.equal(plate.rotationDeg,47);assert.ok(plate.uAxis&&plate.vAxis);
+ assert.ok(C.toDXF(model).includes('MOUNTS_WALL'));
+});
+test('v6 CAD: snap points are optional and use deterministic geometry',()=>{
+ const points=C.referencePoints(base);assert.ok(points.some((p:any)=>p.kind==='end'&&p.xMm===0));
+ assert.equal(C.snapToReference(base,7,0,{enabled:true,radiusMm:25}).xMm,0);
+ assert.equal(C.snapToReference(base,7,0,{enabled:false}).xMm,7);
+});
+test('v6 CAD: workshop drawing data contains exact X/Z, holes and profile cuts',()=>{
+ const d=structuredClone(base),o=d.objects.find((o:any)=>o.kind==='wall');o.rotationDeg=25;o.yawDeg=45;o.holePattern='grid';
+ const report=C.fabricationPlan(d);
+ assert.equal(report.lengthMm,5900);
+ const mount=report.mounts.find((x:any)=>x.id===o.id);
+ assert.equal(mount.rotationDeg,25);assert.equal(mount.yawDeg,45);
+ assert.equal(mount.holes.length,o.holeCount);
+ assert.ok(report.positions.length>0&&report.pieces.length>0);
+});
+test('v6 CAD: UI contains collapsible tool panels, angle controls and dimensioned A3 package',()=>{
+ const ui=read('steelvision-detailer-ui.js'),css=read('steelvision-detailer.css');
+ for(const word of ['decoratePanels','sv-panelcard',"field(\'rotationDeg\'",'data-action="show-points"','data-action="snap-points"','fabri'+'cationHTML','data-helper-kind','data-action="print"','sv-rotate-handle','rotationDrag'])assert.ok(ui.includes(word),word);
+ assert.ok(ui.includes("ev.stopPropagation()"),'editor events must not trigger calculator navigation');
+ assert.ok(css.includes('.sv-panelcard')&&css.includes('.sv-cadbar'));
+});
+test('v6 CAD: PDF email attachment includes rotated plate and dimensioned mount pages',()=>{
+ const source=structuredClone(design);
+ source.state.detailSheets[0].drawing.objects.find((o:any)=>o.kind==='wall').rotationDeg=37;
+ source.state.detailSheets[0].drawing.objects.find((o:any)=>o.kind==='wall').yawDeg=25;
+ const a=steelAttachments(contact,source,'BCS-0000QA6');
+ assert.equal(a.length,3);
+ const pdf=Buffer.from(a[0].content,'base64').toString('latin1');
+ assert.ok(pdf.includes('DIMENSIONED MOUNT PLATE'));
+ assert.ok(pdf.includes('Hole coordinates from left'));
+ assert.ok(pdf.includes('Orientation in assembly'));
+ const json=JSON.parse(Buffer.from(a[2].content,'base64').toString('utf8'));
+ assert.equal(json.design.state.detailSheets[0].drawing.objects.find((o:any)=>o.kind==='wall').rotationDeg,37);
+});

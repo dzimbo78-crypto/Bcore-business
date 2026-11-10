@@ -85,3 +85,34 @@
 #sv-detailer .sv-mainpanel .sv-paperinner{max-height:none}
 @media(max-width:1350px){#sv-detailer .sv5-dual{grid-template-columns:minmax(0,1fr)}#sv-detailer .sv5-dual .sv-preview3d canvas{height:clamp(270px,32vh,450px);flex:none}#sv-detailer .sv5-dual .sv-mainpanel .sv-paper{height:clamp(310px,43vh,570px)}}
 @media(max-width:760px){#sv-detailer .sv-extra-row{grid-template-columns:repeat(2,minmax(0,1fr)) 32px}#sv-detailer .sv-extra-row label:nth-child(1),#sv-detailer .sv-extra-row label:nth-child(2){grid-column:span 1}#sv-detailer .sv-extra-row button{grid-column:3}#sv-detailer .sv5-dual .sv-mainpanel .sv-paper{height:360px}#sv-detailer .sv5-dual .sv-preview3d canvas{height:310px}}
+/* v6 CAD usability: independently collapsible tools, no clipped input cards */
+#sv-detailer .sv-grid{grid-template-columns:minmax(280px,345px) minmax(0,1fr);min-width:0;align-items:start}
+#sv-detailer .sv-sidebar{min-width:0;min-height:0;max-height:min(75vh,890px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+#sv-detailer .sv-panelcard{min-width:0;margin:7px 0 11px;border:1px solid #cfdee6;border-radius:11px;background:white;overflow:hidden}
+#sv-detailer .sv-panelcard > summary{display:flex;align-items:center;justify-content:space-between;cursor:pointer;list-style:none;min-height:45px;padding:11px 13px;font-weight:750;font-size:12px;color:#21465d;background:#f3f8fb;user-select:none}
+#sv-detailer .sv-panelcard > summary::after{content:'＋';font-size:18px;line-height:1;color:#548198}
+#sv-detailer .sv-panelcard[open] > summary::after{content:'−'}
+#sv-detailer .sv-panelcard > summary::-webkit-details-marker{display:none}
+#sv-detailer .sv-panelcard > .sv-section{box-shadow:none!important;margin:0!important;border:0!important;padding:10px!important;min-width:0;max-width:100%}
+#sv-detailer .sv-panelcard .sv-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0}
+#sv-detailer .sv-panelcard .sv-fields>*{min-width:0}
+#sv-detailer .sv-panelcard input,#sv-detailer .sv-panelcard select,#sv-detailer .sv-panelcard textarea{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+#sv-detailer .sv-panelcard .sv-side-line{flex-wrap:wrap;gap:7px;min-width:0}
+#sv-detailer .sv-cadbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:9px 12px;border-bottom:1px solid #c8dce8;background:#eaf3f9;color:#29526b;font-size:11px}
+#sv-detailer .sv-cadbar button{padding:7px 10px;min-height:34px;white-space:normal;border:1px solid #b8ccda;border-radius:7px;background:white;font-weight:650;color:#1e526c}
+#sv-detailer .sv-cadbar button[aria-pressed="true"]{background:#176887;border-color:#176887;color:#fff}
+#sv-detailer .sv-cadbar label{display:inline-flex;align-items:center;gap:6px;font-weight:650}
+#sv-detailer .sv-cadbar select{width:auto;min-width:130px;min-height:34px;max-width:min(100%,210px);background:white}
+#sv-detailer .sv-helpers [data-helper]{cursor:crosshair;pointer-events:all}
+#sv-detailer .sv-helpers [data-helper]:hover circle{fill:#ffb65b;stroke:#ac5f22;stroke-width:2.4}
+#sv-detailer .sv-viewpanel,#sv-detailer .sv-preview3d{min-width:0;max-width:100%;overflow:hidden}
+#sv-detailer .sv-mainpanel .sv-paper{min-width:0;max-width:100%;overflow:auto;overscroll-behavior:contain}
+#sv-detailer .sv-mainpanel svg{max-width:none}
+#sv-detailer .sv-preview3d canvas{max-width:100%}
+#sv-detailer .sv-top-right{display:flex;flex-wrap:wrap;gap:6px;justify-content:end}
+@media(max-width:1050px){#sv-detailer .sv-grid{grid-template-columns:minmax(0,1fr)}#sv-detailer .sv-sidebar{max-height:none;overflow:visible;scrollbar-gutter:auto}}
+@media(max-width:520px){#sv-detailer .sv-panelcard .sv-fields{grid-template-columns:minmax(0,1fr)}#sv-detailer .sv-cadbar{align-items:stretch}#sv-detailer .sv-cadbar label{flex-wrap:wrap}#sv-detailer .sv-cadbar select{width:100%;max-width:100%}}
+
+#sv-detailer .sv-rotate-handle{cursor:grab;touch-action:none;pointer-events:all}
+#sv-detailer .sv-rotate-handle circle{pointer-events:all}
+#sv-detailer .sv-rotate-handle:hover circle{fill:#ffd279;stroke-width:2.2}

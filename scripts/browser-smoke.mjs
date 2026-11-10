@@ -28,12 +28,24 @@ window.addEventListener("load",()=>{
     host.querySelector("[data-add=wall]").click();
     const face=host.querySelector("[data-edit=face]");
     face.value="right";face.dispatchEvent(new Event("change",{bubbles:true}));
+    const initialStep=state.step;
+    const rotation=host.querySelector('[data-edit="rotationDeg"]');
+    rotation.value="37";rotation.dispatchEvent(new Event("change",{bubbles:true}));
+    const yaw=host.querySelector('[data-edit="yawDeg"]');
+    yaw.value="25";yaw.dispatchEvent(new Event("change",{bubbles:true}));
+    const geomPanel=host.querySelector('[data-panel="geometry"]');
+    geomPanel.open=false;
+    host.querySelector('[data-action="show-points"]').click();
+    if(state.step!==initialStep||geomPanel.open)
+      throw Error("Editing a mounting field navigates to Geometry or reopens collapsed panels");
+    if(!host.querySelector("[data-helper]"))throw Error("Mount helper points are not available");
     host.querySelector('[data-action="add-extra-profile"]').click();
     const gap=host.querySelector('[data-rail-prop="gapMm"]');
     gap.value="120";gap.dispatchEvent(new Event("change",{bubbles:true}));
     document.getElementById("bcSaveDetails").click();
     const saved=state.detailSheets?.[0]?.drawing;
-    if(!saved?.extraProfiles?.length||saved.extraProfiles[0].gapMm!==120)
+    if(!saved?.extraProfiles?.length||saved.extraProfiles[0].gapMm!==120 ||
+       !saved.objects.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25))
       throw Error("Cannot save extra top rail geometry");
     const sketchGeometry=SVDetailCore.sceneFrom(saved);
     const sceneGeometry=buildGeom(state.items[0]);
@@ -201,6 +213,7 @@ try{
   const sheets=testQuote?.design?.state?.detailSheets;
   if(!sheets?.length || !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.face==="right") ||
      sheets[0].drawing?.extraProfiles?.[0]?.gapMm!==120 ||
+     !sheets[0].drawing?.objects?.some(o=>o.kind==="wall"&&o.rotationDeg===37&&o.yawDeg===25) ||
      testQuote?.design?.state?.items?.[0]?.segments?.[0]?.length!==3.76)
     throw Error("Drawing/fixings were not carried through the original e-mail RFQ flow: "+JSON.stringify(sheets||[]).slice(0,1000));
   console.log("PASS browser: edited wall fixing and detailSheets reach the existing RFQ endpoint");
