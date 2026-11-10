@@ -430,6 +430,7 @@ test('v8: advanced calculator has quick configuration and authoritative CAD moun
  assert.ok(html.includes('if(detail&&Array.isArray(detail.objects))'));
  assert.ok(html.includes('steelvision-detailer-ui.js?v=8'));
  assert.ok(integration.includes("if(drawing.panelType==='Brak')it.infill='none'"));
+ assert.ok(integration.includes('select.value=it.infill'),'form must not override CAD removal during updateAll');
  assert.equal((html.match(/bcore-steelvision-bridge\.js/g)||[]).length,1);
 });
 test('v8: email package receives explicit no-infill and both underside fixing tabs',()=>{
